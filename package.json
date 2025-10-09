@@ -1,12 +1,9 @@
 {
   "dependencies": {
-<<<<<<< HEAD
-    "bcryptjs": "^3.0.2"
-=======
+    "bcryptjs": "^3.0.2",
     "dotenv": "^17.2.3",
     "express": "^5.1.0",
     "jsonwebtoken": "^9.0.2",
     "mongoose": "^8.19.1"
->>>>>>> 848a786e910fd6f2d489891f3fde12b1fff464a3
   }
 }
