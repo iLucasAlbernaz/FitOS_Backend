@@ -1,59 +1,82 @@
-import { handleRegister, handleLogin, handleLogout } from './auth.js';
+import { handleRegister, handleLogin, handleLogout, displayMessage } from './auth.js';
 import { loadDashboardData, handleChatSubmit, renderCrudForms } from './dashboard.js';
 
-// --- FUNÇÕES DE ALTERNÂNCIA DE TELA ---
+// --- ELEMENTOS DA DOM ---
 const dashboardElement = document.getElementById('app-dashboard');
 const authContainer = document.getElementById('auth-container');
+const loginSection = document.getElementById('login-section'); // Mantido para referência, mas o controle é via grid
+const registerSection = document.getElementById('register-section');
+const authGrid = document.querySelector('.auth-grid'); // Seleciona o grid
+const messageElement = document.getElementById('message');
 
+// --- FUNÇÕES DE ALTERNÂNCIA DE TELA ---
 function showDashboard() {
     authContainer.style.display = 'none';
     dashboardElement.style.display = 'block';
 }
 
-function showLogin() { 
+// Mostra o Login (com grid e imagem)
+function showLogin() {
     authContainer.style.display = 'block';
     dashboardElement.style.display = 'none';
-    
-    // Garante que a seção de login esteja visível
-    document.getElementById('login-section').style.display = 'block';
-    document.getElementById('register-section').style.display = 'none';
+
+    authGrid.style.display = 'grid'; // MOSTRA o grid
+    registerSection.style.display = 'none'; // Esconde o cadastro
+
+    if (messageElement) messageElement.textContent = '';
 }
+window.showLogin = showLogin;
+
+// Mostra o Cadastro (e ESCONDE o grid de login)
+function showRegister() {
+    authContainer.style.display = 'block';
+    dashboardElement.style.display = 'none';
+
+    authGrid.style.display = 'none'; // ESCONDE o grid de login
+    registerSection.style.display = 'block'; // Mostra o cadastro
+
+    if (messageElement) messageElement.textContent = '';
+}
+window.showRegister = showRegister;
+
 
 function logout() {
     handleLogout(); // Limpa o localStorage
     showLogin();
 }
-// Torna a função acessível pelo onclick do botão Sair no HTML
-window.logout = logout; 
+window.logout = logout;
 
-
-// --- LÓGICA DO MODAL DE SUCESSO (NOVIDADE) ---
+// --- LÓGICA DO MODAL (Mantida) ---
 function openModal(message) {
-    document.getElementById('modal-message').textContent = message;
-    document.getElementById('success-modal').style.display = 'block';
-    
-    // Configura o redirecionamento após 2 segundos (tempo para o usuário ler)
-    setTimeout(() => {
-        closeModal();
-        showLogin(); // Redireciona para o login
-    }, 2000); 
+    const modalMessage = document.getElementById('modal-message');
+    const successModal = document.getElementById('success-modal');
+    if (modalMessage && successModal) {
+        modalMessage.textContent = message;
+        successModal.style.display = 'block';
+
+        setTimeout(() => {
+            closeModal();
+            showLogin();
+        }, 2000);
+    }
 }
 
 function closeModal() {
-    document.getElementById('success-modal').style.display = 'none';
+    const successModal = document.getElementById('success-modal');
+    if (successModal) {
+        successModal.style.display = 'none';
+    }
 }
-// Torna a função acessível pelo onclick do botão fechar no HTML
-window.closeModal = closeModal; 
+window.closeModal = closeModal;
 
 
 // --- INICIALIZAÇÃO E EVENT LISTENERS ---
 document.addEventListener('DOMContentLoaded', () => {
-    
-    // --- 1. EVENTO DE CADASTRO (Implementação do Modal) ---
+
+    // --- 1. EVENTO DE CADASTRO ---
     document.getElementById('register-form').addEventListener('submit', async (e) => {
         e.preventDefault();
-        
-        // Coleta de Dados do Formulário (garantindo o cálculo automático das metas)
+
         const userData = {
             nome: document.getElementById('reg-nome').value,
             email: document.getElementById('reg-email').value,
@@ -66,18 +89,16 @@ document.addEventListener('DOMContentLoaded', () => {
             },
             objetivos: {
                 principal: document.getElementById('reg-objetivo').value,
-                meta_peso_kg: parseFloat(document.getElementById('reg-peso').value) * 0.95, 
-                meta_agua_litros: 3.0 
+                meta_peso_kg: parseFloat(document.getElementById('reg-peso').value) * 0.95,
+                meta_agua_litros: 3.0
             }
         };
 
         const result = await handleRegister(userData);
-        
-        // AÇÃO: Se for sucesso, abre o modal
+
         if (result.success) {
-            openModal('Sua conta foi criada com sucesso! Redirecionando para o login...'); 
+            openModal('Sua conta foi criada com sucesso! Redirecionando...');
         }
-        // Em caso de erro, a mensagem é exibida diretamente na tela de cadastro (pelo auth.js)
     });
 
     // --- 2. EVENTO DE LOGIN ---
@@ -87,21 +108,30 @@ document.addEventListener('DOMContentLoaded', () => {
         const senha = document.getElementById('login-senha').value;
 
         const result = await handleLogin({ email, senha });
-        
+
         if (result.success) {
             showDashboard();
             loadDashboardData(result.token).then(profile => {
-                 // Chama a função para renderizar os formulários de CRUD após o login
-                 if (profile) renderCrudForms(profile);
-            }); 
+                if (profile) {
+                    renderCrudForms(profile);
+                    // Após carregar, mostra a seção de perfil e chat por padrão
+                    showDashboardSection('perfil');
+                    const chatSection = document.getElementById('section-chat');
+                    if (chatSection) chatSection.style.display = 'block';
+                }
+            });
         }
     });
 
     // --- 3. EVENTO DE CHATBOT ---
     document.getElementById('chat-form').addEventListener('submit', (e) => {
         e.preventDefault();
-        const pergunta = document.getElementById('chat-pergunta').value;
-        handleChatSubmit(pergunta);
+        const perguntaInput = document.getElementById('chat-pergunta');
+        const pergunta = perguntaInput.value;
+        if (pergunta) {
+            handleChatSubmit(pergunta);
+            perguntaInput.value = ''; // Limpa o campo
+        }
     });
 
 
@@ -110,9 +140,26 @@ document.addEventListener('DOMContentLoaded', () => {
     if (storedToken) {
         showDashboard();
         loadDashboardData(storedToken).then(profile => {
-             if (profile) renderCrudForms(profile);
+            if (profile) {
+                renderCrudForms(profile);
+                showDashboardSection('perfil');
+                const chatSection = document.getElementById('section-chat');
+                if (chatSection) chatSection.style.display = 'block';
+            }
         });
     } else {
-        showLogin();
+        showLogin(); // Começa na tela de login se não houver token
     }
 });
+
+// --- FUNÇÕES GLOBAIS PARA NAVEGAÇÃO DO DASHBOARD (Precisa estar fora do DOMContentLoaded) ---
+function showDashboardSection(sectionId) {
+    document.querySelectorAll('.dashboard-section').forEach(section => {
+        section.style.display = 'none';
+    });
+    const targetSection = document.getElementById('section-' + sectionId);
+    if (targetSection) {
+        targetSection.style.display = 'block';
+    }
+}
+window.showDashboardSection = showDashboardSection; // Torna global
