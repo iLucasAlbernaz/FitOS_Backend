@@ -2,7 +2,9 @@ require('dotenv').config();
 
 const express = require('express');
 const mongoose = require('mongoose');
+const cors = require('cors');
 
+// Importação de Rotas
 const usuarioRoutes = require('./routes/usuarioRoutes');
 const authRoutes = require('./routes/authRoutes');
 const diarioRoutes = require('./routes/diarioRoutes');
@@ -13,9 +15,12 @@ const chatRoutes = require('./routes/chatRoutes');
 
 const app = express();
 
+// Middlewares
+app.use(cors());
+app.use(express.json());
+
 const PORT = process.env.PORT || 3000;
 
-app.use(express.json());
 app.use('/api/usuarios', usuarioRoutes);
 app.use('/api/auth', authRoutes);
 app.use('/api/diarios', diarioRoutes);
@@ -28,7 +33,7 @@ const connectDB = async () => {
     try {
         await mongoose.connect(process.env.MONGODB_URI);
         
-        console.log('MongoDB (Atlas) conectado com sucesso! 🚀');
+        console.log('MongoDB (Atlas) conectado com sucesso!');
         
         app.listen(PORT, () => {
             console.log(`Servidor FitOS rodando na porta ${PORT}`);

@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FitOS - Login e Cadastro</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <header>
+        <h1>FitOS: Seu Planejador Fitness</h1>
+    </header>
+
+    <main>
+        <div id="auth-container">
+            <section id="login-section">
+                <h2>Login</h2>
+                <p id="message" class="error"></p>
+                
+                <form id="login-form">
+                    <input type="email" id="login-email" placeholder="Email" required>
+                    <input type="password" id="login-senha" placeholder="Senha" required>
+                    <button type="submit">Entrar</button>
+                </form>
+                <p>Não tem conta? <a href="#" onclick="showRegister()">Cadastre-se</a></p>
+            </section>
+
+            <section id="register-section" style="display: none;">
+                <h2>Cadastro</h2>
+                <form id="register-form">
+                    <input type="text" id="reg-nome" placeholder="Nome Completo" required>
+                    <input type="email" id="reg-email" placeholder="Email" required>
+                    <input type="password" id="reg-senha" placeholder="Senha (mín. 8 caracteres)" required>
+                    
+                    <label>Dados Iniciais:</label>
+                    <input type="number" id="reg-altura" placeholder="Altura (cm) - Ex: 1.75" required step="0.01">
+                    <input type="number" id="reg-peso" placeholder="Peso (kg) - Ex: 82.5" required step="0.01">
+                    <select id="reg-sexo" required>
+                        <option value="" disabled selected>Gênero</option>
+                        <option value="M">Masculino</option>
+                        <option value="F">Feminino</option>
+                    </select>
+
+                    <select id="reg-objetivo" required>
+                        <option value="" disabled selected>Objetivo Principal</option>
+                        <option value="Perda de Peso">Perda de Peso</option>
+                        <option value="Ganho de Massa">Ganho de Massa</option>
+                        <option value="Manutenção">Manutenção</option>
+                    </select>
+
+                    <button type="submit">Finalizar Cadastro</button>
+                    <p><a href="#" onclick="showLogin()">Voltar ao Login</a></p>
+                </form>
+            </section>
+        </div>
+        
+        <div id="app-dashboard" style="display: none;">
+            <h2>Bem-vindo ao Dashboard!</h2>
+            <button onclick="logout()">Sair</button>
+        </div>
+    </main>
+
+    <script src="app.js"></script>
+    <script>
+        // Funções simples para alternar as telas no Frontend
+        function showRegister() {
+            document.getElementById('login-section').style.display = 'none';
+            document.getElementById('register-section').style.display = 'block';
+        }
+        function showLogin() {
+            document.getElementById('login-section').style.display = 'block';
+            document.getElementById('register-section').style.display = 'none';
+        }
+        function showDashboard() {
+            document.getElementById('auth-container').style.display = 'none';
+            document.getElementById('app-dashboard').style.display = 'block';
+        }
+    </script>
+</body>
+</html>
