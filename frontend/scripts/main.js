@@ -10,26 +10,51 @@ function showDashboard() {
     dashboardElement.style.display = 'block';
 }
 
-function showAuth() {
+function showLogin() { 
     authContainer.style.display = 'block';
     dashboardElement.style.display = 'none';
+    
+    // Garante que a seção de login esteja visível
+    document.getElementById('login-section').style.display = 'block';
+    document.getElementById('register-section').style.display = 'none';
 }
 
 function logout() {
     handleLogout(); // Limpa o localStorage
-    showAuth();
+    showLogin();
 }
-window.logout = logout; // Torna a função acessível pelo onclick do botão HTML
+// Torna a função acessível pelo onclick do botão Sair no HTML
+window.logout = logout; 
+
+
+// --- LÓGICA DO MODAL DE SUCESSO (NOVIDADE) ---
+function openModal(message) {
+    document.getElementById('modal-message').textContent = message;
+    document.getElementById('success-modal').style.display = 'block';
+    
+    // Configura o redirecionamento após 2 segundos (tempo para o usuário ler)
+    setTimeout(() => {
+        closeModal();
+        showLogin(); // Redireciona para o login
+    }, 2000); 
+}
+
+function closeModal() {
+    document.getElementById('success-modal').style.display = 'none';
+}
+// Torna a função acessível pelo onclick do botão fechar no HTML
+window.closeModal = closeModal; 
+
 
 // --- INICIALIZAÇÃO E EVENT LISTENERS ---
 document.addEventListener('DOMContentLoaded', () => {
-    // --- 1. EVENTO DE CADASTRO ---
+    
+    // --- 1. EVENTO DE CADASTRO (Implementação do Modal) ---
     document.getElementById('register-form').addEventListener('submit', async (e) => {
         e.preventDefault();
         
-        // Coleta todos os dados do formulário...
+        // Coleta de Dados do Formulário (garantindo o cálculo automático das metas)
         const userData = {
-            // ... (coleta de dados igual à função anterior, apenas omitida por brevidade)
             nome: document.getElementById('reg-nome').value,
             email: document.getElementById('reg-email').value,
             senha: document.getElementById('reg-senha').value,
@@ -47,9 +72,12 @@ document.addEventListener('DOMContentLoaded', () => {
         };
 
         const result = await handleRegister(userData);
+        
+        // AÇÃO: Se for sucesso, abre o modal
         if (result.success) {
-            // Lógica de sucesso está em auth.js
+            openModal('Sua conta foi criada com sucesso! Redirecionando para o login...'); 
         }
+        // Em caso de erro, a mensagem é exibida diretamente na tela de cadastro (pelo auth.js)
     });
 
     // --- 2. EVENTO DE LOGIN ---
@@ -62,7 +90,10 @@ document.addEventListener('DOMContentLoaded', () => {
         
         if (result.success) {
             showDashboard();
-            loadDashboardData(result.token); 
+            loadDashboardData(result.token).then(profile => {
+                 // Chama a função para renderizar os formulários de CRUD após o login
+                 if (profile) renderCrudForms(profile);
+            }); 
         }
     });
 
@@ -79,10 +110,9 @@ document.addEventListener('DOMContentLoaded', () => {
     if (storedToken) {
         showDashboard();
         loadDashboardData(storedToken).then(profile => {
-             // Renderiza os formulários de CRUD após carregar o perfil
              if (profile) renderCrudForms(profile);
         });
     } else {
-        showAuth();
+        showLogin();
     }
 });

@@ -23,15 +23,18 @@ export async function handleRegister(userData) {
 
         const data = await response.json();
 
-        if (response.ok) { // Status 201
+        // 1. CORREÇÃO CRÍTICA: Verifica explicitamente o Status 201 (Created)
+        if (response.status === 201) { 
             displayMessage(data.mensagem + ' Faça login agora.', 'success');
             return { success: true };
         } else {
+            // Trata erros como 400 Bad Request (Validação, Email Duplicado)
             displayMessage(data.mensagem || 'Erro desconhecido no cadastro.', 'error');
             return { success: false };
         }
 
     } catch (error) {
+        // Erro de rede (servidor offline)
         displayMessage('Erro de rede. Verifique se o servidor está ativo.', 'error');
         console.error('Erro de rede:', error);
         return { success: false };
@@ -51,7 +54,7 @@ export async function handleLogin(loginData) {
 
         const data = await response.json();
         
-        if (response.ok) { // Status 200
+        if (response.ok) { // Status 200 OK
             // Salva o Token JWT e retorna sucesso
             localStorage.setItem('jwtToken', data.token);
             return { success: true, token: data.token, user: data.usuario };

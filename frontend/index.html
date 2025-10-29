@@ -8,57 +8,72 @@
 </head>
 <body>
 
+    <div id="success-modal" class="modal" style="display: none;">
+        <div class="modal-content card">
+            <span class="close-btn" onclick="closeModal()">&times;</span>
+            <h3 class="modal-title success-message">Ação Concluída!</h3>
+            <p id="modal-message">Mensagem de sucesso aqui.</p>
+        </div>
+    </div>
     <header class="app-header">
-        <h1 class="header-title">FitOS: Seu Planejador Fitness</h1>
+        <img src="images/logo.png" alt="Logo FitOS" class="header-logo"> 
     </header>
 
     <main class="container">
         <div id="auth-container" class="card auth-card">
             
-            <section id="login-section" class="form-section">
-                <h2 class="form-title">Login</h2>
-                <p id="message" class="message error-message"></p> 
+            <div class="auth-grid">
                 
-                <form id="login-form">
-                    <input type="email" id="login-email" class="input-field" placeholder="Email" required>
-                    <input type="password" id="login-senha" class="input-field" placeholder="Senha" required>
-                    <button type="submit" class="btn btn-primary">Entrar</button>
-                </form>
-                <p class="link-text">Não tem conta? <a href="#" onclick="showRegister()" class="link">Cadastre-se</a></p>
-            </section>
+                <div class="form-column">
+                    <section id="login-section" class="form-section" style="text-align: center;">
+                        <br><br><br>
+                        <h2 class="form-title">Login</h2>
+                        <p id="message" class="message error-message"></p> 
+                        
+                        <form id="login-form">
+                            <input type="email" id="login-email" class="input-field" placeholder="Email" required>
+                            <input type="password" id="login-senha" class="input-field" placeholder="Senha" required>
+                            <button type="submit" class="btn btn-primary">Entrar</button>
+                        </form>
+                        <p class="link-text">Não tem conta? <a href="#" onclick="showRegister()" class="link">Cadastre-se</a></p>
+                    </section>
 
-            <section id="register-section" class="form-section" style="display: none;">
-                <h2 class="form-title">Cadastro</h2>
-                <form id="register-form">
-                    <input type="text" id="reg-nome" class="input-field" placeholder="Nome Completo" required>
-                    <input type="email" id="reg-email" class="input-field" placeholder="Email" required>
-                    <input type="password" id="reg-senha" class="input-field" placeholder="Senha (mín. 8 caracteres)" required>
-                    
-                    <label class="input-label">Dados Iniciais:</label>
-                    <input type="number" id="reg-altura" class="input-field" placeholder="Altura (m) - Ex: 1.75" required step="0.01">
-                    <input type="number" id="reg-peso" class="input-field" placeholder="Peso (kg) - Ex: 82.5" required step="0.01">
-                    <input type="number" id="reg-idade" class="input-field" placeholder="Idade" required>
-                    <select id="reg-sexo" class="input-field" required>
-                        <option value="" disabled selected>Gênero</option>
-                        <option value="M">Masculino</option>
-                        <option value="F">Feminino</option>
-                    </select>
+                    <section id="register-section" class="form-section" style="display: none;">
+                        <h2 class="form-title">Cadastro</h2>
+                        <form id="register-form">
+                            <input type="text" id="reg-nome" class="input-field" placeholder="Nome Completo" required>
+                            <input type="email" id="reg-email" class="input-field" placeholder="Email" required>
+                            <input type="password" id="reg-senha" class="input-field" placeholder="Senha (mín. 8 caracteres)" required>
+                            
+                            <label class="input-label">Dados Iniciais:</label>
+                            <input type="number" id="reg-altura" class="input-field" placeholder="Altura (m) - Ex: 1.75" required step="0.01">
+                            <input type="number" id="reg-peso" class="input-field" placeholder="Peso (kg) - Ex: 82.5" required step="0.01">
+                            <input type="number" id="reg-idade" class="input-field" placeholder="Idade" required>
+                            <select id="reg-sexo" class="input-field" required>
+                                <option value="" disabled selected>Gênero</option>
+                                <option value="M">Masculino</option>
+                                <option value="F">Feminino</option>
+                            </select>
 
-                    <label class="input-label">Objetivo:</label>
-                    <select id="reg-objetivo" class="input-field" required>
-                        <option value="" disabled selected>Objetivo Principal</option>
-                        <option value="Perda de Peso">Perda de Peso</option>
-                        <option value="Ganho de Massa">Ganho de Massa</option>
-                        <option value="Manutenção">Manutenção</option>
-                    </select>
+                            <label class="input-label">Objetivo:</label>
+                            <select id="reg-objetivo" class="input-field" required>
+                                <option value="" disabled selected>Objetivo Principal</option>
+                                <option value="Perda de Peso">Perda de Peso</option>
+                                <option value="Ganho de Massa">Ganho de Massa</option>
+                                <option value="Manutenção">Manutenção</option>
+                            </select>
 
-                    <button type="submit" class="btn btn-primary">Finalizar Cadastro</button>
-                    <p class="link-text"><a href="#" onclick="showLogin()" class="link">Voltar ao Login</a></p>
-                </form>
-            </section>
-        </div>
-        
-        <div id="app-dashboard" class="container dashboard-area" style="display: none;">
+                            <button type="submit" class="btn btn-primary">Finalizar Cadastro</button>
+                            <p class="link-text"><a href="#" onclick="showLogin()" class="link">Voltar ao Login</a></p>
+                        </form>
+                    </section>
+                </div>
+
+                <div class="auth-image-side">
+                    <img src="images/img.png" alt="Logo FitOS" class="auth-logo">
+                </div>
+                
+            </div> </div> <div id="app-dashboard" class="container dashboard-area" style="display: none;">
             
             <header class="dashboard-menu">
                 <nav>
@@ -76,7 +91,7 @@
                 <section id="section-perfil" class="dashboard-section">
                     <h3 class="section-title">Meu Perfil e Atualização (CRUD U/D)</h3>
                     <div id="perfil-form-container"></div>
-                    </section>
+                </section>
 
                 <section id="section-diario" class="dashboard-section" style="display: none;">
                     <h3 class="section-title">Registro Diário (CRUD C/R)</h3>
@@ -109,11 +124,13 @@
         function showRegister() {
             document.getElementById('login-section').style.display = 'none';
             document.getElementById('register-section').style.display = 'block';
+            document.querySelector('.auth-image-side').style.display = 'none'; // Esconde a imagem no cadastro
             document.getElementById('message').textContent = '';
         }
         function showLogin() {
             document.getElementById('login-section').style.display = 'block';
             document.getElementById('register-section').style.display = 'none';
+            document.querySelector('.auth-image-side').style.display = 'flex'; // Mostra a imagem no login
             document.getElementById('message').textContent = '';
         }
         function showDashboardSection(sectionId) {
