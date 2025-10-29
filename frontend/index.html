@@ -3,79 +3,130 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>FitOS - Login e Cadastro</title>
-    <link rel="stylesheet" href="style.css">
+    <title>FitOS - Seu Planejador Fitness</title>
+    <link rel="stylesheet" href="style.css"> 
 </head>
 <body>
 
-    <header>
-        <h1>FitOS: Seu Planejador Fitness</h1>
+    <header class="app-header">
+        <h1 class="header-title">FitOS: Seu Planejador Fitness</h1>
     </header>
 
-    <main>
-        <div id="auth-container">
-            <section id="login-section">
-                <h2>Login</h2>
-                <p id="message" class="error"></p>
+    <main class="container">
+        <div id="auth-container" class="card auth-card">
+            
+            <section id="login-section" class="form-section">
+                <h2 class="form-title">Login</h2>
+                <p id="message" class="message error-message"></p> 
                 
                 <form id="login-form">
-                    <input type="email" id="login-email" placeholder="Email" required>
-                    <input type="password" id="login-senha" placeholder="Senha" required>
-                    <button type="submit">Entrar</button>
+                    <input type="email" id="login-email" class="input-field" placeholder="Email" required>
+                    <input type="password" id="login-senha" class="input-field" placeholder="Senha" required>
+                    <button type="submit" class="btn btn-primary">Entrar</button>
                 </form>
-                <p>Não tem conta? <a href="#" onclick="showRegister()">Cadastre-se</a></p>
+                <p class="link-text">Não tem conta? <a href="#" onclick="showRegister()" class="link">Cadastre-se</a></p>
             </section>
 
-            <section id="register-section" style="display: none;">
-                <h2>Cadastro</h2>
+            <section id="register-section" class="form-section" style="display: none;">
+                <h2 class="form-title">Cadastro</h2>
                 <form id="register-form">
-                    <input type="text" id="reg-nome" placeholder="Nome Completo" required>
-                    <input type="email" id="reg-email" placeholder="Email" required>
-                    <input type="password" id="reg-senha" placeholder="Senha (mín. 8 caracteres)" required>
+                    <input type="text" id="reg-nome" class="input-field" placeholder="Nome Completo" required>
+                    <input type="email" id="reg-email" class="input-field" placeholder="Email" required>
+                    <input type="password" id="reg-senha" class="input-field" placeholder="Senha (mín. 8 caracteres)" required>
                     
-                    <label>Dados Iniciais:</label>
-                    <input type="number" id="reg-altura" placeholder="Altura (cm) - Ex: 1.75" required step="0.01">
-                    <input type="number" id="reg-peso" placeholder="Peso (kg) - Ex: 82.5" required step="0.01">
-                    <select id="reg-sexo" required>
+                    <label class="input-label">Dados Iniciais:</label>
+                    <input type="number" id="reg-altura" class="input-field" placeholder="Altura (m) - Ex: 1.75" required step="0.01">
+                    <input type="number" id="reg-peso" class="input-field" placeholder="Peso (kg) - Ex: 82.5" required step="0.01">
+                    <input type="number" id="reg-idade" class="input-field" placeholder="Idade" required>
+                    <select id="reg-sexo" class="input-field" required>
                         <option value="" disabled selected>Gênero</option>
                         <option value="M">Masculino</option>
                         <option value="F">Feminino</option>
                     </select>
 
-                    <select id="reg-objetivo" required>
+                    <label class="input-label">Objetivo:</label>
+                    <select id="reg-objetivo" class="input-field" required>
                         <option value="" disabled selected>Objetivo Principal</option>
                         <option value="Perda de Peso">Perda de Peso</option>
                         <option value="Ganho de Massa">Ganho de Massa</option>
                         <option value="Manutenção">Manutenção</option>
                     </select>
 
-                    <button type="submit">Finalizar Cadastro</button>
-                    <p><a href="#" onclick="showLogin()">Voltar ao Login</a></p>
+                    <button type="submit" class="btn btn-primary">Finalizar Cadastro</button>
+                    <p class="link-text"><a href="#" onclick="showLogin()" class="link">Voltar ao Login</a></p>
                 </form>
             </section>
         </div>
         
-        <div id="app-dashboard" style="display: none;">
-            <h2>Bem-vindo ao Dashboard!</h2>
-            <button onclick="logout()">Sair</button>
+        <div id="app-dashboard" class="container dashboard-area" style="display: none;">
+            
+            <header class="dashboard-menu">
+                <nav>
+                    <button class="btn btn-secondary" onclick="showDashboardSection('perfil')">Perfil & Metas</button>
+                    <button class="btn btn-secondary" onclick="showDashboardSection('diario')">Diário & Acompanhamento</button>
+                    <button class="btn btn-secondary" onclick="showDashboardSection('receitas')">Receitas</button>
+                    <button onclick="logout()" class="btn btn-danger">Sair</button>
+                </nav>
+            </header>
+
+            <div class="main-content card">
+                <h2 class="dashboard-title">Dashboard</h2>
+                <div id="user-info" class="info-block" style="margin-bottom: 20px;"></div>
+                
+                <section id="section-perfil" class="dashboard-section">
+                    <h3 class="section-title">Meu Perfil e Atualização (CRUD U/D)</h3>
+                    <div id="perfil-form-container"></div>
+                    </section>
+
+                <section id="section-diario" class="dashboard-section" style="display: none;">
+                    <h3 class="section-title">Registro Diário (CRUD C/R)</h3>
+                    <div id="diario-form-container"></div>
+                    <div id="diario-list-container"></div>
+                </section>
+
+                <section id="section-receitas" class="dashboard-section" style="display: none;">
+                    <h3 class="section-title">Minhas Receitas (CRUD C/R)</h3>
+                    <div id="receitas-form-container"></div>
+                    <div id="receitas-list-container"></div>
+                </section>
+                
+                <section id="section-chat" class="dashboard-section">
+                    <h3 class="section-title">Assistente de IA (Comunicação)</h3>
+                    <form id="chat-form" class="chat-form">
+                        <input type="text" id="chat-pergunta" class="input-field" placeholder="Pergunte sobre dieta ou treino..." required>
+                        <button type="submit" class="btn btn-secondary">Perguntar</button>
+                    </form>
+                    <p id="chat-resposta" class="info-message"></p>
+                </section>
+            </div>
         </div>
     </main>
 
-    <script src="app.js"></script>
+    <script type="module" src="scripts/main.js"></script>
+    
     <script>
-        // Funções simples para alternar as telas no Frontend
+        // Funções de Alternância (Expostas globalmente para o onclick do HTML)
         function showRegister() {
             document.getElementById('login-section').style.display = 'none';
             document.getElementById('register-section').style.display = 'block';
+            document.getElementById('message').textContent = '';
         }
         function showLogin() {
             document.getElementById('login-section').style.display = 'block';
             document.getElementById('register-section').style.display = 'none';
+            document.getElementById('message').textContent = '';
         }
-        function showDashboard() {
-            document.getElementById('auth-container').style.display = 'none';
-            document.getElementById('app-dashboard').style.display = 'block';
+        function showDashboardSection(sectionId) {
+            document.querySelectorAll('.dashboard-section').forEach(section => {
+                section.style.display = 'none';
+            });
+            document.getElementById('section-' + sectionId).style.display = 'block';
         }
+        // Configuração inicial para mostrar Perfil e Chat ao carregar
+        document.addEventListener('DOMContentLoaded', () => {
+            showDashboardSection('perfil'); 
+            document.getElementById('section-chat').style.display = 'block';
+        });
     </script>
 </body>
 </html>
