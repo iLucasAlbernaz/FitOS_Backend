@@ -7,7 +7,9 @@ const usuarioRoutes = require('./routes/usuarioRoutes');
 const authRoutes = require('./routes/authRoutes');
 const diarioRoutes = require('./routes/diarioRoutes');
 const receitaRoutes = require('./routes/receitaRoutes');
-const treinoRoutes = require('./routes/treinoRoutes'); 
+const treinoRoutes = require('./routes/treinoRoutes');
+const notificacaoRoutes = require('./routes/notificacaoRoutes');
+const chatRoutes = require('./routes/chatRoutes');
 
 const app = express();
 
@@ -19,6 +21,8 @@ app.use('/api/auth', authRoutes);
 app.use('/api/diarios', diarioRoutes);
 app.use('/api/receitas', receitaRoutes);
 app.use('/api/treinos', treinoRoutes); 
+app.use('/api/notificacoes', notificacaoRoutes);
+app.use('/api/chat', chatRoutes);
 
 const connectDB = async () => {
     try {
