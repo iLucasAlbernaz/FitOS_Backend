@@ -21,15 +21,12 @@
 
     <main class="container">
         <div id="auth-container" class="card auth-card">
-            
             <div class="auth-grid">
-                
                 <div class="form-column">
                     <section id="login-section" class="form-section" style="text-align: center;">
                         <br><br><br>
                         <h2 class="form-title">Login</h2>
                         <p id="message" class="message error-message"></p> 
-                        
                         <form id="login-form">
                             <input type="email" id="login-email" class="input-field" placeholder="Email" required>
                             <input type="password" id="login-senha" class="input-field" placeholder="Senha" required>
@@ -38,13 +35,10 @@
                         <p class="link-text">Não tem conta? <a href="#" onclick="showRegister()" class="link">Cadastre-se</a></p>
                     </section>
                 </div>
-
                 <div class="auth-image-side">
                     <img src="images/img.png" alt="Logo FitOS" class="auth-logo">
                 </div>
-                
             </div> 
-            
             <section id="register-section" class="form-section">
                 <h2 class="form-title">Cadastro</h2>
                 <form id="register-form">
@@ -71,7 +65,6 @@
                     <p class="link-text"><a href="#" onclick="showLogin()" class="link">Voltar ao Login</a></p>
                 </form>
             </section>
-
         </div> 
         
         <div id="app-dashboard" class="container dashboard-area" style="display: none;">
@@ -93,57 +86,52 @@
                 <div id="user-info" class="info-block" style="margin-bottom: 20px;"></div>
 
                 <section id="section-perfil" class="dashboard-section">
-                    <h3 class="section-title">Meu Perfil e Segurança</h3>
-                    <div id="perfil-form-container">
-                        </div>
+                   <h3 class="section-title">Meu Perfil e Segurança</h3>
+                   <div id="perfil-form-container"></div>
                 </section>
-
                 <section id="section-metas" class="dashboard-section" style="display: none;">
-                    <h3 class="section-title">Minhas Metas e Atualização</h3>
-                    <div id="metas-form-container">
-                        </div>
+                   <h3 class="section-title">Minhas Metas e Atualização</h3>
+                   <div id="metas-form-container"></div>
                 </section>
-
                 <section id="section-treinos" class="dashboard-section" style="display: none;">
-                    <div class="section-header">
-                        <h3 class="section-title">Minhas Rotinas de Treino</h3>
-                        <button id="btn-show-create-form" class="btn btn-primary" style="width: auto; margin-top: 0;">+ Nova Rotina</button>
-                    </div>
-                    
-                    <div id="treinos-list-container">
-                        </div>
-
-                    <div id="treino-form-container" style="display: none;">
-                        </div>
+                   <div class="section-header">
+                       <h3 class="section-title">Minhas Rotinas de Treino</h3>
+                       <button id="btn-show-create-form" class="btn btn-primary" style="width: auto; margin-top: 0;">+ Nova Rotina</button>
+                   </div>
+                   <div id="treinos-list-container"></div>
+                   <div id="treino-form-container" style="display: none;"></div>
                 </section>
-                
                 <section id="section-diario" class="dashboard-section" style="display: none;">
-                    <h3 class="section-title">Registro Diário</h3>
-                    <div id="diario-form-container">
-                        </div>
-                    <div id="diario-list-container">
-                        </div>
+                   <h3 class="section-title">Registro Diário</h3>
+                   <div id="diario-form-container"></div>
+                   <div id="diario-list-container"></div>
                 </section>
-                
                 <section id="section-dieta" class="dashboard-section" style="display: none;">
-                    <h3 class="section-title">Meu Plano Alimentar</h3>
-                    <div id="dieta-container">
-                        </div>
+                   <h3 class="section-title">Meu Plano Alimentar</h3>
+                   <div id="dieta-container"></div>
                 </section>
-
                 <section id="section-receitas" class="dashboard-section" style="display: none;">
-                    <h3 class="section-title">Minhas Receitas</h3>
-                    <div id="receitas-form-container"></div>
-                    <div id="receitas-list-container"></div>
+                   <h3 class="section-title">Minhas Receitas</h3>
+                   <div id="receitas-form-container"></div>
+                   <div id="receitas-list-container"></div>
                 </section>
 
                 <section id="section-chat" class="dashboard-section" style="display: none;">
                     <h3 class="section-title">Assistente de IA</h3>
+                    
+                    <div id="chat-history-container" class="info-message">
+                        </div>
+                    
+                    <div class="quick-replies">
+                        <button class="btn btn-secondary quick-reply-btn" data-pergunta="Me dê uma sugestão de treino para peito">Treino para Peito</button>
+                        <button class="btn btn-secondary quick-reply-btn" data-pergunta="Quais alimentos são ricos em fibras?">Alimentos Ricos em Fibras</button>
+                        <button class="btn btn-secondary quick-reply-btn" data-pergunta="Quantas proteínas devo consumir por dia?">Cálculo de Proteína</button>
+                    </div>
+
                     <form id="chat-form" class="chat-form">
                         <input type="text" id="chat-pergunta" class="input-field" placeholder="Pergunte sobre dieta ou treino..." required>
-                        <button type="submit" class="btn btn-secondary">Perguntar</button>
+                        <button type="submit" class="btn btn-primary">Perguntar</button>
                     </form>
-                    <p id="chat-resposta" class="info-message"></p>
                 </section>
             </div>
         </div>
@@ -162,24 +150,28 @@
                 targetSection.style.display = 'block';
             }
             
-            // Gatilho do Plano de Dieta (UC002)
+            // Gatilho do Plano de Dieta
             if (sectionId === 'dieta') {
                 if (window.loadDietPlan) {
                     window.loadDietPlan();
                 }
             }
-            
-            // Gatilho dos Treinos (UC003)
+            // Gatilho dos Treinos
             if (sectionId === 'treinos') {
                 if (window.loadTreinos) {
                     window.loadTreinos();
                 }
             }
-
-            // Gatilho do Diário (UC004)
+            // Gatilho do Diário
             if (sectionId === 'diario') {
                 if (window.loadDiario) {
                     window.loadDiario();
+                }
+            }
+            // [GATILHO ADICIONADO]
+            if (sectionId === 'chat') {
+                if (window.loadChatHistory) {
+                    window.loadChatHistory();
                 }
             }
         }

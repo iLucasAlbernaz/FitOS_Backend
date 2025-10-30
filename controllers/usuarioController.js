@@ -6,27 +6,23 @@ const Dieta = require('../models/Dieta');
 const Diario = require('../models/Diario');
 const Receita = require('../models/Receita');
 const Treino = require('../models/Treino');
-
+const Chat = require('../models/Chat'); // <-- [ADICIONADO]
 
 exports.cadastrarUsuario = async (req, res) => {
     const { senha } = req.body; 
-
     try {
         const salt = await bcrypt.genSalt(10);
         const senhaHash = await bcrypt.hash(senha, salt);
-
         const novoUsuario = new Usuario({
             ...req.body,
             senha_hash: senhaHash
         });
-
         await novoUsuario.save();
         res.status(201).json({
             mensagem: "Usuário cadastrado com sucesso! Segurança aplicada.",
             usuario_id: novoUsuario._id,
             email: novoUsuario.email
         });
-
     } catch (error) {
         if (error.code === 11000) { 
             return res.status(400).json({ mensagem: "Email já cadastrado." });
@@ -42,11 +38,9 @@ exports.cadastrarUsuario = async (req, res) => {
 exports.getUsuarioLogado = async (req, res) => {
     try {
         const usuario = await Usuario.findById(req.usuario.id).select('-senha_hash'); 
-        
         if (!usuario) {
             return res.status(404).json({ mensagem: 'Usuário não encontrado.' });
         }
-
         res.json(usuario);
     } catch (error) {
         console.error(error.message);
@@ -61,14 +55,11 @@ exports.atualizarPerfil = async (req, res) => {
             req.body,
             { new: true, runValidators: true }
         ).select('-senha_hash'); 
-
         if (!usuario) {
             return res.status(404).json({ mensagem: "Usuário não encontrado." });
         }
-
         res.status(200).json({ mensagem: "Perfil atualizado com sucesso!", usuario });
     } catch (error) {
-        // Erro de sintaxe corrigido aqui (removido o '_')
         if (error.name === 'ValidationError') {
             return res.status(400).json({ mensagem: "Erro de validação de dados.", erro: error.message });
         }
@@ -79,28 +70,18 @@ exports.atualizarPerfil = async (req, res) => {
 // --- FUNÇÃO MODIFICADA ---
 exports.deletarPerfil = async (req, res) => {
     try {
-        // [NOVO] Passo 1: Deletar dados associados
-        
-        // Deleta o plano de dieta (1-para-1)
+        // [ATUALIZADO] Passo 1: Deletar dados associados
         await Dieta.findOneAndDelete({ usuario: req.usuario.id });
-        
-        // Deleta todos os registros do diário (1-para-Muitos)
         await Diario.deleteMany({ usuario: req.usuario.id });
-        
-        // Deleta todas as receitas (1-para-Muitos)
         await Receita.deleteMany({ usuario: req.usuario.id });
-        
-        // Deleta todos os treinos (1-para-Muitos)
         await Treino.deleteMany({ usuario: req.usuario.id });
+        await Chat.deleteMany({ usuario: req.usuario.id }); // <-- [ADICIONADO]
 
-        // [Antigo] Passo 2: Deletar o próprio usuário
+        // Passo 2: Deletar o próprio usuário
         const usuario = await Usuario.findByIdAndDelete(req.usuario.id);
-
         if (!usuario) {
             return res.status(404).json({ mensagem: "Usuário não encontrado." });
         }
-
-        // [NOVO] Mensagem de resposta atualizada
         res.status(200).json({ mensagem: "Conta e todos os dados associados foram excluídos permanentemente." });
     
     } catch (error) {

@@ -1,5 +1,6 @@
 import { handleRegister, handleLogin, handleLogout, displayMessage } from './auth.js';
-import { loadDashboardData, handleChatSubmit, renderCrudForms } from './dashboard.js';
+// [ATUALIZADO] Importa as novas funções do dashboard
+import { loadDashboardData, handleChatSubmit, renderCrudForms, setupChatListeners, loadChatHistory } from './dashboard.js'; 
 import { loadDietPlan } from './dieta.js';
 import { loadTreinos } from './treino.js';
 import { loadDiario } from './diario.js';
@@ -153,17 +154,19 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    // --- 3. EVENTO DE CHATBOT ---
+    // --- 3. EVENTO DE CHATBOT (Formulário) ---
     document.getElementById('chat-form').addEventListener('submit', (e) => {
         e.preventDefault();
         const perguntaInput = document.getElementById('chat-pergunta');
         const pergunta = perguntaInput.value;
         if (pergunta) {
             handleChatSubmit(pergunta);
-            perguntaInput.value = ''; // Limpa o campo
+            perguntaInput.value = ''; // Limpa o campo após o envio
         }
     });
 
+    // --- [NOVO] Adiciona os listeners dos botões rápidos do chat ---
+    setupChatListeners(); 
 
     // --- 4. VERIFICAR SESSÃO AO CARREGAR ---
     const storedToken = localStorage.getItem('jwtToken');
@@ -189,3 +192,4 @@ document.addEventListener('DOMContentLoaded', () => {
 window.loadDietPlan = loadDietPlan;
 window.loadTreinos = loadTreinos;
 window.loadDiario = loadDiario;
+window.loadChatHistory = loadChatHistory; // <-- [ADICIONADO]

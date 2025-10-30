@@ -536,3 +536,111 @@ body {
     font-size: 0.9em;
     font-weight: normal;
 }
+
+/* ========================================= */
+/* 10. ESTILOS DO CHATBOT (UC006) */
+/* ========================================= */
+
+#chat-resposta {
+    /* Garante que o texto quebre a linha corretamente */
+    white-space: pre-wrap; 
+    line-height: 1.6;
+}
+
+.quick-replies {
+    display: flex;
+    gap: 10px;
+    margin-bottom: var(--spacing-unit);
+    flex-wrap: wrap; /* Permite que os botões quebrem a linha */
+}
+
+.quick-reply-btn {
+    width: auto !important; /* Sobrescreve o width: 100% */
+    margin-top: 0 !important;
+    background-color: #f0f7f7 !important;
+    font-weight: bold;
+    font-size: 0.9em;
+}
+
+.chat-form {
+    display: flex;
+    gap: 10px;
+    margin-top: var(--spacing-unit);
+}
+
+.chat-form input {
+    margin-bottom: 0;
+    flex: 1; /* Ocupa o espaço disponível */
+}
+
+.chat-form button {
+    width: auto; /* O botão se ajusta ao texto */
+    margin-top: 0;
+}
+
+/* ========================================= */
+/* 11. ESTILOS DO CHATBOT (UC006) */
+/* ========================================= */
+#chat-history-container {
+    background-color: #fdfdfd;
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    height: 300px; /* Altura fixa para o histórico */
+    overflow-y: auto; /* Scroll automático */
+    padding: var(--spacing-unit);
+    margin-bottom: var(--spacing-unit);
+    /* Reseta o estilo do info-message */
+    border-left: 1px solid #e0e0e0; 
+    background-color: #fdfdfd;
+}
+.chat-message {
+    padding: 8px 12px;
+    border-radius: 12px;
+    margin-bottom: 10px;
+    max-width: 80%;
+    line-height: 1.6;
+    white-space: pre-wrap; /* Preserva quebras de linha */
+}
+.user-message {
+    background-color: var(--primary-color);
+    color: white;
+    margin-left: auto; /* Alinha à direita */
+    text-align: right;
+}
+.model-message {
+    background-color: #f0f0f0;
+    color: #333;
+    margin-right: auto; /* Alinha à esquerda */
+}
+/* Mensagem de erro no chat */
+.model-message.error-message {
+    background-color: #fff0f0;
+    color: var(--danger-color);
+    border: 1px solid var(--danger-color);
+}
+.quick-replies {
+    display: flex;
+    gap: 10px;
+    margin-bottom: var(--spacing-unit);
+    flex-wrap: wrap; 
+}
+.quick-reply-btn {
+    width: auto !important; 
+    margin-top: 0 !important;
+    background-color: #f0f7f7 !important;
+    font-weight: bold;
+    font-size: 0.9em;
+}
+.chat-form {
+    display: flex;
+    gap: 10px;
+    margin-top: var(--spacing-unit);
+}
+.chat-form input {
+    margin-bottom: 0;
+    flex: 1; 
+}
+.chat-form button {
+    width: auto; 
+    margin-top: 0;
+}
