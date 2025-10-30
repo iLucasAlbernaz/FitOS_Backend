@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>FitOS - Seu Planejador Fitness</title>
-    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="style.css"> 
 </head>
 <body>
 
@@ -16,20 +16,20 @@
         </div>
     </div>
     <header class="app-header">
-        <img src="images/logo.png" alt="Logo FitOS" class="header-logo">
+        <img src="images/logo.png" alt="Logo FitOS" class="header-logo"> 
     </header>
 
     <main class="container">
         <div id="auth-container" class="card auth-card">
-
+            
             <div class="auth-grid">
-
+                
                 <div class="form-column">
                     <section id="login-section" class="form-section" style="text-align: center;">
                         <br><br><br>
                         <h2 class="form-title">Login</h2>
-                        <p id="message" class="message error-message"></p>
-
+                        <p id="message" class="message error-message"></p> 
+                        
                         <form id="login-form">
                             <input type="email" id="login-email" class="input-field" placeholder="Email" required>
                             <input type="password" id="login-senha" class="input-field" placeholder="Senha" required>
@@ -42,14 +42,15 @@
                 <div class="auth-image-side">
                     <img src="images/img.png" alt="Logo FitOS" class="auth-logo">
                 </div>
-
-            </div> <section id="register-section" class="form-section">
+                
+            </div> 
+            
+            <section id="register-section" class="form-section">
                 <h2 class="form-title">Cadastro</h2>
                 <form id="register-form">
                     <input type="text" id="reg-nome" class="input-field" placeholder="Nome Completo" required>
                     <input type="email" id="reg-email" class="input-field" placeholder="Email" required>
                     <input type="password" id="reg-senha" class="input-field" placeholder="Senha (mín. 8 caracteres)" required>
-
                     <label class="input-label">Dados Iniciais:</label>
                     <input type="number" id="reg-altura" class="input-field" placeholder="Altura (m) - Ex: 1.75" required step="0.01">
                     <input type="number" id="reg-peso" class="input-field" placeholder="Peso (kg) - Ex: 82.5" required step="0.01">
@@ -59,7 +60,6 @@
                         <option value="M">Masculino</option>
                         <option value="F">Feminino</option>
                     </select>
-
                     <label class="input-label">Objetivo:</label>
                     <select id="reg-objetivo" class="input-field" required>
                         <option value="" disabled selected>Objetivo Principal</option>
@@ -67,46 +67,62 @@
                         <option value="Ganho de Massa">Ganho de Massa</option>
                         <option value="Manutenção">Manutenção</option>
                     </select>
-
                     <button type="submit" class="btn btn-primary">Finalizar Cadastro</button>
                     <p class="link-text"><a href="#" onclick="showLogin()" class="link">Voltar ao Login</a></p>
                 </form>
             </section>
 
-        </div> <div id="app-dashboard" class="container dashboard-area" style="display: none;">
+        </div> 
+        
+        <div id="app-dashboard" class="container dashboard-area" style="display: none;">
 
             <header class="dashboard-menu">
                 <nav>
-                    <button class="btn btn-secondary" onclick="showDashboardSection('perfil')">Perfil & Metas</button>
-                    <button class="btn btn-secondary" onclick="showDashboardSection('diario')">Diário & Acompanhamento</button>
+                    <button class="btn btn-secondary" onclick="showDashboardSection('perfil')">Perfil</button>
+                    <button class="btn btn-secondary" onclick="showDashboardSection('metas')">Metas</button>
+                    <button class="btn btn-secondary" onclick="showDashboardSection('diario')">Diário</button>
                     <button class="btn btn-secondary" onclick="showDashboardSection('receitas')">Receitas</button>
+                    <button class="btn btn-secondary" onclick="showDashboardSection('dieta')">Plano de Dieta</button>
+                    <button class="btn btn-secondary" onclick="showDashboardSection('chat')">Assistente IA</button>
                     <button onclick="logout()" class="btn btn-danger">Sair</button>
                 </nav>
             </header>
 
             <div class="main-content card">
-                <h2 class="dashboard-title">Dashboard</h2>
                 <div id="user-info" class="info-block" style="margin-bottom: 20px;"></div>
 
                 <section id="section-perfil" class="dashboard-section">
-                    <h3 class="section-title">Meu Perfil e Atualização (CRUD U/D)</h3>
-                    <div id="perfil-form-container"></div>
+                    <h3 class="section-title">Meu Perfil e Segurança</h3>
+                    <div id="perfil-form-container">
+                        </div>
+                </section>
+
+                <section id="section-metas" class="dashboard-section" style="display: none;">
+                    <h3 class="section-title">Minhas Metas e Atualização</h3>
+                    <div id="metas-form-container">
+                        </div>
+                </section>
+                
+                <section id="section-dieta" class="dashboard-section" style="display: none;">
+                    <h3 class="section-title">Meu Plano Alimentar</h3>
+                    <div id="dieta-container">
+                        </div>
                 </section>
 
                 <section id="section-diario" class="dashboard-section" style="display: none;">
-                    <h3 class="section-title">Registro Diário (CRUD C/R)</h3>
+                    <h3 class="section-title">Registro Diário</h3>
                     <div id="diario-form-container"></div>
                     <div id="diario-list-container"></div>
                 </section>
 
                 <section id="section-receitas" class="dashboard-section" style="display: none;">
-                    <h3 class="section-title">Minhas Receitas (CRUD C/R)</h3>
+                    <h3 class="section-title">Minhas Receitas</h3>
                     <div id="receitas-form-container"></div>
                     <div id="receitas-list-container"></div>
                 </section>
 
-                <section id="section-chat" class="dashboard-section">
-                    <h3 class="section-title">Assistente de IA (Comunicação)</h3>
+                <section id="section-chat" class="dashboard-section" style="display: none;">
+                    <h3 class="section-title">Assistente de IA</h3>
                     <form id="chat-form" class="chat-form">
                         <input type="text" id="chat-pergunta" class="input-field" placeholder="Pergunte sobre dieta ou treino..." required>
                         <button type="submit" class="btn btn-secondary">Perguntar</button>
@@ -118,7 +134,7 @@
     </main>
 
     <script type="module" src="scripts/main.js"></script>
-
+    
     <script>
         // Funções de Alternância do DASHBOARD (Expostas globalmente)
         function showDashboardSection(sectionId) {
@@ -129,11 +145,15 @@
             if (targetSection) {
                 targetSection.style.display = 'block';
             }
+            
+            // Gatilho para carregar o Plano de Dieta
+            if (sectionId === 'dieta') {
+                if (window.loadDietPlan) {
+                    window.loadDietPlan();
+                }
+            }
         }
-        // Configuração inicial para mostrar Perfil e Chat ao carregar (se logado)
-        document.addEventListener('DOMContentLoaded', () => {
-             // O main.js controla a visibilidade inicial baseada no token
-        });
+        
         // Função de fechar modal (exposta globalmente)
         function closeModal() {
             const successModal = document.getElementById('success-modal');

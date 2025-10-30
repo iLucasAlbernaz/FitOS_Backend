@@ -2,19 +2,17 @@
 /* 1. VARIÁVEIS E BASE (Design Meia-Noite com Centralização) */
 /* ========================================= */
 :root {
-    /* NOVIDADE: Cores baseadas na logo */
-    --primary-color: #26a69a; /* Verde-azulado principal (Teal) */
-    --primary-light: #80cbc4; /* Verde-azulado claro para destaques */
-    --secondary-color: #4dd0e1; /* Ciano claro para links e botões secundários */
-    --accent-color: #a7ffeb; /* Verde muito claro (quase branco) para detalhes */
-    --danger-color: #ef5350; /* Vermelho (mantido) */
+    --primary-color: #26a69a; 
+    --primary-light: #80cbc4; 
+    --secondary-color: #4dd0e1; 
+    --accent-color: #a7ffeb; 
+    --danger-color: #ef5350; 
     
-    /* Fundo Escuro (Mantido ou ajustado ligeiramente) */
-    --background-gradient: linear-gradient(135deg, #1f2937 0%, #004d40 100%); /* Fundo escuro com tom verde */
+    --background-gradient: linear-gradient(135deg, #1f2937 0%, #004d40 100%); 
     
     --card-background: #ffffff;
-    --text-color: #333333; /* Cor do texto principal */
-    --light-text-color: #f5f5f5; /* Cor para texto sobre fundos escuros */
+    --text-color: #333333; 
+    --light-text-color: #f5f5f5; 
     --font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     --spacing-unit: 1rem;
 }
@@ -23,23 +21,20 @@ body {
     font-family: var(--font-family);
     margin: 0;
     padding: 0;
-    background: var(--background-gradient); /* Aplicando o Degradê */
+    background: var(--background-gradient); 
     color: var(--text-color);
-    /* NOVIDADE: Garante que o body ocupe toda a altura */
     min-height: 100vh;
-    display: flex; /* Habilita flexbox */
-    flex-direction: column; /* Organiza itens verticalmente */
-    /* NOVIDADE: Centraliza o conteúdo (header e card) verticalmente */
+    display: flex; 
+    flex-direction: column; 
     justify-content: center;
-    align-items: center; /* Centraliza horizontalmente */
+    align-items: center; 
     position: relative;
 }
 
 .container {
     max-width: 900px;
-    width: 90%; /* Usa porcentagem para melhor responsividade */
+    width: 90%; 
     margin: 0 auto;
-    /* Removido padding para deixar o body controlar o espaço */
 }
 
 /* ========================================= */
@@ -52,28 +47,23 @@ body {
     padding: var(--spacing-unit) 0;
     text-align: center;
     width: 100%;
-    /* NOVIDADE: Diminui a margem inferior para aproximar a logo do card */
-    margin-bottom: 0; /* Exemplo: Reduzido pela metade */
-    /* Você pode usar 0px se quiser que fiquem bem próximos: margin-bottom: 0; */
+    margin-bottom: 0; 
 }
 
 .header-logo {
-    /* AJUSTE AQUI: Tente um valor menor se estiver muito grande */
-    max-height: 300px; /* Exemplo: Reduzido para 70px */
+    max-height: 300px; 
     width: auto;      
     display: block;   
-    margin: 0 auto;   /* Centraliza */
+    margin: 0 auto;   
 }
 
 .auth-card {
-    /* O card continua centralizado */
     max-width: 800px; 
     min-height: 400px; 
     margin-bottom: calc(var(--spacing-unit) * 2); 
     align-self: center; 
     display: flex; 
     flex-direction: column;
-    
 }
 
 /* ========================================= */
@@ -84,8 +74,8 @@ body {
     display: grid;
     grid-template-columns: 1fr 1fr;
     gap: calc(var(--spacing-unit) * 2);
-    align-items: stretch; /* Faz as colunas esticarem verticalmente */
-    width: 100%; /* Ocupa a largura do card */
+    align-items: stretch; 
+    width: 100%; 
 }
 
 .form-column {
@@ -97,23 +87,20 @@ body {
     justify-content: center;
     align-items: center;
     padding: var(--spacing-unit);
-    background-color: #ffffff; /* Azul muito claro */
+    background-color: #ffffff; 
     border-radius: 8px;
-    /* height: 100%; <- Removido, align-items: stretch faz isso */
 }
 
 .auth-logo {
     max-width: 115%;
-    max-height: 3000px; /* Ajuste conforme necessário */
+    max-height: 3000px; 
     height: auto;
     object-fit: contain;
 }
 
-/* Ajustes para o formulário de cadastro ocupar o espaço todo */
 #register-section {
-    grid-column: 1 / -1; /* Ocupa as duas colunas quando visível */
+    grid-column: 1 / -1; 
 }
-/* Oculta a imagem e expande o formulário quando o cadastro está ativo */
 #register-section:not([style*="display: none;"]) ~ .auth-image-side {
     display: none;
 }
@@ -262,9 +249,19 @@ body {
     border-bottom: 1px solid #ddd;
 }
 .dashboard-menu nav {
-    display: flex;
+    display: grid; 
+    /* Atualizado para 7 colunas */
+    grid-template-columns: repeat(7, 1fr); 
     gap: 10px;
+    width: 100%; 
 }
+
+.dashboard-menu .btn {
+    width: 100%; 
+    margin-top: 0; 
+    box-sizing: border-box; 
+}
+
 .dashboard-menu .btn-secondary {
     width: auto;
     margin-top: 0;
@@ -280,4 +277,52 @@ body {
 }
 .link:hover {
     text-decoration: underline;
+}
+
+/* ========================================= */
+/* 7. ESTILOS DO PLANO DE DIETA (UC002) */
+/* ========================================= */
+.meal-card {
+    background-color: #f9f9f9;
+    border: 1px solid #e0e0e0;
+    border-left: 5px solid var(--primary-color);
+    border-radius: 8px;
+    padding: var(--spacing-unit);
+    margin-bottom: var(--spacing-unit);
+}
+
+.meal-card h3 {
+    margin-top: 0;
+    color: var(--primary-color);
+}
+
+.meal-card ul {
+    list-style-type: none;
+    padding-left: 0;
+}
+
+.meal-card li {
+    padding: 10px 0;
+    border-bottom: 1px solid #eee;
+}
+
+.meal-card li:last-child {
+    border-bottom: none;
+}
+
+.meal-card li strong {
+    color: var(--text-color);
+}
+
+.meal-card li small {
+    color: #555;
+}
+
+.meal-totals {
+    margin-top: 10px;
+    padding-top: 10px;
+    border-top: 1px dashed var(--primary-light);
+    background-color: #f0f7f7;
+    padding: 8px;
+    border-radius: 4px;
 }

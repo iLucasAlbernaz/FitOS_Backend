@@ -13,6 +13,7 @@ const treinoRoutes = require('./routes/treinoRoutes');
 const notificacaoRoutes = require('./routes/notificacaoRoutes');
 const chatRoutes = require('./routes/chatRoutes');
 
+
 const app = express();
 
 // Middlewares
@@ -28,6 +29,7 @@ app.use('/api/receitas', receitaRoutes);
 app.use('/api/treinos', treinoRoutes); 
 app.use('/api/notificacoes', notificacaoRoutes);
 app.use('/api/chat', chatRoutes);
+app.use('/api/dieta', require('./routes/dietaRoutes'));
 
 const connectDB = async () => {
     try {
