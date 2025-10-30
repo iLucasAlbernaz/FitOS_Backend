@@ -1,6 +1,8 @@
 import { handleRegister, handleLogin, handleLogout, displayMessage } from './auth.js';
 import { loadDashboardData, handleChatSubmit, renderCrudForms } from './dashboard.js';
 import { loadDietPlan } from './dieta.js';
+// IMPORT ADICIONADO (UC003)
+import { loadTreinos } from './treino.js';
 
 // --- ELEMENTOS DA DOM ---
 const dashboardElement = document.getElementById('app-dashboard');
@@ -143,7 +145,9 @@ document.addEventListener('DOMContentLoaded', () => {
                     renderCrudForms(profile);
                     // Mostra a seção de perfil por padrão
                     // (A função global showDashboardSection é definida no index.html)
-                    window.showDashboardSection('perfil');
+                    if (window.showDashboardSection) {
+                        window.showDashboardSection('perfil');
+                    }
                 }
             });
         }
@@ -169,7 +173,9 @@ document.addEventListener('DOMContentLoaded', () => {
             if (profile) {
                 renderCrudForms(profile);
                 // Mostra o perfil por padrão ao recarregar a página
-                window.showDashboardSection('perfil');
+                if (window.showDashboardSection) {
+                    window.showDashboardSection('perfil');
+                }
             }
         });
     } else {
@@ -178,5 +184,8 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 // --- FUNÇÕES GLOBAIS PARA NAVEGAÇÃO DO DASHBOARD ---
-// (Exporta a função de dieta para o script do index.html)
+// (Exporta as funções para o script do index.html)
+
 window.loadDietPlan = loadDietPlan;
+// EXPORTAÇÃO ADICIONADA (UC003)
+window.loadTreinos = loadTreinos;

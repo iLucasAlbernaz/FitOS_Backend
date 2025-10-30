@@ -359,3 +359,123 @@ body {
 .change-plan-section .btn-secondary:hover {
     background-color: #e0e0e0;
 }
+
+/* ========================================= */
+/* 9. ESTILOS DO TREINO (UC003) */
+/* ========================================= */
+
+/* Cabeçalho da seção (Título + Botão "Novo") */
+.section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 2px solid var(--primary-light);
+    padding-bottom: 10px;
+    margin-bottom: var(--spacing-unit);
+}
+.section-header h3 {
+    margin: 0;
+    padding: 0;
+    border: none;
+}
+
+/* Card de Treino (Visualização) */
+.treino-card {
+    background: #fdfdfd;
+    border: 1px solid #e0e0e0;
+    border-left: 5px solid var(--secondary-color);
+    border-radius: 8px;
+    padding: var(--spacing-unit);
+    margin-bottom: var(--spacing-unit);
+}
+.treino-card h4 {
+    margin: 0 0 5px 0;
+    color: var(--primary-color);
+}
+.treino-card small {
+    color: #555;
+    font-weight: bold;
+}
+.treino-card .exercicios-list {
+    margin-top: 10px;
+    font-size: 0.9em;
+}
+.treino-card .action-buttons {
+    margin-top: 15px;
+    display: flex;
+    gap: 10px;
+}
+.treino-card .action-buttons .btn {
+    width: 100px;
+    padding: 5px;
+    margin-top: 0;
+    font-size: 0.9em;
+    font-weight: normal;
+}
+
+/* Botão de Gerar ABC */
+.gerar-abc-container {
+    text-align: center;
+    padding: 20px;
+    background: #f0f7f7;
+    border-radius: 8px;
+}
+
+/* Formulário de Treino (Criar/Editar) */
+.treino-form {
+    background: #f9f9f9;
+    padding: var(--spacing-unit);
+    border-radius: 8px;
+    border: 1px solid #ddd;
+    margin-top: var(--spacing-unit);
+}
+.treino-form h4 {
+    margin-top: 0;
+}
+.treino-form .form-divider {
+    border: 0;
+    border-top: 1px dashed #ccc;
+    margin: 15px 0;
+}
+.treino-form .exercicio-item {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    margin-bottom: 10px;
+}
+.treino-form .exercicio-item input {
+    margin-bottom: 0;
+}
+.treino-form .exercicio-item button {
+    width: auto;
+    padding: 8px 12px;
+    margin-top: 0;
+    line-height: 1;
+}
+/* Lista de exercícios no formulário */
+.exercicios-list-form ul {
+    list-style-type: none;
+    padding-left: 0;
+    max-height: 200px;
+    overflow-y: auto;
+    background: #fff;
+    border: 1px solid #eee;
+    padding: 10px;
+    border-radius: 4px;
+}
+.exercicios-list-form li {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px;
+    border-bottom: 1px solid #f0f0f0;
+}
+.exercicios-list-form li span {
+    flex: 1;
+}
+.exercicios-list-form li button {
+    width: auto;
+    padding: 2px 8px;
+    font-size: 0.8em;
+    margin: 0;
+}

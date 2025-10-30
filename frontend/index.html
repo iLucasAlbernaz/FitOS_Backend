@@ -80,6 +80,7 @@
                 <nav>
                     <button class="btn btn-secondary" onclick="showDashboardSection('perfil')">Perfil</button>
                     <button class="btn btn-secondary" onclick="showDashboardSection('metas')">Metas</button>
+                    <button class="btn btn-secondary" onclick="showDashboardSection('treinos')">Treinos</button>
                     <button class="btn btn-secondary" onclick="showDashboardSection('diario')">Diário</button>
                     <button class="btn btn-secondary" onclick="showDashboardSection('receitas')">Receitas</button>
                     <button class="btn btn-secondary" onclick="showDashboardSection('dieta')">Plano de Dieta</button>
@@ -100,6 +101,19 @@
                 <section id="section-metas" class="dashboard-section" style="display: none;">
                     <h3 class="section-title">Minhas Metas e Atualização</h3>
                     <div id="metas-form-container">
+                        </div>
+                </section>
+
+                <section id="section-treinos" class="dashboard-section" style="display: none;">
+                    <div class="section-header">
+                        <h3 class="section-title">Minhas Rotinas de Treino</h3>
+                        <button id="btn-show-create-form" class="btn btn-primary" style="width: auto; margin-top: 0;">+ Nova Rotina</button>
+                    </div>
+                    
+                    <div id="treinos-list-container">
+                        </div>
+
+                    <div id="treino-form-container" style="display: none;">
                         </div>
                 </section>
                 
@@ -150,6 +164,13 @@
             if (sectionId === 'dieta') {
                 if (window.loadDietPlan) {
                     window.loadDietPlan();
+                }
+            }
+            
+            // [GATILHO ADICIONADO]
+            if (sectionId === 'treinos') {
+                if (window.loadTreinos) {
+                    window.loadTreinos();
                 }
             }
         }
