@@ -117,16 +117,18 @@
                         </div>
                 </section>
                 
+                <section id="section-diario" class="dashboard-section" style="display: none;">
+                    <h3 class="section-title">Registro Diário</h3>
+                    <div id="diario-form-container">
+                        </div>
+                    <div id="diario-list-container">
+                        </div>
+                </section>
+                
                 <section id="section-dieta" class="dashboard-section" style="display: none;">
                     <h3 class="section-title">Meu Plano Alimentar</h3>
                     <div id="dieta-container">
                         </div>
-                </section>
-
-                <section id="section-diario" class="dashboard-section" style="display: none;">
-                    <h3 class="section-title">Registro Diário</h3>
-                    <div id="diario-form-container"></div>
-                    <div id="diario-list-container"></div>
                 </section>
 
                 <section id="section-receitas" class="dashboard-section" style="display: none;">
@@ -160,17 +162,24 @@
                 targetSection.style.display = 'block';
             }
             
-            // Gatilho para carregar o Plano de Dieta
+            // Gatilho do Plano de Dieta (UC002)
             if (sectionId === 'dieta') {
                 if (window.loadDietPlan) {
                     window.loadDietPlan();
                 }
             }
             
-            // [GATILHO ADICIONADO]
+            // Gatilho dos Treinos (UC003)
             if (sectionId === 'treinos') {
                 if (window.loadTreinos) {
                     window.loadTreinos();
+                }
+            }
+
+            // Gatilho do Diário (UC004)
+            if (sectionId === 'diario') {
+                if (window.loadDiario) {
+                    window.loadDiario();
                 }
             }
         }

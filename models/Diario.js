@@ -1,57 +1,39 @@
 const mongoose = require('mongoose');
+const Schema = mongoose.Schema;
 
-const MacrosDiarioSchema = new mongoose.Schema({
-    proteinas_g: { type: Number, required: true },
-    carboidratos_g: { type: Number, required: true },
-    gorduras_g: { type: Number, required: true },
-    calorias_total: { type: Number, required: true }
-}, { _id: false }); 
-
-const DiarioSchema = new mongoose.Schema({
-    
-    usuario_id: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'Usuario', 
+const DiarioSchema = new Schema({
+    usuario: {
+        type: Schema.Types.ObjectId,
+        ref: 'Usuario',
         required: true
     },
-
-    data_registro: {
+    // Data do registro (vamos garantir uma entrada por dia)
+    data: {
         type: Date,
-        default: Date.now,
-        required: true,
-        unique: true
+        required: true
     },
-    peso_kg: {
-        type: Number
-    },
-    agua_ingerida_litros: {
+    // Campos do UC004
+    pesoKg: {
         type: Number,
-        default: 0
+        required: [true, 'O campo Peso é obrigatório.'] // FE3.1
     },
-
-    macros_totais: {
-        type: MacrosDiarioSchema,
-        required: true 
+    aguaLitros: {
+        type: Number,
+        required: [true, 'O campo Água é obrigatório.'] // FE3.1
     },
-
-    refeicoes: [
-        {
-            nome: { type: String, required: true },
-            macros_reais: MacrosDiarioSchema, 
-        }
-    ],
-
-    treinos: [
-        {
-            nome: { type: String, required: true },
-            duracao_minutos: { type: Number, required: true },
-            membros_treinados: [{ type: String }]
-        }
-    ]
+    alimentosConsumidos: { // Campo de texto simples
+        type: String,
+        trim: true
+    },
+    treinoRealizado: { // Campo de texto simples
+        type: String,
+        trim: true
+    }
 }, {
-    timestamps: true 
+    timestamps: true
 });
 
-const Diario = mongoose.model('Diario', DiarioSchema);
+// Garante que um usuário só pode ter um registro por dia
+DiarioSchema.index({ usuario: 1, data: 1 }, { unique: true });
 
-module.exports = Diario;
+module.exports = mongoose.model('Diario', DiarioSchema);

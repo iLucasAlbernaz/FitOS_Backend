@@ -1,8 +1,8 @@
 import { handleRegister, handleLogin, handleLogout, displayMessage } from './auth.js';
 import { loadDashboardData, handleChatSubmit, renderCrudForms } from './dashboard.js';
 import { loadDietPlan } from './dieta.js';
-// IMPORT ADICIONADO (UC003)
 import { loadTreinos } from './treino.js';
+import { loadDiario } from './diario.js';
 
 // --- ELEMENTOS DA DOM ---
 const dashboardElement = document.getElementById('app-dashboard');
@@ -187,5 +187,5 @@ document.addEventListener('DOMContentLoaded', () => {
 // (Exporta as funções para o script do index.html)
 
 window.loadDietPlan = loadDietPlan;
-// EXPORTAÇÃO ADICIONADA (UC003)
 window.loadTreinos = loadTreinos;
+window.loadDiario = loadDiario;
