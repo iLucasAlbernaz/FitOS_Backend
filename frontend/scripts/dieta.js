@@ -4,7 +4,7 @@ const container = document.getElementById('dieta-container');
 let isPlanLoaded = false; 
 
 /**
- * Renderiza um card de refeição individual. (Função mantida)
+ * Renderiza um card de refeição individual. (Não muda)
  */
 function renderMeal(title, meal) {
     if (!meal || !meal.alimentos || meal.alimentos.length === 0) {
@@ -43,7 +43,7 @@ function renderMeal(title, meal) {
 }
 
 /**
- * [NOVO] Renderiza os botões de seleção de plano.
+ * Renderiza os botões de seleção de plano (quando NÃO há plano). (Não muda)
  */
 function renderPlanSelector() {
     container.innerHTML = `
@@ -60,7 +60,6 @@ function renderPlanSelector() {
         </div>
     `;
 
-    // Adiciona os event listeners aos botões
     document.getElementById('btn-gerar-perda').addEventListener('click', () => {
         handleGeneratePlan('perda-peso');
     });
@@ -70,7 +69,75 @@ function renderPlanSelector() {
 }
 
 /**
- * [NOVO] Lida com a chamada de API para gerar um plano.
+ * [MODIFICADO] Renderiza os botões para MUDAR de plano (quando JÁ HÁ plano).
+ * Agora ele recebe o nome do plano atual.
+ */
+function renderPlanChanger(nomePlanoAtual) {
+    let changerHTML = `
+        <div class="change-plan-section">
+            <hr>
+            <h4>Mudar de Plano?</h4>
+            <p>Seu plano atual é: <strong>${nomePlanoAtual}</strong></p>
+            <p>Você pode substituí-lo pelo outro plano disponível:</p>
+            <div class="plan-selector-buttons">
+    `;
+
+    // Lógica para mostrar APENAS o outro botão
+    if (nomePlanoAtual === 'Perda de Peso') {
+        changerHTML += `
+            <button id="btn-mudar-ganho" class="btn btn-secondary" style="margin-top: 10px;">
+                Mudar para (Ganho de Massa)
+            </button>
+        `;
+    } else if (nomePlanoAtual === 'Ganho de Massa') {
+        changerHTML += `
+            <button id="btn-mudar-perda" class="btn btn-secondary">
+                Mudar para (Perda de Peso)
+            </button>
+        `;
+    } else {
+        // Fallback (caso o nome do plano não seja reconhecido)
+        changerHTML += `
+            <p>Não foi possível identificar seu plano. Você pode escolher um novo:</p>
+            <button id="btn-mudar-perda" class="btn btn-secondary">
+                Mudar para (Perda de Peso)
+            </button>
+            <button id="btn-mudar-ganho" class="btn btn-secondary" style="margin-top: 10px;">
+                Mudar para (Ganho de Massa)
+            </button>
+        `;
+    }
+
+    changerHTML += `
+            </div>
+        </div>
+    `;
+    
+    container.innerHTML += changerHTML;
+
+    // Adiciona os event listeners APENAS para os botões que existem
+    const btnMudarPerda = document.getElementById('btn-mudar-perda');
+    if (btnMudarPerda) {
+        btnMudarPerda.addEventListener('click', () => {
+            if (confirm('Tem certeza que deseja substituir seu plano atual pelo de Perda de Peso?')) {
+                handleGeneratePlan('perda-peso');
+            }
+        });
+    }
+    
+    const btnMudarGanho = document.getElementById('btn-mudar-ganho');
+    if (btnMudarGanho) {
+        btnMudarGanho.addEventListener('click', () => {
+            if (confirm('Tem certeza que deseja substituir seu plano atual pelo de Ganho de Massa?')) {
+                handleGeneratePlan('ganho-massa');
+            }
+        });
+    }
+}
+
+
+/**
+ * Lida com a chamada de API para gerar/mudar um plano. (Não muda)
  */
 async function handleGeneratePlan(tipoPlano) {
     const token = localStorage.getItem('jwtToken');
@@ -90,10 +157,9 @@ async function handleGeneratePlan(tipoPlano) {
             throw new Error('Falha ao gerar o plano.');
         }
 
-        // Sucesso!
-        alert('Plano gerado com sucesso!');
-        isPlanLoaded = false; // Força o recarregamento
-        loadDietPlan(); // Recarrega a seção para mostrar o novo plano
+        alert('Plano atualizado com sucesso!');
+        isPlanLoaded = false; 
+        loadDietPlan(); 
 
     } catch (error) {
         console.error('Erro ao gerar plano:', error);
@@ -103,12 +169,12 @@ async function handleGeneratePlan(tipoPlano) {
 
 
 /**
- * Função principal (MODIFICADA) para carregar ou selecionar o plano.
+ * Função principal (MODIFICADA) para passar o nome do plano.
  */
 export async function loadDietPlan() {
-    if (isPlanLoaded) {
-        return;
-    }
+    // Resetamos a flag toda vez que a seção é aberta
+    // para garantir que os dados sejam recarregados
+    isPlanLoaded = false; 
     
     if (!container) return;
 
@@ -127,9 +193,7 @@ export async function loadDietPlan() {
         });
 
         if (!response.ok) {
-            // [MODIFICADO] Fluxo FE3.1: Plano não encontrado (404)
             if (response.status === 404) {
-                // Em vez de mostrar erro, mostra os botões de seleção
                 renderPlanSelector();
             } else {
                 throw new Error('Falha ao buscar o plano');
@@ -139,7 +203,7 @@ export async function loadDietPlan() {
 
         const plan = await response.json();
 
-        // Fluxo DP03: Renderiza o plano
+        // Fluxo 2: Tem plano. Renderiza o plano.
         if (plan && plan.cafeDaManha) { 
             container.innerHTML = ''; 
             container.innerHTML += renderMeal('Café da Manhã', plan.cafeDaManha);
@@ -150,15 +214,16 @@ export async function loadDietPlan() {
                 container.innerHTML += renderMeal('Lanches', plan.lanches);
             }
 
+            // [MODIFICADO] Passa o nome do plano (plan.nomePlano) para o renderizador
+            renderPlanChanger(plan.nomePlano);
+
             isPlanLoaded = true;
         } else {
-            // Fluxo FE3.1: Resposta OK, mas sem plano
             renderPlanSelector();
         }
 
     } catch (error) {
         console.error('Erro ao carregar plano de dieta:', error);
-        // Fluxo FE3.2: Erro de conexão
         container.innerHTML = '<p class="error-message">Erro ao carregar o plano de dieta. Tente novamente mais tarde.</p>';
     }
 }

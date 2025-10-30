@@ -1,15 +1,13 @@
 const Dieta = require('../models/Dieta');
 const Usuario = require('../models/Usuario');
 
-// --- PLANOS PADRÃO (TEMPLATES) ---
-
+// --- (Os templates 'templatePerdaPeso' e 'templateGanhoMassa' continuam os mesmos) ---
 const templatePerdaPeso = {
     cafeDaManha: {
         alimentos: [
             { nome: 'Ovo Cozido', porcao: '2 unidades', calorias: 140, proteinas: 12, carboidratos: 1, gorduras: 10 },
             { nome: 'Mamão Papaia', porcao: '1/2 unidade', calorias: 60, proteinas: 1, carboidratos: 15, gorduras: 0 }
         ],
-        // O ERRO DE DIGITAÇÃO FOI CORRIGIDO NESTA LINHA:
         totais: { calorias: 200, proteinas: 13, carboidratos: 16, gorduras: 10 }
     },
     almoco: {
@@ -55,10 +53,7 @@ const templateGanhoMassa = {
     }
 };
 
-
-// @route   GET /api/dieta/meu-plano
-// @desc    Buscar o plano de dieta do usuário logado
-// @access  Privado
+// --- (getMeuPlano não muda) ---
 exports.getMeuPlano = async (req, res) => {
     try {
         const dieta = await Dieta.findOne({ usuario: req.usuario.id });
@@ -79,40 +74,38 @@ exports.getMeuPlano = async (req, res) => {
 // @desc    Gera (cria) um novo plano de dieta para o usuário
 // @access  Privado
 exports.gerarMeuPlano = async (req, res) => {
-    const { tipoPlano } = req.body; // ex: "perda-peso" ou "ganho-massa"
+    const { tipoPlano } = req.body; 
     const usuarioId = req.usuario.id;
 
     let templateEscolhido;
+    let nomePlanoParaSalvar; // <-- Variável adicionada
 
     if (tipoPlano === 'perda-peso') {
         templateEscolhido = templatePerdaPeso;
+        nomePlanoParaSalvar = 'Perda de Peso'; // <-- Nome salvo
     } else if (tipoPlano === 'ganho-massa') {
         templateEscolhido = templateGanhoMassa;
+        nomePlanoParaSalvar = 'Ganho de Massa'; // <-- Nome salvo
     } else {
         return res.status(400).json({ msg: 'Tipo de plano inválido.' });
     }
 
     try {
-        // Remove plano antigo, se existir
         await Dieta.findOneAndDelete({ usuario: usuarioId });
 
-        // Cria o novo plano
         const novoPlano = new Dieta({
             usuario: usuarioId,
+            nomePlano: nomePlanoParaSalvar, // <-- CAMPO NOVO SENDO SALVO
             cafeDaManha: templateEscolhido.cafeDaManha,
             almoco: templateEscolhido.almoco,
             jantar: templateEscolhido.jantar,
             lanches: templateEscolhido.lanches 
         });
 
-        // Salva no banco (é aqui que o erro acontecia)
         await novoPlano.save();
-        
-        // Retorna o plano salvo
         res.status(201).json(novoPlano);
 
     } catch (err) {
-        // Se houver um erro de validação (como o erro de digitação), ele cairá aqui
         console.error('Erro ao salvar no banco:', err.message);
         res.status(500).send('Erro interno do servidor ao gerar plano.');
     }

@@ -1,7 +1,7 @@
 const mongoose = require('mongoose');
 const Schema = mongoose.Schema;
 
-// Schema para um item alimentar
+// ... (AlimentoSchema e RefeicaoSchema não mudam) ...
 const AlimentoSchema = new Schema({
     nome: { type: String, required: true },
     porcao: { type: String, required: true },
@@ -11,7 +11,6 @@ const AlimentoSchema = new Schema({
     gorduras: { type: Number, required: true }
 });
 
-// Schema para uma refeição (que contém vários alimentos e os totais)
 const RefeicaoSchema = new Schema({
     alimentos: [AlimentoSchema],
     totais: {
@@ -24,20 +23,25 @@ const RefeicaoSchema = new Schema({
 
 // Schema principal do Plano de Dieta
 const DietaSchema = new Schema({
-    // Link para o usuário
     usuario: {
         type: Schema.Types.ObjectId,
-        ref: 'Usuario', // Deve corresponder ao nome do seu modelo de usuário
+        ref: 'Usuario', 
         required: true,
-        unique: true // Geralmente um usuário tem apenas um plano de dieta
+        unique: true 
     },
+    
+    // --- CAMPO ADICIONADO ---
+    // Agora salvamos o nome do plano
+    nomePlano: { type: String, required: true }, 
+    // --- FIM DA ADIÇÃO ---
+
     // As refeições que o frontend espera
-    cafeDaManha: { type: RefeicaoSchema },
-    almoco: { type: RefeicaoSchema },
-    jantar: { type: RefeicaoSchema },
+    cafeDaManha: { type: RefeicaoSchema, required: true },
+    almoco: { type: RefeicaoSchema, required: true },
+    jantar: { type: RefeicaoSchema, required: true },
     lanches: { type: RefeicaoSchema } // Opcional
 }, {
-    timestamps: true // Salva a data de criação/atualização
+    timestamps: true 
 });
 
 module.exports = mongoose.model('Dieta', DietaSchema);

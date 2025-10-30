@@ -326,3 +326,36 @@ body {
     padding: 8px;
     border-radius: 4px;
 }
+
+/* ========================================= */
+/* 8. ESTILOS DO "MUDAR PLANO" (NOVO) */
+/* ========================================= */
+
+.change-plan-section {
+    margin-top: calc(var(--spacing-unit) * 2);
+    padding-top: var(--spacing-unit);
+}
+
+.change-plan-section hr {
+     margin-bottom: var(--spacing-unit);
+     border: 0;
+     border-top: 1px solid #eee;
+}
+
+.change-plan-section h4 {
+    color: var(--primary-color);
+    margin-bottom: 0.5rem;
+    margin-top: 0;
+}
+
+/* Faz os botões de mudança usarem o estilo secundário */
+.change-plan-section .btn-secondary {
+    background-color: #f0f0f0; 
+    color: #333;
+    border: 1px solid #ccc;
+    font-weight: bold;
+}
+
+.change-plan-section .btn-secondary:hover {
+    background-color: #e0e0e0;
+}
