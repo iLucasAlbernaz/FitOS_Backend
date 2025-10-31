@@ -11,28 +11,58 @@ exports.getMetas = async (req, res) => {
     }
 };
 
-// 2. DEFINIR META (MODIFICADO)
+// 2. VISUALIZAR UMA META (Não muda)
+exports.getMetaById = async (req, res) => {
+    try {
+        const meta = await Meta.findById(req.params.id);
+        if (!meta) return res.status(404).json({ msg: 'Meta não encontrada' });
+
+        if (meta.usuario.toString() !== req.usuario.id) {
+            return res.status(401).json({ msg: 'Não autorizado' });
+        }
+        res.json(meta);
+    } catch (err) {
+        console.error(err.message);
+        if (err.kind === 'ObjectId') {
+             return res.status(404).json({ msg: 'Meta não encontrada (ID mal formatado)' });
+        }
+        res.status(500).send('Erro no Servidor');
+    }
+};
+
+// 3. DEFINIR META (MODIFICADO)
 // POST /api/metas
 exports.createMeta = async (req, res) => {
-    // Pega os novos campos do body
-    const { tipo, valorAlvo, valorInicial, dataInicio, dataFim } = req.body;
+    const { tipo, valorAlvo, valorInicial, dataInicio, dataFim, periodo } = req.body;
 
-    // Validação
-    if (!tipo || !valorAlvo || !valorInicial || !dataInicio) {
-        return res.status(400).json({ msg: 'Tipo, Valor Inicial, Valor Alvo e Data de Início são obrigatórios.' });
+    // Validação (FE9.1 / FE9.2)
+    if (!tipo || !valorAlvo || !dataInicio) {
+        return res.status(400).json({ msg: 'Tipo, Valor Alvo e Data de Início são obrigatórios.' });
     }
-    if (valorAlvo <= 0 || valorInicial <= 0) {
-        return res.status(400).json({ msg: 'Valores devem ser positivos.' });
+    
+    // Validação específica para cada tipo
+    if (tipo === 'Peso' || tipo === 'Água') {
+        if (!valorInicial) {
+            return res.status(400).json({ msg: 'Valor Inicial é obrigatório para metas de Peso ou Água.' });
+        }
+        if (valorAlvo <= 0 || valorInicial <= 0) {
+            return res.status(400).json({ msg: 'Valores devem ser positivos.' });
+        }
+    } else if (tipo === 'Treino') {
+        if (!periodo) {
+            return res.status(400).json({ msg: 'Período (Semana/Mês) é obrigatório para metas de Treino.' });
+        }
     }
 
     try {
         const novaMeta = new Meta({
             usuario: req.usuario.id,
             tipo,
-            valorInicial,
+            valorInicial: valorInicial || 0, // Salva 0 se for treino
             valorAlvo,
-            dataInicio: new Date(dataInicio), // Converte a string para Data
+            dataInicio: new Date(dataInicio), 
             dataFim: dataFim ? new Date(dataFim) : null,
+            periodo: periodo || null, // Salva nulo se for peso/água
             status: 'Em Andamento'
         });
 
@@ -44,20 +74,18 @@ exports.createMeta = async (req, res) => {
     }
 };
 
-// 3. EDITAR META (MODIFICADO)
+// 4. EDITAR META (MODIFICADO)
 // PUT /api/metas/:id
 exports.updateMeta = async (req, res) => {
-    const { valorAlvo, valorInicial, dataInicio, dataFim } = req.body;
+    const { dataInicio, dataFim } = req.body;
 
     try {
         let meta = await Meta.findById(req.params.id);
         if (!meta) return res.status(404).json({ msg: 'Meta não encontrada' });
-
         if (meta.usuario.toString() !== req.usuario.id) {
             return res.status(401).json({ msg: 'Não autorizado' });
         }
-
-        // Constrói o objeto de atualização
+        
         const dadosAtualizados = {
             ...req.body,
             dataInicio: new Date(dataInicio),
@@ -76,7 +104,7 @@ exports.updateMeta = async (req, res) => {
     }
 };
 
-// 4. EXCLUIR META (Não muda)
+// 5. EXCLUIR META (Não muda)
 exports.deleteMeta = async (req, res) => {
     try {
         let meta = await Meta.findById(req.params.id);

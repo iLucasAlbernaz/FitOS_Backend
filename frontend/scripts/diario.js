@@ -3,6 +3,8 @@ import { API_URL } from './auth.js';
 // --- Elementos DOM ---
 const formContainer = document.getElementById('diario-form-container');
 const listContainer = document.getElementById('diario-list-container');
+// [NOVO] O botão "+ Novo Registro"
+const showCreateFormBtn = document.getElementById('btn-show-create-diario-form');
 
 // --- Variável de Estado ---
 let currentEditId = null; // Guarda o ID do registro sendo editado
@@ -23,17 +25,35 @@ function formatarDataParaInput(dateString) {
 }
 
 // --- FUNÇÃO PRINCIPAL (Chamada pelo index.html) ---
+// [MODIFICADA] Agora reseta a visualização para a lista
 export async function loadDiario() {
-    renderForm();
+    // 1. Gerencia a visibilidade
+    formContainer.style.display = 'none';
+    listContainer.style.display = 'block';
+    showCreateFormBtn.style.display = 'block';
+    
+    // 2. Renderiza o formulário (mas o deixa oculto)
+    renderForm('Novo Registro Diário', {}, null, false); // false = não mostrar
+    
+    // 3. Carrega e renderiza a lista de registros antigos
     loadAndRenderList();
 }
 
+// --- [NOVO] Funções para mostrar/esconder o formulário ---
+function showCreateForm() {
+    currentEditId = null;
+    renderForm('Novo Registro Diário', {}, null, true); // true = mostrar
+}
+// Adiciona o listener ao botão "+ Novo Registro"
+if (showCreateFormBtn) {
+    showCreateFormBtn.addEventListener('click', showCreateForm);
+}
+
 // --- RENDERIZAÇÃO DO FORMULÁRIO (Criar/Editar) ---
-// MODIFICADO: Adiciona o campo de data
-function renderForm(title = 'Novo Registro Diário', data = {}, editId = null) {
+// [MODIFICADO] Adicionado o parâmetro 'show'
+function renderForm(title = 'Novo Registro Diário', data = {}, editId = null, show = false) {
     currentEditId = editId; 
 
-    // Define a data para o input: ou a do registro (para edição) ou a de hoje (para novo)
     const inputDate = data.data ? formatarDataParaInput(data.data) : getHojeFormatado();
 
     formContainer.innerHTML = `
@@ -51,9 +71,18 @@ function renderForm(title = 'Novo Registro Diário', data = {}, editId = null) {
             <textarea id="diario-treino" class="input-field" placeholder="Treino realizado...">${data.treinoRealizado || ''}</textarea>
             
             <button type="submit" class="btn btn-primary">${editId ? 'Salvar Alterações' : 'Salvar Registro'}</button>
-            <button type="button" id="btn-cancelar-diario" class="btn-cancel" style="display: ${editId ? 'inline-block' : 'none'};">Cancelar Edição</button>
+            <button type="button" id="btn-cancelar-diario" class="btn btn-secondary" style="margin-left: 10px; width: auto; display: inline-block;">Cancelar</button>
         </form>
     `;
+
+    // [MODIFICADO] Controla a visibilidade
+    if (show) {
+        formContainer.style.display = 'block';
+        listContainer.style.display = 'none';
+        showCreateFormBtn.style.display = 'none';
+    } else {
+        formContainer.style.display = 'none';
+    }
 
     // Event Listeners do Formulário
     document.getElementById('diario-form').addEventListener('submit', handleFormSubmit);
@@ -61,7 +90,7 @@ function renderForm(title = 'Novo Registro Diário', data = {}, editId = null) {
     const cancelBtn = document.getElementById('btn-cancelar-diario');
     if (cancelBtn) {
         cancelBtn.addEventListener('click', () => {
-            renderForm(); // Reseta o formulário para "Criar"
+            loadDiario(); // Reseta o formulário para a lista
         });
     }
 }
@@ -80,7 +109,7 @@ async function loadAndRenderList() {
         const registros = await response.json();
         
         if (registros.length === 0) {
-            listContainer.innerHTML = '<p class="info-message">Nenhum registro no diário ainda.</p>';
+            listContainer.innerHTML = '<hr style="border: 1px solid #eee; margin: 2rem 0;"><p class="info-message">Nenhum registro no diário ainda.</p>';
             return;
         }
 
@@ -92,18 +121,17 @@ async function loadAndRenderList() {
     }
 }
 
-// MODIFICADO: Formata a data como você pediu
+// (Função não modificada)
 function renderDiarioList(registros) {
-    listContainer.innerHTML = '<hr><h4>Histórico de Registros</h4>'; 
+    listContainer.innerHTML = '<h4>Histórico de Registros</h4>'; 
     
     registros.forEach(reg => {
-        // [NOVA FORMATAÇÃO] Ex: "quarta-feira, 30 de outubro de 2025"
         const dataFormatada = new Date(reg.data).toLocaleDateString('pt-BR', {
             weekday: 'long',
             year: 'numeric',
             month: 'long',
             day: 'numeric',
-            timeZone: 'UTC' // Importante para consistência
+            timeZone: 'UTC' 
         });
 
         listContainer.innerHTML += `
@@ -134,21 +162,21 @@ function renderDiarioList(registros) {
 
 // --- HANDLERS (Ações) ---
 
-// MODIFICADO: Envia a data para o backend
+// (Função não modificada)
 async function handleFormSubmit(e) {
     e.preventDefault();
     const token = localStorage.getItem('jwtToken');
 
     const data = {
-        data: document.getElementById('diario-data').value, // <-- CAMPO ADICIONADO
+        data: document.getElementById('diario-data').value,
         pesoKg: parseFloat(document.getElementById('diario-peso').value),
         aguaLitros: parseFloat(document.getElementById('diario-agua').value),
         alimentosConsumidos: document.getElementById('diario-alimentos').value,
         treinoRealizado: document.getElementById('diario-treino').value,
     };
     
-    if (!data.pesoKg || !data.aguaLitros || data.pesoKg <= 0 || data.aguaLitros < 0) {
-        alert('Por favor, insira valores válidos para Peso (kg) e Água (Litros).');
+    if (!data.data || !data.pesoKg || !data.aguaLitros || data.pesoKg <= 0 || data.aguaLitros < 0) {
+        alert('Por favor, insira valores válidos para Data, Peso (kg) e Água (Litros).');
         return;
     }
 
@@ -175,7 +203,7 @@ async function handleFormSubmit(e) {
             }
         } else {
             alert('Registro salvo com sucesso!');
-            loadDiario(); 
+            loadDiario(); // Reseta o form e recarrega a lista
         }
 
     } catch (error) {
@@ -184,7 +212,7 @@ async function handleFormSubmit(e) {
     }
 }
 
-// MODIFICADO: Título do formulário de edição
+// [MODIFICADO] handleEditClick agora mostra o formulário
 async function handleEditClick(id) {
     try {
         const token = localStorage.getItem('jwtToken');
@@ -197,7 +225,8 @@ async function handleEditClick(id) {
         
         const dataFormatada = new Date(registro.data).toLocaleDateString('pt-BR', { timeZone: 'UTC' });
         
-        renderForm(`Editar Registro de ${dataFormatada}`, registro, id); 
+        // [MODIFICADO] Chama renderForm com 'true' para mostrar
+        renderForm(`Editar Registro de ${dataFormatada}`, registro, id, true); 
         
         window.scrollTo(0, 0); 
 
@@ -207,7 +236,7 @@ async function handleEditClick(id) {
     }
 }
 
-// (Não muda)
+// (Função não modificada)
 async function handleDeleteClick(id) {
     if (!confirm('Tem certeza que deseja excluir este registro do diário?')) {
         return;
@@ -223,7 +252,7 @@ async function handleDeleteClick(id) {
         if (!response.ok) throw new Error('Falha ao excluir.');
         
         alert('Registro excluído com sucesso.');
-        loadAndRenderList(); 
+        loadAndRenderList(); // Apenas recarrega a lista
 
     } catch (error) {
         console.error('Erro ao excluir:', error);

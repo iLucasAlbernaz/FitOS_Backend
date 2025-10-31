@@ -3,31 +3,61 @@ import { API_URL } from './auth.js';
 // --- Elementos DOM ---
 const listContainer = document.getElementById('metas-list-container');
 const formContainer = document.getElementById('metas-form-container');
+const showCreateFormBtn = document.getElementById('btn-show-create-meta-form');
 
 // --- Variável de Estado ---
 let currentEditId = null; 
 
-/**
- * Helper: Converte data do banco para 'YYYY-MM-DD' (para o input)
- */
+// --- Helpers de Data ---
 function formatarDataParaInput(dateString) {
     if (!dateString) return '';
     return new Date(dateString).toISOString().split('T')[0];
 }
-
-// --- FUNÇÃO PRINCIPAL (Chamada pelo index.html) ---
-export async function loadMetas() {
-    renderMetaForm(); // Desenha o formulário (sempre visível)
-    loadAndRenderList(); // Carrega e desenha a lista de metas
+function getHojeFormatado() {
+    return new Date().toISOString().split('T')[0];
+}
+function getInicioSemana(d) { // d = new Date()
+    d = new Date(d);
+    const day = d.getDay();
+    const diff = d.getDate() - day + (day === 0 ? -6 : 1); // assume Segunda como início
+    return new Date(d.setDate(diff));
+}
+function getInicioMes(d) { // d = new Date()
+    return new Date(d.getFullYear(), d.getMonth(), 1);
 }
 
-// --- RENDERIZAÇÃO DO FORMULÁRIO (Criar/Editar) ---
-// (MODIFICADO para incluir os novos campos)
-function renderMetaForm(title = 'Definir Nova Meta', data = {}, editId = null) {
+// --- FUNÇÃO PRINCIPAL (Não muda) ---
+export async function loadMetas() {
+    formContainer.style.display = 'none';
+    listContainer.style.display = 'block';
+    showCreateFormBtn.style.display = 'block'; 
+    renderMetaForm('Definir Nova Meta', {}, null, false); 
+    loadAndRenderList(); 
+}
+
+// --- Funções de Formulário ---
+function showCreateForm() {
+    currentEditId = null;
+    renderMetaForm('Definir Nova Meta', {}, null, true); 
+}
+if (showCreateFormBtn) {
+    showCreateFormBtn.addEventListener('click', showCreateForm);
+}
+
+// [MODIFICADO] Mostra/esconde campos dinamicamente
+function renderMetaForm(title = 'Definir Nova Meta', data = {}, editId = null, show = false) {
     currentEditId = editId; 
 
-    const dataInicio = data.dataInicio ? formatarDataParaInput(data.dataInicio) : '';
+    const dataInicio = data.dataInicio ? formatarDataParaInput(data.dataInicio) : (editId ? '' : getHojeFormatado());
     const dataFim = data.dataFim ? formatarDataParaInput(data.dataFim) : '';
+    
+    // Define a visibilidade dos campos
+    let valorInicialDisplay = (data.tipo === 'Peso' || data.tipo === 'Água') ? 'block' : 'none';
+    let periodoDisplay = (data.tipo === 'Treino') ? 'block' : 'none';
+    let valorAlvoLabel = 'Valor Alvo';
+    if (data.tipo === 'Treino') valorAlvoLabel = 'Frequência Alvo (vezes)';
+    if (data.tipo === 'Água') valorAlvoLabel = 'Valor Alvo (Litros/dia)';
+    if (data.tipo === 'Peso') valorAlvoLabel = 'Valor Alvo (kg)';
 
     formContainer.innerHTML = `
         <form id="meta-form" class="meta-form">
@@ -36,63 +66,84 @@ function renderMetaForm(title = 'Definir Nova Meta', data = {}, editId = null) {
             <label for="meta-tipo" class="input-label">Tipo da Meta:</label>
             <select id="meta-tipo" class="input-field" required ${editId ? 'disabled' : ''}>
                 <option value="" disabled ${!data.tipo ? 'selected' : ''}>Selecione um tipo...</option>
-                <option value="Peso" ${data.tipo === 'Peso' ? 'selected' : ''}>Peso (kg)</option>
-                <option value="Água" ${data.tipo === 'Água' ? 'selected' : ''}>Água (Litros/dia)</option>
+                <option value="Peso" ${data.tipo === 'Peso' ? 'selected' : ''}>Meta de Peso (kg)</option>
+                <option value="Água" ${data.tipo === 'Água' ? 'selected' : ''}>Meta de Água (Litros/dia)</option>
+                <option value="Treino" ${data.tipo === 'Treino' ? 'selected' : ''}>Meta de Treino (Frequência)</option>
             </select>
             
-            <div class="meta-form-grid">
-                <input type="number" step="0.1" id="meta-inicial" class="input-field" placeholder="Valor Inicial (Ex: 82)" value="${data.valorInicial || ''}" required>
-                <input type="number" step="0.1" id="meta-valor" class="input-field" placeholder="Valor Alvo (Ex: 75)" value="${data.valorAlvo || ''}" required>
+            <div id="meta-periodo-group" style="display: ${periodoDisplay};">
+                <label for="meta-periodo" class="input-label">Período:</label>
+                <select id="meta-periodo" class="input-field">
+                    <option value="Semana" ${data.periodo === 'Semana' ? 'selected' : ''}>Semanal</option>
+                    <option value="Mês" ${data.periodo === 'Mês' ? 'selected' : ''}>Mensal</option>
+                </select>
+            </div>
+
+            <div id="meta-inicial-group" style="display: ${valorInicialDisplay};">
+                <label for="meta-inicial" class="input-label">Valor Inicial:</label>
+                <input type="number" step="0.1" id="meta-inicial" class="input-field" placeholder="Ex: 82" value="${data.valorInicial || ''}">
             </div>
             
+            <label for="meta-valor" class="input-label">${valorAlvoLabel}:</label>
+            <input type="number" step="1" id="meta-valor" class.name="input-field" placeholder="Ex: 75 (kg) ou 5 (treinos)" value="${data.valorAlvo || ''}" required>
+            
+            <label class="input-label" style="margin-top: 10px;">Período da Meta:</label>
             <div class="meta-form-grid">
-                <input type="date" id="meta-inicio" class="input-field" value="${dataInicio}" required>
-                <input type="date" id="meta-fim" class="input-field" value="${dataFim}">
+                <input type="date" id="meta-inicio" class="input-field" value="${dataInicio}" required title="Data de Início">
+                <input type="date" id="meta-fim" class="input-field" value="${dataFim}" title="Data Fim (Opcional)">
             </div>
             
             <button type="submit" class="btn btn-primary">${editId ? 'Salvar Alterações' : 'Definir Meta'}</button>
-            <button type="button" id="btn-cancelar-meta" class="btn-cancel" style="display: ${editId ? 'inline-block' : 'none'};">Cancelar</button>
+            <button type="button" id="btn-cancelar-meta" class="btn btn-secondary" style="margin-left: 10px; width: auto; display: inline-block;">Cancelar</button>
         </form>
     `;
+    
+    if (show) {
+        formContainer.style.display = 'block';
+        listContainer.style.display = 'none';
+        showCreateFormBtn.style.display = 'none';
+    } else {
+        formContainer.style.display = 'none';
+    }
 
     // Event Listeners
-    document.getElementById('meta-form').addEventListener('submit', handleFormSubmit);
+    document.getElementById('meta-tipo').addEventListener('change', (e) => {
+        const tipo = e.target.value;
+        document.getElementById('meta-inicial-group').style.display = (tipo === 'Peso' || tipo === 'Água') ? 'block' : 'none';
+        document.getElementById('meta-periodo-group').style.display = (tipo === 'Treino') ? 'block' : 'none';
+        
+        const labelValor = document.querySelector('label[for="meta-valor"]');
+        if (tipo === 'Treino') labelValor.textContent = 'Frequência Alvo (vezes):';
+        else if (tipo === 'Água') labelValor.textContent = 'Valor Alvo (Litros/dia):';
+        else if (tipo === 'Peso') labelValor.textContent = 'Valor Alvo (kg):';
+    });
     
-    const cancelBtn = document.getElementById('btn-cancelar-meta');
-    if (cancelBtn) {
-        cancelBtn.addEventListener('click', () => {
-            currentEditId = null;
-            renderForm(); 
-        });
-    }
+    document.getElementById('meta-form').addEventListener('submit', handleFormSubmit);
+    document.getElementById('btn-cancelar-meta').addEventListener('click', loadMetas);
 }
 
-// --- RENDERIZAÇÃO DA LISTA (O CÉREBRO DA INTEGRAÇÃO) ---
+// --- RENDERIZAÇÃO DA LISTA ---
 async function loadAndRenderList() {
     listContainer.innerHTML = '<p class="info-message">Carregando metas e progresso...</p>';
     const token = localStorage.getItem('jwtToken');
     
     try {
-        // [PASSO 1] Buscar as METAS
-        const metasResponse = await fetch(`${API_URL}/metas`, {
-            headers: { 'x-auth-token': token }
-        });
-        if (!metasResponse.ok) throw new Error('Falha ao buscar metas.');
-        const metas = await metasResponse.json();
+        const [metasRes, diarioRes] = await Promise.all([
+            fetch(`${API_URL}/metas`, { headers: { 'x-auth-token': token } }),
+            fetch(`${API_URL}/diarios`, { headers: { 'x-auth-token': token } })
+        ]);
 
-        // [PASSO 2] Buscar os REGISTROS DO DIÁRIO
-        const diarioResponse = await fetch(`${API_URL}/diarios`, {
-            headers: { 'x-auth-token': token }
-        });
-        if (!diarioResponse.ok) throw new Error('Falha ao buscar dados do diário.');
-        const diarios = await diarioResponse.json();
+        if (!metasRes.ok) throw new Error('Falha ao buscar metas.');
+        if (!diarioRes.ok) throw new Error('Falha ao buscar dados do diário.');
+        
+        const metas = await metasRes.json();
+        const diarios = await diarioRes.json();
         
         if (metas.length === 0) {
             listContainer.innerHTML = '<p class="info-message">Nenhuma meta definida ainda.</p>';
             return;
         }
         
-        // [PASSO 3] Combinar os dados e renderizar
         renderMetaList(metas, diarios);
         
     } catch (error) {
@@ -101,69 +152,66 @@ async function loadAndRenderList() {
     }
 }
 
-// (MODIFICADO para calcular o progresso)
+// [MODIFICADO] Agora renderiza 2 tipos de card
 function renderMetaList(metas, diarios) {
-    listContainer.innerHTML = '<hr><h4>Metas Atuais</h4>'; 
+    listContainer.innerHTML = '<hr style="border: 1px solid #eee; margin: 2rem 0;"><h4>Metas Atuais</h4>'; 
+    
+    const hoje = new Date();
     
     metas.forEach(meta => {
-        // Ignora metas de treino por enquanto
-        if (meta.tipo === 'Treino') return; 
+        
+        // --- LÓGICA PARA METAS DE VALOR (Peso / Água) ---
+        if (meta.tipo === 'Peso' || meta.tipo === 'Água') {
+            let valorAtual = meta.valorInicial;
+            let progresso = 0;
+            let metaPerdaPeso = meta.valorAlvo < meta.valorInicial;
 
-        // [LÓGICA DE PROGRESSO]
-        let valorAtual = meta.valorInicial;
-        let progresso = 0;
-        let metaPerdaPeso = meta.valorAlvo < meta.valorInicial;
+            const tipoDiario = meta.tipo === 'Peso' ? 'pesoKg' : 'aguaLitros';
+            const registroRecente = diarios
+                .filter(d => d[tipoDiario] > 0 && new Date(d.data) >= new Date(meta.dataInicio)) 
+                .sort((a, b) => new Date(b.data) - new Date(a.data)) 
+                [0]; 
+                
+            if (registroRecente) {
+                valorAtual = registroRecente[tipoDiario];
+            }
 
-        // Encontra o registro mais recente do diário (para 'Peso' ou 'Água')
-        const tipoDiario = meta.tipo === 'Peso' ? 'pesoKg' : 'aguaLitros';
-        const registroRecente = diarios
-            .filter(d => d[tipoDiario] > 0) // Pega apenas registros relevantes
-            .sort((a, b) => new Date(b.data) - new Date(a.data)) // Ordena por data (mais novo primeiro)
-            [0]; // Pega o primeiro
+            const totalAlcancado = valorAtual - meta.valorInicial;
+            const totalMeta = meta.valorAlvo - meta.valorInicial;
+
+            if (totalMeta !== 0) { 
+                progresso = (totalAlcancado / totalMeta) * 100;
+            }
+            if (progresso < 0) progresso = 0;
+            if (progresso > 100) progresso = 100;
             
-        if (registroRecente) {
-            valorAtual = registroRecente[tipoDiario];
+            listContainer.innerHTML += renderCardValor(meta, progresso, valorAtual);
+
+        // --- LÓGICA PARA METAS DE HÁBITO (Treino) ---
+        } else if (meta.tipo === 'Treino') {
+            
+            // Define o início do período (Semana ou Mês)
+            const inicioPeriodo = meta.periodo === 'Mês' ? getInicioMes(hoje) : getInicioSemana(hoje);
+            
+            // Filtra os diários que são check-ins de treino DENTRO do período atual
+            const treinosNoPeriodo = diarios.filter(d => {
+                const dataRegistro = new Date(d.data);
+                return (
+                    d.treinoRealizado && d.treinoRealizado.trim() !== '' && // Se treinou
+                    dataRegistro >= inicioPeriodo && // Dentro do período
+                    dataRegistro <= hoje // E não no futuro
+                );
+            });
+            
+            // Gera os dados do calendário
+            const diasTreinados = new Set(treinosNoPeriodo.map(d => new Date(d.data).getUTCDate()));
+            const calendarioHtml = renderCalendario(diasTreinados);
+            
+            listContainer.innerHTML += renderCardTreino(meta, treinosNoPeriodo.length, calendarioHtml);
         }
-
-        // Calcula a porcentagem do progresso
-        const totalAlcancado = valorAtual - meta.valorInicial;
-        const totalMeta = meta.valorAlvo - meta.valorInicial;
-
-        if (totalMeta !== 0) { // Evita divisão por zero
-            progresso = (totalAlcancado / totalMeta) * 100;
-        }
-
-        // Ajuste para metas de perda de peso (progresso deve ser positivo)
-        if (metaPerdaPeso && progresso < 0) progresso = 0;
-        if (!metaPerdaPeso && progresso < 0) progresso = 0;
-        if (progresso > 100) progresso = 100;
-
-        // Formata data fim (prazo)
-        let prazoFormatado = 'Sem prazo';
-        if (meta.dataFim) {
-            prazoFormatado = new Date(meta.dataFim).toLocaleDateString('pt-BR', { timeZone: 'UTC' });
-        }
-
-        listContainer.innerHTML += `
-            <div class="meta-card">
-                <div class="meta-card-header">
-                    <strong>${meta.tipo} (Alvo: ${meta.valorAlvo})</strong>
-                    <span class="meta-status status-andamento">${progresso.toFixed(0)}%</span>
-                </div>
-                <div class="meta-card-body">
-                    <p>Início: ${meta.valorInicial} | Atual: ${valorAtual}</p>
-                    <div class="progress-bar-container">
-                        <div class="progress-bar-fill" style="width: ${progresso}%;"></div>
-                    </div>
-                </div>
-                <div class="action-buttons">
-                    <button class="btn btn-secondary btn-edit-meta" data-id="${meta._id}">Editar</button>
-                    <button class="btn btn-danger btn-delete-meta" data-id="${meta._id}">Excluir</button>
-                </div>
-            </div>
-        `;
     });
 
+    // Adiciona os listeners
     listContainer.querySelectorAll('.btn-edit-meta').forEach(btn => 
         btn.addEventListener('click', (e) => handleEditClick(e.target.dataset.id))
     );
@@ -172,30 +220,126 @@ function renderMetaList(metas, diarios) {
     );
 }
 
+// --- Funções de Renderização dos Cards ---
+
+function renderCardValor(meta, progresso, valorAtual) {
+    const dataInicioFormatada = new Date(meta.dataInicio).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric', timeZone: 'UTC' });
+    let dataFimFormatada = 'Sem prazo';
+    if (meta.dataFim) {
+        dataFimFormatada = new Date(meta.dataFim).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric', timeZone: 'UTC' });
+    }
+
+    return `
+        <div class="meta-card">
+            <div class="meta-card-header">
+                <strong>${meta.tipo} (Alvo: ${meta.valorAlvo})</strong>
+                <span class="meta-status status-andamento">${progresso.toFixed(0)}%</span>
+            </div>
+            <div class="meta-card-body">
+                <p class="meta-card-progress">Início: ${meta.valorInicial} | Atual: ${valorAtual}</p>
+                <div class="progress-bar-container">
+                    <div class="progress-bar-fill" style="width: ${progresso}%;"></div>
+                </div>
+                <p class="meta-card-dates">
+                    <small>Início: ${dataInicioFormatada} | Fim: ${dataFimFormatada}</small>
+                </p>
+            </div>
+            <div class="action-buttons">
+                <button class="btn btn-secondary btn-edit-meta" data-id="${meta._id}">Editar</button>
+                <button class="btn btn-danger btn-delete-meta" data-id="${meta._id}">Excluir</button>
+            </div>
+        </div>
+    `;
+}
+
+function renderCardTreino(meta, treinosFeitos, calendarioHtml) {
+    return `
+        <div class="meta-card">
+            <div class="meta-card-header">
+                <strong>Meta de Treino (${meta.periodo})</strong>
+                <span class="meta-status status-andamento">
+                    ${treinosFeitos} de ${meta.valorAlvo}
+                </span>
+            </div>
+            <div class="meta-card-body">
+                <p class="meta-card-progress">Progresso deste ${meta.periodo}:</p>
+                ${calendarioHtml}
+            </div>
+            <div class="action-buttons">
+                <button class="btn btn-secondary btn-edit-meta" data-id="${meta._id}">Editar</button>
+                <button class="btn btn-danger btn-delete-meta" data-id="${meta._id}">Excluir</button>
+            </div>
+        </div>
+    `;
+}
+
+// --- [NOVO] Renderizador do Calendário ---
+function renderCalendario(diasTreinados) {
+    const hoje = new Date();
+    const mes = hoje.getMonth();
+    const ano = hoje.getFullYear();
+    const primeiroDia = new Date(ano, mes, 1).getDay(); // 0=Domingo, 1=Segunda
+    const diasNoMes = new Date(ano, mes + 1, 0).getDate();
+
+    let html = '<div class="calendario-grid">';
+    
+    // Dias da semana (ex: D, S, T)
+    const diasSemana = ['D', 'S', 'T', 'Q', 'Q', 'S', 'S'];
+    diasSemana.forEach(dia => {
+        html += `<div class="cal-dia cal-header">${dia}</div>`;
+    });
+    
+    // Espaços em branco antes do dia 1
+    for (let i = 0; i < primeiroDia; i++) {
+        html += '<div class="cal-dia cal-vazio"></div>';
+    }
+    
+    // Dias do mês
+    for (let dia = 1; dia <= diasNoMes; dia++) {
+        let classes = 'cal-dia';
+        if (dia === hoje.getDate() && mes === hoje.getMonth() && ano === hoje.getFullYear()) {
+            classes += ' cal-hoje'; // Destaque para o dia de hoje
+        }
+        if (diasTreinados.has(dia)) {
+            classes += ' cal-treino'; // Dia "riscado"
+        }
+        
+        html += `<div class="${classes}">${dia}</div>`;
+    }
+    
+    html += '</div>';
+    return html;
+}
+
+
 // --- HANDLERS (Ações) ---
 
-// (MODIFICADO para enviar os novos campos)
+// [MODIFICADO] Envia os novos campos
 async function handleFormSubmit(e) {
     e.preventDefault();
     const token = localStorage.getItem('jwtToken');
 
     const data = {
         tipo: document.getElementById('meta-tipo').value,
-        valorInicial: parseFloat(document.getElementById('meta-inicial').value),
+        valorInicial: parseFloat(document.getElementById('meta-inicial').value) || 0,
         valorAlvo: parseFloat(document.getElementById('meta-valor').value),
         dataInicio: document.getElementById('meta-inicio').value,
-        dataFim: document.getElementById('meta-fim').value || null
+        dataFim: document.getElementById('meta-fim').value || null,
+        periodo: document.getElementById('meta-periodo').value || null
     };
     
-    if (!data.tipo || !data.valorInicial || !data.valorAlvo || !data.dataInicio) {
-        alert('Tipo, Valor Inicial, Valor Alvo e Data de Início são obrigatórios.');
+    if (!data.tipo || !data.valorAlvo || !data.dataInicio) {
+        alert('Tipo, Valor Alvo e Data de Início são obrigatórios.');
         return;
     }
     
-    // Validação de lógica
-    if (data.tipo === 'Peso' && data.valorInicial === data.valorAlvo) {
-        alert('O Valor Inicial não pode ser igual ao Valor Alvo.');
-        return;
+    if (data.tipo === 'Treino' && !data.periodo) {
+         alert('Selecione um Período (Semana/Mês) para a meta de Treino.');
+         return;
+    }
+    if ((data.tipo === 'Peso' || data.tipo === 'Água') && !data.valorInicial) {
+         alert('O Valor Inicial é obrigatório para metas de Peso e Água.');
+         return;
     }
 
     try {
@@ -204,10 +348,7 @@ async function handleFormSubmit(e) {
 
         const response = await fetch(url, {
             method: method,
-            headers: {
-                'Content-Type': 'application/json',
-                'x-auth-token': token
-            },
+            headers: { 'Content-Type': 'application/json', 'x-auth-token': token },
             body: JSON.stringify(data)
         });
 
@@ -225,11 +366,10 @@ async function handleFormSubmit(e) {
     }
 }
 
-// (MODIFICADO para buscar o ID da meta, não do diário)
+// [MODIFICADO] Lida com a busca da meta (GET /:id)
 async function handleEditClick(id) {
     try {
         const token = localStorage.getItem('jwtToken');
-        // Busca a META, não o diário
         const res = await fetch(`${API_URL}/metas/${id}`, { 
             headers: { 'x-auth-token': token }
         });
@@ -237,7 +377,7 @@ async function handleEditClick(id) {
         
         const meta = await res.json();
         
-        renderForm('Editar Meta', meta, id); 
+        renderForm('Editar Meta', meta, id, true); // true = mostrar
         window.scrollTo(0, 0); 
 
     } catch (error) {
@@ -251,19 +391,15 @@ async function handleDeleteClick(id) {
     if (!confirm('Tem certeza que deseja excluir esta meta?')) {
         return; 
     }
-
     try {
         const token = localStorage.getItem('jwtToken');
         const response = await fetch(`${API_URL}/metas/${id}`, {
             method: 'DELETE',
             headers: { 'x-auth-token': token }
         });
-
         if (!response.ok) throw new Error('Falha ao excluir.');
-        
         alert('Meta excluída com sucesso.');
         loadMetas(); 
-
     } catch (error) {
         console.error('Erro ao excluir meta:', error);
         alert('Não foi possível excluir a meta.');

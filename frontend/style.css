@@ -653,6 +653,7 @@ body {
     padding: var(--spacing-unit);
     border-radius: 8px;
     border: 1px solid #ddd;
+    margin-top: var(--spacing-unit); /* [NOVO] Espaçamento do topo */
 }
 /* Novo grid para o formulário */
 .meta-form-grid {
@@ -730,7 +731,7 @@ body {
     background-color: var(--danger-color); /* Vermelho */
 }
 
-/* [NOVO] Barra de Progresso */
+/* Barra de Progresso */
 .progress-bar-container {
     width: 100%;
     background-color: #e0e0e0;
@@ -743,4 +744,60 @@ body {
     background-color: var(--primary-color);
     border-radius: 4px;
     transition: width 0.5s ease;
+}
+
+/* Estilo para as datas */
+.meta-card-progress {
+    font-weight: bold;
+    color: #333;
+}
+.meta-card-dates {
+    margin-top: 8px;
+    color: #666;
+    font-size: 0.9em;
+}
+
+/* ========================================= */
+/* 13. ESTILOS DO CALENDÁRIO DE METAS (UC009) */
+/* ========================================= */
+
+.calendario-grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr); /* 7 dias da semana */
+    gap: 5px;
+    margin-top: 10px;
+    padding: 10px;
+    background: #fdfdfd;
+    border: 1px solid #f0f0f0;
+    border-radius: 4px;
+}
+.cal-dia {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 30px;
+    font-size: 0.8em;
+    border-radius: 50%; /* Deixa redondinho */
+}
+.cal-header {
+    font-weight: bold;
+    color: #999;
+}
+.cal-vazio {
+    background: none;
+}
+.cal-hoje {
+    background-color: #f0f7f7;
+    font-weight: bold;
+    border: 1px solid var(--primary-light);
+}
+.cal-treino {
+    background-color: var(--primary-color) !important;
+    color: white;
+    font-weight: bold;
+}
+.cal-treino.cal-hoje {
+    border: 2px solid var(--primary-color);
+    background: var(--primary-light);
+    color: #333;
 }

@@ -89,13 +89,14 @@
                    <h3 class="section-title">Meu Perfil e Segurança</h3>
                    <div id="perfil-form-container"></div>
                 </section>
-
+                
                 <section id="section-metas" class="dashboard-section" style="display: none;">
-                   <h3 class="section-title">Minhas Metas</h3>
-                   <div id="metas-form-container">
-                       </div>
-                   <div id="metas-list-container">
-                       </div>
+                    <div class="section-header">
+                        <h3 class="section-title">Minhas Metas</h3>
+                        <button id="btn-show-create-meta-form" class="btn btn-primary" style="width: auto; margin-top: 0;">+ Nova Meta</button>
+                    </div>
+                    <div id="metas-form-container" style="display: none;"></div>
+                    <div id="metas-list-container"></div>
                 </section>
 
                 <section id="section-treinos" class="dashboard-section" style="display: none;">
@@ -106,37 +107,41 @@
                    <div id="treinos-list-container"></div>
                    <div id="treino-form-container" style="display: none;"></div>
                 </section>
-
+                
                 <section id="section-diario" class="dashboard-section" style="display: none;">
-                   <h3 class="section-title">Registro Diário</h3>
-                   <div id="diario-form-container"></div>
-                   <div id="diario-list-container"></div>
+                    <div class="section-header">
+                        <h3 class="section-title">Registro Diário</h3>
+                        <button id="btn-show-create-diario-form" class="btn btn-primary" style="width: auto; margin-top: 0;">+ Novo Registro</button>
+                    </div>
+                    
+                    <div id="diario-form-container" style="display: none;">
+                        </div>
+                    
+                    <div id="diario-list-container">
+                        </div>
                 </section>
-
+                
                 <section id="section-dieta" class="dashboard-section" style="display: none;">
                    <h3 class="section-title">Meu Plano Alimentar</h3>
                    <div id="dieta-container"></div>
                 </section>
-
                 <section id="section-receitas" class="dashboard-section" style="display: none;">
                    <h3 class="section-title">Minhas Receitas</h3>
                    <div id="receitas-form-container"></div>
                    <div id="receitas-list-container"></div>
                 </section>
-
                 <section id="section-chat" class="dashboard-section" style="display: none;">
-                    <h3 class="section-title">Assistente de IA</h3>
-                    <div id="chat-history-container" class="info-message">
-                       </div>
-                    <div class="quick-replies">
-                        <button class="btn btn-secondary quick-reply-btn" data-pergunta="Me dê uma sugestão de treino para peito">Treino para Peito</button>
-                        <button class="btn btn-secondary quick-reply-btn" data-pergunta="Quais alimentos são ricos em fibras?">Alimentos Ricos em Fibras</button>
-                        <button class="btn btn-secondary quick-reply-btn" data-pergunta="Quantas proteínas devo consumir por dia?">Cálculo de Proteína</button>
-                    </div>
-                    <form id="chat-form" class="chat-form">
-                        <input type="text" id="chat-pergunta" class="input-field" placeholder="Pergunte sobre dieta ou treino..." required>
-                        <button type="submit" class="btn btn-primary">Perguntar</button>
-                    </form>
+                   <h3 class="section-title">Assistente de IA</h3>
+                   <div id="chat-history-container" class="info-message"></div>
+                   <div class="quick-replies">
+                       <button class="btn btn-secondary quick-reply-btn" data-pergunta="Me dê uma sugestão de treino para peito">Treino para Peito</button>
+                       <button class="btn btn-secondary quick-reply-btn" data-pergunta="Quais alimentos são ricos em fibras?">Alimentos Ricos em Fibras</button>
+                       <button class="btn btn-secondary quick-reply-btn" data-pergunta="Quantas proteínas devo consumir por dia?">Cálculo de Proteína</button>
+                   </div>
+                   <form id="chat-form" class="chat-form">
+                       <input type="text" id="chat-pergunta" class="input-field" placeholder="Pergunte sobre dieta ou treino..." required>
+                       <button type="submit" class="btn btn-primary">Perguntar</button>
+                   </form>
                 </section>
             </div>
         </div>
@@ -167,7 +172,7 @@
                     window.loadTreinos();
                 }
             }
-            // Gatilho do Diário
+            // [GATILHO MODIFICADO]
             if (sectionId === 'diario') {
                 if (window.loadDiario) {
                     window.loadDiario();
@@ -179,7 +184,7 @@
                     window.loadChatHistory();
                 }
             }
-            // [GATILHO ADICIONADO]
+            // Gatilho das Metas
             if (sectionId === 'metas') {
                 if (window.loadMetas) {
                     window.loadMetas();

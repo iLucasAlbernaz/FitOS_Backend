@@ -13,24 +13,30 @@ const MetaSchema = new Schema({
         enum: ['Peso', 'Água', 'Treino'] // Tipos de meta
     },
     
-    // --- CAMPOS ATUALIZADOS ---
+    // [MODIFICADO] ValorInicial não é mais obrigatório
     valorInicial: {
-        type: Number, // Ex: 82 (kg)
-        required: [true, 'O Valor Inicial é obrigatório']
+        type: Number, 
+        required: false // Só é usado por 'Peso' e 'Água'
     },
     valorAlvo: {
-        type: Number, // Ex: 75 (kg)
+        type: Number, // Ex: 75 (kg) ou 5 (treinos)
         required: [true, 'O Valor Alvo é obrigatório']
     },
     dataInicio: {
-        type: Date, // Data que o usuário definiu como início
+        type: Date, 
         required: [true, 'A Data de Início é obrigatória']
     },
-    dataFim: { // Renomeado de 'prazo'
+    dataFim: {
         type: Date,
-        required: false // Opcional
+        required: false 
     },
-    // --- FIM DA ATUALIZAÇÃO ---
+    
+    // [NOVO] Campo específico para Metas de Treino
+    periodo: {
+        type: String,
+        enum: ['Semana', 'Mês'],
+        required: false // Só é usado por 'Treino'
+    },
 
     status: {
         type: String,
