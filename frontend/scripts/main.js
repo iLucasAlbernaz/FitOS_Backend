@@ -4,6 +4,7 @@ import { loadDashboardData, handleChatSubmit, renderCrudForms, setupChatListener
 import { loadDietPlan } from './dieta.js';
 import { loadTreinos } from './treino.js';
 import { loadDiario } from './diario.js';
+import { loadMetas } from './meta.js';
 
 // --- ELEMENTOS DA DOM ---
 const dashboardElement = document.getElementById('app-dashboard');
@@ -193,3 +194,4 @@ window.loadDietPlan = loadDietPlan;
 window.loadTreinos = loadTreinos;
 window.loadDiario = loadDiario;
 window.loadChatHistory = loadChatHistory; // <-- [ADICIONADO]
+window.loadMetas = loadMetas;

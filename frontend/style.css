@@ -644,3 +644,67 @@ body {
     width: auto; 
     margin-top: 0;
 }
+
+/* ========================================= */
+/* 12. ESTILOS DAS METAS (UC009) */
+/* ========================================= */
+.meta-form {
+    background: #f9f9f9;
+    padding: var(--spacing-unit);
+    border-radius: 8px;
+    border: 1px solid #ddd;
+}
+.meta-card {
+    background: #fdfdfd;
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    margin-bottom: var(--spacing-unit);
+    overflow: hidden; 
+}
+.meta-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: #f9f9f9;
+    padding: 10px var(--spacing-unit);
+    border-bottom: 1px solid #eee;
+    flex-wrap: wrap; 
+}
+.meta-card-header strong {
+    color: var(--primary-color);
+}
+.meta-card-body {
+    padding: 10px var(--spacing-unit);
+    font-size: 0.9em;
+}
+.meta-card-body p {
+    margin: 5px 0;
+}
+.meta-card .action-buttons {
+    padding: 0 var(--spacing-unit) 10px var(--spacing-unit);
+    display: flex;
+    gap: 10px;
+}
+.meta-card .action-buttons .btn {
+    width: 100px;
+    padding: 5px;
+    margin-top: 0;
+    font-size: 0.9em;
+    font-weight: normal;
+}
+.meta-status {
+    font-weight: bold;
+    font-size: 0.8em;
+    padding: 3px 8px;
+    border-radius: 12px;
+    color: white;
+}
+.status-andamento {
+    background-color: #6c757d; /* Cinza */
+}
+.status-concluida {
+    background-color: var(--primary-color); /* Verde */
+}
+.status-expirada {
+    background-color: var(--danger-color); /* Vermelho */
+}

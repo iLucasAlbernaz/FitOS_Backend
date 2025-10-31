@@ -7,6 +7,7 @@ const Diario = require('../models/Diario');
 const Receita = require('../models/Receita');
 const Treino = require('../models/Treino');
 const Chat = require('../models/Chat'); // <-- [ADICIONADO]
+const Meta = require('../models/Meta');
 
 exports.cadastrarUsuario = async (req, res) => {
     const { senha } = req.body; 
@@ -76,6 +77,7 @@ exports.deletarPerfil = async (req, res) => {
         await Receita.deleteMany({ usuario: req.usuario.id });
         await Treino.deleteMany({ usuario: req.usuario.id });
         await Chat.deleteMany({ usuario: req.usuario.id }); // <-- [ADICIONADO]
+        await Meta.deleteMany({ usuario: req.usuario.id });
 
         // Passo 2: Deletar o próprio usuário
         const usuario = await Usuario.findByIdAndDelete(req.usuario.id);

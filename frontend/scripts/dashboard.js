@@ -101,11 +101,6 @@ export async function loadDashboardData(token) {
 // --- FUNÇÃO 2: RENDERIZAR FORMULÁRIOS DE CRUD (Perfil e Metas) ---
 // (Não muda)
 export function renderCrudForms(profile) {
-    if (metasFormContainer) {
-        metasFormContainer.innerHTML = `
-            <p class="info-message">Em breve, você poderá definir e acompanhar novas metas detalhadas aqui.</p>
-        `;
-    }
     if (perfilFormContainer) {
         perfilFormContainer.innerHTML = `
             <h4 style="color: var(--primary-color);">Meus Dados Cadastrais</h4>

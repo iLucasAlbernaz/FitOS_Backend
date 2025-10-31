@@ -12,7 +12,7 @@ const receitaRoutes = require('./routes/receitaRoutes');
 const treinoRoutes = require('./routes/treinoRoutes');
 const notificacaoRoutes = require('./routes/notificacaoRoutes');
 const chatRoutes = require('./routes/chatRoutes');
-
+const metaRoutes = require('./routes/metaRoutes');
 
 const app = express();
 
@@ -30,6 +30,7 @@ app.use('/api/treinos', treinoRoutes);
 app.use('/api/notificacoes', notificacaoRoutes);
 app.use('/api/chat', chatRoutes);
 app.use('/api/dieta', require('./routes/dietaRoutes'));
+app.use('/api/metas', metaRoutes);
 
 const connectDB = async () => {
     try {
