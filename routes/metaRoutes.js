@@ -6,7 +6,7 @@ const metaController = require('../controllers/metaController');
 // GET /api/metas (Visualizar Todas)
 router.get('/', auth, metaController.getMetas);
 
-// [ROTA ADICIONADA]
+// [ROTA CORRIGIDA]
 // GET /api/metas/:id (Visualizar Um para Editar)
 router.get('/:id', auth, metaController.getMetaById);
 

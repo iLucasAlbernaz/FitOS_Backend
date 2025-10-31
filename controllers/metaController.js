@@ -1,6 +1,6 @@
 const Meta = require('../models/Meta');
 
-// 1. VISUALIZAR METAS (Não muda)
+// 1. VISUALIZAR METAS (GET /api/metas)
 exports.getMetas = async (req, res) => {
     try {
         const metas = await Meta.find({ usuario: req.usuario.id }).sort({ dataFim: 1 });
@@ -11,12 +11,14 @@ exports.getMetas = async (req, res) => {
     }
 };
 
-// 2. VISUALIZAR UMA META (Não muda)
+// 2. [NOVO] VISUALIZAR UMA META (Para Edição)
+// GET /api/metas/:id
 exports.getMetaById = async (req, res) => {
     try {
         const meta = await Meta.findById(req.params.id);
         if (!meta) return res.status(404).json({ msg: 'Meta não encontrada' });
 
+        // Validação de segurança
         if (meta.usuario.toString() !== req.usuario.id) {
             return res.status(401).json({ msg: 'Não autorizado' });
         }
@@ -30,23 +32,17 @@ exports.getMetaById = async (req, res) => {
     }
 };
 
-// 3. DEFINIR META (MODIFICADO)
-// POST /api/metas
+// 3. DEFINIR META (POST /api/metas)
 exports.createMeta = async (req, res) => {
     const { tipo, valorAlvo, valorInicial, dataInicio, dataFim, periodo } = req.body;
 
-    // Validação (FE9.1 / FE9.2)
     if (!tipo || !valorAlvo || !dataInicio) {
         return res.status(400).json({ msg: 'Tipo, Valor Alvo e Data de Início são obrigatórios.' });
     }
     
-    // Validação específica para cada tipo
     if (tipo === 'Peso' || tipo === 'Água') {
         if (!valorInicial) {
             return res.status(400).json({ msg: 'Valor Inicial é obrigatório para metas de Peso ou Água.' });
-        }
-        if (valorAlvo <= 0 || valorInicial <= 0) {
-            return res.status(400).json({ msg: 'Valores devem ser positivos.' });
         }
     } else if (tipo === 'Treino') {
         if (!periodo) {
@@ -58,11 +54,11 @@ exports.createMeta = async (req, res) => {
         const novaMeta = new Meta({
             usuario: req.usuario.id,
             tipo,
-            valorInicial: valorInicial || 0, // Salva 0 se for treino
+            valorInicial: valorInicial || 0,
             valorAlvo,
             dataInicio: new Date(dataInicio), 
             dataFim: dataFim ? new Date(dataFim) : null,
-            periodo: periodo || null, // Salva nulo se for peso/água
+            periodo: periodo || null,
             status: 'Em Andamento'
         });
 
@@ -74,14 +70,14 @@ exports.createMeta = async (req, res) => {
     }
 };
 
-// 4. EDITAR META (MODIFICADO)
-// PUT /api/metas/:id
+// 4. EDITAR META (PUT /api/metas/:id)
 exports.updateMeta = async (req, res) => {
     const { dataInicio, dataFim } = req.body;
 
     try {
         let meta = await Meta.findById(req.params.id);
         if (!meta) return res.status(404).json({ msg: 'Meta não encontrada' });
+
         if (meta.usuario.toString() !== req.usuario.id) {
             return res.status(401).json({ msg: 'Não autorizado' });
         }
@@ -104,7 +100,7 @@ exports.updateMeta = async (req, res) => {
     }
 };
 
-// 5. EXCLUIR META (Não muda)
+// 5. EXCLUIR META (DELETE /api/metas/:id)
 exports.deleteMeta = async (req, res) => {
     try {
         let meta = await Meta.findById(req.params.id);

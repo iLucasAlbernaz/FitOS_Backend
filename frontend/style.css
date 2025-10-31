@@ -761,6 +761,13 @@ body {
 /* 13. ESTILOS DO CALENDÁRIO DE METAS (UC009) */
 /* ========================================= */
 
+/* [NOVO] Estilo para o título do calendário (Request 1) */
+.meta-card-body .meta-card-progress {
+    text-align: center;
+    font-weight: bold;
+    color: #333;
+}
+
 .calendario-grid {
     display: grid;
     grid-template-columns: repeat(7, 1fr); /* 7 dias da semana */

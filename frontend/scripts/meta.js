@@ -16,10 +16,11 @@ function formatarDataParaInput(dateString) {
 function getHojeFormatado() {
     return new Date().toISOString().split('T')[0];
 }
-function getInicioSemana(d) { // d = new Date()
+// [MODIFICADO] getInicioSemana agora começa no DOMINGO (dia 0)
+function getInicioSemana(d) { 
     d = new Date(d);
-    const day = d.getDay();
-    const diff = d.getDate() - day + (day === 0 ? -6 : 1); // assume Segunda como início
+    const day = d.getDay(); // 0 = Domingo, 1 = Segunda...
+    const diff = d.getDate() - day; // Volta para o Domingo
     return new Date(d.setDate(diff));
 }
 function getInicioMes(d) { // d = new Date()
@@ -36,6 +37,7 @@ export async function loadMetas() {
 }
 
 // --- Funções de Formulário ---
+// (Não muda)
 function showCreateForm() {
     currentEditId = null;
     renderMetaForm('Definir Nova Meta', {}, null, true); 
@@ -44,14 +46,13 @@ if (showCreateFormBtn) {
     showCreateFormBtn.addEventListener('click', showCreateForm);
 }
 
-// [MODIFICADO] Mostra/esconde campos dinamicamente
+// (Não muda)
 function renderMetaForm(title = 'Definir Nova Meta', data = {}, editId = null, show = false) {
     currentEditId = editId; 
 
     const dataInicio = data.dataInicio ? formatarDataParaInput(data.dataInicio) : (editId ? '' : getHojeFormatado());
     const dataFim = data.dataFim ? formatarDataParaInput(data.dataFim) : '';
     
-    // Define a visibilidade dos campos
     let valorInicialDisplay = (data.tipo === 'Peso' || data.tipo === 'Água') ? 'block' : 'none';
     let periodoDisplay = (data.tipo === 'Treino') ? 'block' : 'none';
     let valorAlvoLabel = 'Valor Alvo';
@@ -85,7 +86,7 @@ function renderMetaForm(title = 'Definir Nova Meta', data = {}, editId = null, s
             </div>
             
             <label for="meta-valor" class="input-label">${valorAlvoLabel}:</label>
-            <input type="number" step="1" id="meta-valor" class.name="input-field" placeholder="Ex: 75 (kg) ou 5 (treinos)" value="${data.valorAlvo || ''}" required>
+            <input type="number" step="1" id="meta-valor" class="input-field" placeholder="Ex: 75 (kg) ou 5 (treinos)" value="${data.valorAlvo || ''}" required>
             
             <label class="input-label" style="margin-top: 10px;">Período da Meta:</label>
             <div class="meta-form-grid">
@@ -144,6 +145,7 @@ async function loadAndRenderList() {
             return;
         }
         
+        // [MODIFICADO] Passa a lista completa de diários
         renderMetaList(metas, diarios);
         
     } catch (error) {
@@ -158,22 +160,27 @@ function renderMetaList(metas, diarios) {
     
     const hoje = new Date();
     
+    // [MODIFICADO] Cria um Set de performance (apenas com dias treinados, como 'YYYY-MM-DD')
+    const diasTreinados = new Set(diarios
+        .filter(d => d.treinoRealizado && d.treinoRealizado.trim() !== '')
+        .map(d => new Date(d.data).toISOString().split('T')[0])
+    );
+    
     metas.forEach(meta => {
         
         // --- LÓGICA PARA METAS DE VALOR (Peso / Água) ---
         if (meta.tipo === 'Peso' || meta.tipo === 'Água') {
             let valorAtual = meta.valorInicial;
             let progresso = 0;
-            let metaPerdaPeso = meta.valorAlvo < meta.valorInicial;
-
             const tipoDiario = meta.tipo === 'Peso' ? 'pesoKg' : 'aguaLitros';
-            const registroRecente = diarios
+            
+            // Filtra diários DENTRO do período da meta
+            const registrosRelevantes = diarios
                 .filter(d => d[tipoDiario] > 0 && new Date(d.data) >= new Date(meta.dataInicio)) 
-                .sort((a, b) => new Date(b.data) - new Date(a.data)) 
-                [0]; 
+                .sort((a, b) => new Date(b.data) - new Date(a.data)); 
                 
-            if (registroRecente) {
-                valorAtual = registroRecente[tipoDiario];
+            if (registrosRelevantes.length > 0) {
+                valorAtual = registrosRelevantes[0][tipoDiario];
             }
 
             const totalAlcancado = valorAtual - meta.valorInicial;
@@ -190,24 +197,30 @@ function renderMetaList(metas, diarios) {
         // --- LÓGICA PARA METAS DE HÁBITO (Treino) ---
         } else if (meta.tipo === 'Treino') {
             
-            // Define o início do período (Semana ou Mês)
+            // Define o início e fim do período (Semana ou Mês)
             const inicioPeriodo = meta.periodo === 'Mês' ? getInicioMes(hoje) : getInicioSemana(hoje);
+            const fimPeriodo = meta.periodo === 'Mês' 
+                ? new Date(hoje.getFullYear(), hoje.getMonth() + 1, 0) // Último dia do mês
+                : new Date(inicioPeriodo.getFullYear(), inicioPeriodo.getMonth(), inicioPeriodo.getDate() + 6); // Fim da semana (Sábado)
+
+            // Filtra os check-ins que estão no Set e dentro do período
+            let treinosNoPeriodo = 0;
+            const diasTreinadosNoPeriodo = new Set();
             
-            // Filtra os diários que são check-ins de treino DENTRO do período atual
-            const treinosNoPeriodo = diarios.filter(d => {
-                const dataRegistro = new Date(d.data);
-                return (
-                    d.treinoRealizado && d.treinoRealizado.trim() !== '' && // Se treinou
-                    dataRegistro >= inicioPeriodo && // Dentro do período
-                    dataRegistro <= hoje // E não no futuro
-                );
+            diasTreinados.forEach(diaString => {
+                const dia = new Date(diaString);
+                // Adiciona 4h (UTC-4) para corrigir fuso de data, garantindo que o dia seja contado corretamente
+                dia.setUTCHours(4); 
+                
+                if (dia >= inicioPeriodo && dia <= fimPeriodo) {
+                    treinosNoPeriodo++;
+                    diasTreinadosNoPeriodo.add(dia.getUTCDate()); // Adiciona só o NÚMERO do dia
+                }
             });
             
-            // Gera os dados do calendário
-            const diasTreinados = new Set(treinosNoPeriodo.map(d => new Date(d.data).getUTCDate()));
-            const calendarioHtml = renderCalendario(diasTreinados);
+            const calendarioHtml = renderCalendario(meta.periodo, diasTreinadosNoPeriodo);
             
-            listContainer.innerHTML += renderCardTreino(meta, treinosNoPeriodo.length, calendarioHtml);
+            listContainer.innerHTML += renderCardTreino(meta, treinosNoPeriodo, calendarioHtml);
         }
     });
 
@@ -252,7 +265,18 @@ function renderCardValor(meta, progresso, valorAtual) {
     `;
 }
 
+// [MODIFICADO] Adiciona o Título do Calendário (Request 1)
 function renderCardTreino(meta, treinosFeitos, calendarioHtml) {
+    const hoje = new Date();
+    // Capitaliza o Mês: "outubro" -> "Outubro"
+    const mes = hoje.toLocaleDateString('pt-BR', { month: 'long' });
+    const mesCapitalizado = mes.charAt(0).toUpperCase() + mes.slice(1);
+    
+    // Define o título (Request 1)
+    const tituloCalendario = meta.periodo === 'Mês' 
+        ? `${mesCapitalizado} ${hoje.getFullYear()}`
+        : 'Esta Semana';
+        
     return `
         <div class="meta-card">
             <div class="meta-card-header">
@@ -262,7 +286,7 @@ function renderCardTreino(meta, treinosFeitos, calendarioHtml) {
                 </span>
             </div>
             <div class="meta-card-body">
-                <p class="meta-card-progress">Progresso deste ${meta.periodo}:</p>
+                <p class="meta-card-progress">${tituloCalendario}</p>
                 ${calendarioHtml}
             </div>
             <div class="action-buttons">
@@ -273,38 +297,66 @@ function renderCardTreino(meta, treinosFeitos, calendarioHtml) {
     `;
 }
 
-// --- [NOVO] Renderizador do Calendário ---
-function renderCalendario(diasTreinados) {
+// --- [MODIFICADO] Renderizador do Calendário (Request 2) ---
+// Agora lida com "Semana" ou "Mês"
+function renderCalendario(periodo, diasTreinados) {
     const hoje = new Date();
-    const mes = hoje.getMonth();
-    const ano = hoje.getFullYear();
-    const primeiroDia = new Date(ano, mes, 1).getDay(); // 0=Domingo, 1=Segunda
-    const diasNoMes = new Date(ano, mes + 1, 0).getDate();
+    // Usamos UTC para evitar problemas de fuso
+    const diaHoje = hoje.getUTCDate();
+    const mesHoje = hoje.getUTCMonth();
+    const anoHoje = hoje.getUTCFullYear();
 
     let html = '<div class="calendario-grid">';
     
-    // Dias da semana (ex: D, S, T)
+    // Cabeçalho (D, S, T...)
     const diasSemana = ['D', 'S', 'T', 'Q', 'Q', 'S', 'S'];
     diasSemana.forEach(dia => {
         html += `<div class="cal-dia cal-header">${dia}</div>`;
     });
     
-    // Espaços em branco antes do dia 1
-    for (let i = 0; i < primeiroDia; i++) {
-        html += '<div class="cal-dia cal-vazio"></div>';
-    }
-    
-    // Dias do mês
-    for (let dia = 1; dia <= diasNoMes; dia++) {
-        let classes = 'cal-dia';
-        if (dia === hoje.getDate() && mes === hoje.getMonth() && ano === hoje.getFullYear()) {
-            classes += ' cal-hoje'; // Destaque para o dia de hoje
-        }
-        if (diasTreinados.has(dia)) {
-            classes += ' cal-treino'; // Dia "riscado"
+    // --- LÓGICA PARA META SEMANAL ---
+    if (periodo === 'Semana') {
+        const inicioSemana = getInicioSemana(hoje); // Começa no Domingo
+        
+        for (let i = 0; i < 7; i++) { // Loop de 7 dias
+            const diaAtual = new Date(inicioSemana);
+            diaAtual.setUTCDate(diaAtual.getUTCDate() + i);
+            
+            const diaNum = diaAtual.getUTCDate();
+            
+            let classes = 'cal-dia';
+            if (diaNum === diaHoje && diaAtual.getUTCMonth() === mesHoje && diaAtual.getUTCFullYear() === anoHoje) {
+                classes += ' cal-hoje'; // Destaque para o dia de hoje
+            }
+            if (diasTreinados.has(diaNum)) {
+                classes += ' cal-treino'; // Dia "riscado"
+            }
+            
+            html += `<div class="${classes}">${diaNum}</div>`;
         }
         
-        html += `<div class="${classes}">${dia}</div>`;
+    // --- LÓGICA PARA META MENSAL ---
+    } else { 
+        const primeiroDia = new Date(anoHoje, mesHoje, 1).getUTCDay(); // 0=Domingo
+        const diasNoMes = new Date(anoHoje, mesHoje + 1, 0).getUTCDate(); // Último dia
+        
+        // Espaços em branco antes do dia 1
+        for (let i = 0; i < primeiroDia; i++) {
+            html += '<div class="cal-dia cal-vazio"></div>';
+        }
+        
+        // Dias do mês
+        for (let dia = 1; dia <= diasNoMes; dia++) {
+            let classes = 'cal-dia';
+            if (dia === diaHoje && mesHoje === hoje.getUTCMonth() && anoHoje === hoje.getUTCFullYear()) {
+                classes += ' cal-hoje'; 
+            }
+            if (diasTreinados.has(dia)) {
+                classes += ' cal-treino'; 
+            }
+            
+            html += `<div class="${classes}">${dia}</div>`;
+        }
     }
     
     html += '</div>';
@@ -337,7 +389,7 @@ async function handleFormSubmit(e) {
          alert('Selecione um Período (Semana/Mês) para a meta de Treino.');
          return;
     }
-    if ((data.tipo === 'Peso' || data.tipo === 'Água') && !data.valorInicial) {
+    if ((data.tipo === 'Peso' || data.tipo === 'Água') && data.valorInicial === 0) {
          alert('O Valor Inicial é obrigatório para metas de Peso e Água.');
          return;
     }
@@ -366,7 +418,7 @@ async function handleFormSubmit(e) {
     }
 }
 
-// [MODIFICADO] Lida com a busca da meta (GET /:id)
+// (Não muda)
 async function handleEditClick(id) {
     try {
         const token = localStorage.getItem('jwtToken');
