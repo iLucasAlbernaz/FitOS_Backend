@@ -646,7 +646,7 @@ body {
 }
 
 /* ========================================= */
-/* 12. ESTILOS DAS METAS (UC009) */
+/* 12. ESTILOS DAS METAS (UC009 - ATUALIZADO) */
 /* ========================================= */
 .meta-form {
     background: #f9f9f9;
@@ -654,6 +654,27 @@ body {
     border-radius: 8px;
     border: 1px solid #ddd;
 }
+/* Novo grid para o formulário */
+.meta-form-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+}
+/* Estiliza o botão de cancelar */
+.btn-cancel {
+    display: inline-block;
+    width: auto;
+    margin-left: 10px;
+    background-color: #f0f0f0; 
+    color: #333;
+    border: 1px solid #ccc;
+    font-weight: bold;
+    padding: 10px; 
+    margin-top: 0.5rem; 
+}
+.btn-cancel:hover { background-color: #e0e0e0; }
+
+/* Card de Meta */
 .meta-card {
     background: #fdfdfd;
     border: 1px solid #e0e0e0;
@@ -694,7 +715,7 @@ body {
 }
 .meta-status {
     font-weight: bold;
-    font-size: 0.8em;
+    font-size: 0.9em;
     padding: 3px 8px;
     border-radius: 12px;
     color: white;
@@ -707,4 +728,19 @@ body {
 }
 .status-expirada {
     background-color: var(--danger-color); /* Vermelho */
+}
+
+/* [NOVO] Barra de Progresso */
+.progress-bar-container {
+    width: 100%;
+    background-color: #e0e0e0;
+    border-radius: 4px;
+    height: 10px;
+    margin-top: 5px;
+}
+.progress-bar-fill {
+    height: 100%;
+    background-color: var(--primary-color);
+    border-radius: 4px;
+    transition: width 0.5s ease;
 }

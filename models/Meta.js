@@ -7,21 +7,31 @@ const MetaSchema = new Schema({
         ref: 'Usuario',
         required: true
     },
-    // (DM04) Tipo, Valor, Prazo
     tipo: {
         type: String,
         required: true,
         enum: ['Peso', 'Água', 'Treino'] // Tipos de meta
     },
-    valorAlvo: {
-        type: Number,
-        required: [true, 'O Valor Alvo é obrigatório'] // FE9.1
+    
+    // --- CAMPOS ATUALIZADOS ---
+    valorInicial: {
+        type: Number, // Ex: 82 (kg)
+        required: [true, 'O Valor Inicial é obrigatório']
     },
-    prazo: {
+    valorAlvo: {
+        type: Number, // Ex: 75 (kg)
+        required: [true, 'O Valor Alvo é obrigatório']
+    },
+    dataInicio: {
+        type: Date, // Data que o usuário definiu como início
+        required: [true, 'A Data de Início é obrigatória']
+    },
+    dataFim: { // Renomeado de 'prazo'
         type: Date,
         required: false // Opcional
     },
-    // (VM02) Status
+    // --- FIM DA ATUALIZAÇÃO ---
+
     status: {
         type: String,
         required: true,

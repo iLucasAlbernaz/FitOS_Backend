@@ -1,10 +1,9 @@
 const Meta = require('../models/Meta');
 
-// 1. VISUALIZAR METAS (Fluxo VM01)
-// GET /api/metas
+// 1. VISUALIZAR METAS (Não muda)
 exports.getMetas = async (req, res) => {
     try {
-        const metas = await Meta.find({ usuario: req.usuario.id }).sort({ prazo: 1 });
+        const metas = await Meta.find({ usuario: req.usuario.id }).sort({ dataFim: 1 });
         res.json(metas);
     } catch (err) {
         console.error(err.message);
@@ -12,25 +11,28 @@ exports.getMetas = async (req, res) => {
     }
 };
 
-// 2. DEFINIR META (Fluxo DM01)
+// 2. DEFINIR META (MODIFICADO)
 // POST /api/metas
 exports.createMeta = async (req, res) => {
-    const { tipo, valorAlvo, prazo } = req.body;
+    // Pega os novos campos do body
+    const { tipo, valorAlvo, valorInicial, dataInicio, dataFim } = req.body;
 
-    // Validação (FE9.1 / FE9.2)
-    if (!tipo || !valorAlvo) {
-        return res.status(400).json({ msg: 'Tipo da Meta e Valor Alvo são obrigatórios.' });
+    // Validação
+    if (!tipo || !valorAlvo || !valorInicial || !dataInicio) {
+        return res.status(400).json({ msg: 'Tipo, Valor Inicial, Valor Alvo e Data de Início são obrigatórios.' });
     }
-    if (valorAlvo <= 0) {
-        return res.status(400).json({ msg: 'O Valor Alvo deve ser um número positivo.' });
+    if (valorAlvo <= 0 || valorInicial <= 0) {
+        return res.status(400).json({ msg: 'Valores devem ser positivos.' });
     }
 
     try {
         const novaMeta = new Meta({
             usuario: req.usuario.id,
             tipo,
+            valorInicial,
             valorAlvo,
-            prazo: prazo ? prazo : null, // Salva nulo se o prazo vier vazio
+            dataInicio: new Date(dataInicio), // Converte a string para Data
+            dataFim: dataFim ? new Date(dataFim) : null,
             status: 'Em Andamento'
         });
 
@@ -42,9 +44,11 @@ exports.createMeta = async (req, res) => {
     }
 };
 
-// 3. EDITAR META (Fluxo EM01)
+// 3. EDITAR META (MODIFICADO)
 // PUT /api/metas/:id
 exports.updateMeta = async (req, res) => {
+    const { valorAlvo, valorInicial, dataInicio, dataFim } = req.body;
+
     try {
         let meta = await Meta.findById(req.params.id);
         if (!meta) return res.status(404).json({ msg: 'Meta não encontrada' });
@@ -53,15 +57,16 @@ exports.updateMeta = async (req, res) => {
             return res.status(401).json({ msg: 'Não autorizado' });
         }
 
-        // Validação (FE9.1 / FE9.2)
-        const { valorAlvo } = req.body;
-        if (valorAlvo && valorAlvo <= 0) {
-            return res.status(400).json({ msg: 'O Valor Alvo deve ser um número positivo.' });
-        }
+        // Constrói o objeto de atualização
+        const dadosAtualizados = {
+            ...req.body,
+            dataInicio: new Date(dataInicio),
+            dataFim: dataFim ? new Date(dataFim) : null
+        };
 
         meta = await Meta.findByIdAndUpdate(
             req.params.id,
-            { $set: req.body },
+            { $set: dadosAtualizados },
             { new: true }
         );
         res.json(meta);
@@ -71,8 +76,7 @@ exports.updateMeta = async (req, res) => {
     }
 };
 
-// 4. EXCLUIR META (Fluxo XM01)
-// DELETE /api/metas/:id
+// 4. EXCLUIR META (Não muda)
 exports.deleteMeta = async (req, res) => {
     try {
         let meta = await Meta.findById(req.params.id);

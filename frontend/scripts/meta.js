@@ -1,7 +1,6 @@
 import { API_URL } from './auth.js';
 
 // --- Elementos DOM ---
-const section = document.getElementById('section-metas');
 const listContainer = document.getElementById('metas-list-container');
 const formContainer = document.getElementById('metas-form-container');
 
@@ -18,18 +17,17 @@ function formatarDataParaInput(dateString) {
 
 // --- FUNÇÃO PRINCIPAL (Chamada pelo index.html) ---
 export async function loadMetas() {
-    // 1. Renderiza o formulário (mas o esconde)
-    renderMetaForm();
-    // 2. Carrega e renderiza a lista de metas
-    loadAndRenderList();
+    renderMetaForm(); // Desenha o formulário (sempre visível)
+    loadAndRenderList(); // Carrega e desenha a lista de metas
 }
 
 // --- RENDERIZAÇÃO DO FORMULÁRIO (Criar/Editar) ---
+// (MODIFICADO para incluir os novos campos)
 function renderMetaForm(title = 'Definir Nova Meta', data = {}, editId = null) {
     currentEditId = editId; 
 
-    // Define a data para o input: ou a do registro (para edição) ou vazia (para novo)
-    const inputDate = data.prazo ? formatarDataParaInput(data.prazo) : '';
+    const dataInicio = data.dataInicio ? formatarDataParaInput(data.dataInicio) : '';
+    const dataFim = data.dataFim ? formatarDataParaInput(data.dataFim) : '';
 
     formContainer.innerHTML = `
         <form id="meta-form" class="meta-form">
@@ -40,17 +38,20 @@ function renderMetaForm(title = 'Definir Nova Meta', data = {}, editId = null) {
                 <option value="" disabled ${!data.tipo ? 'selected' : ''}>Selecione um tipo...</option>
                 <option value="Peso" ${data.tipo === 'Peso' ? 'selected' : ''}>Peso (kg)</option>
                 <option value="Água" ${data.tipo === 'Água' ? 'selected' : ''}>Água (Litros/dia)</option>
-                <option value="Treino" ${data.tipo === 'Treino' ? 'selected' : ''}>Treino (vezes/semana)</option>
             </select>
             
-            <label for="meta-valor" class="input-label">Valor Alvo:</label>
-            <input type="number" step="0.1" id="meta-valor" class="input-field" placeholder="Ex: 75.5" value="${data.valorAlvo || ''}" required>
-
-            <label for="meta-prazo" class="input-label">Prazo (Opcional):</label>
-            <input type="date" id="meta-prazo" class="input-field" value="${inputDate}">
+            <div class="meta-form-grid">
+                <input type="number" step="0.1" id="meta-inicial" class="input-field" placeholder="Valor Inicial (Ex: 82)" value="${data.valorInicial || ''}" required>
+                <input type="number" step="0.1" id="meta-valor" class="input-field" placeholder="Valor Alvo (Ex: 75)" value="${data.valorAlvo || ''}" required>
+            </div>
+            
+            <div class="meta-form-grid">
+                <input type="date" id="meta-inicio" class="input-field" value="${dataInicio}" required>
+                <input type="date" id="meta-fim" class="input-field" value="${dataFim}">
+            </div>
             
             <button type="submit" class="btn btn-primary">${editId ? 'Salvar Alterações' : 'Definir Meta'}</button>
-            <button type="button" id="btn-cancelar-meta" class="btn-cancel" style="display: ${editId ? 'inline-block' : 'none'};">Cancelar Edição</button>
+            <button type="button" id="btn-cancelar-meta" class="btn-cancel" style="display: ${editId ? 'inline-block' : 'none'};">Cancelar</button>
         </form>
     `;
 
@@ -61,66 +62,99 @@ function renderMetaForm(title = 'Definir Nova Meta', data = {}, editId = null) {
     if (cancelBtn) {
         cancelBtn.addEventListener('click', () => {
             currentEditId = null;
-            renderForm(); // Reseta o formulário
+            renderForm(); 
         });
     }
 }
 
-// --- RENDERIZAÇÃO DA LISTA ---
+// --- RENDERIZAÇÃO DA LISTA (O CÉREBRO DA INTEGRAÇÃO) ---
 async function loadAndRenderList() {
-    listContainer.innerHTML = '<p class="info-message">Carregando metas...</p>';
+    listContainer.innerHTML = '<p class="info-message">Carregando metas e progresso...</p>';
     const token = localStorage.getItem('jwtToken');
     
     try {
-        const response = await fetch(`${API_URL}/metas`, {
+        // [PASSO 1] Buscar as METAS
+        const metasResponse = await fetch(`${API_URL}/metas`, {
             headers: { 'x-auth-token': token }
         });
-        if (!response.ok) throw new Error('Falha ao buscar metas.');
-        
-        const metas = await response.json();
+        if (!metasResponse.ok) throw new Error('Falha ao buscar metas.');
+        const metas = await metasResponse.json();
+
+        // [PASSO 2] Buscar os REGISTROS DO DIÁRIO
+        const diarioResponse = await fetch(`${API_URL}/diarios`, {
+            headers: { 'x-auth-token': token }
+        });
+        if (!diarioResponse.ok) throw new Error('Falha ao buscar dados do diário.');
+        const diarios = await diarioResponse.json();
         
         if (metas.length === 0) {
             listContainer.innerHTML = '<p class="info-message">Nenhuma meta definida ainda.</p>';
             return;
         }
-        renderMetaList(metas);
+        
+        // [PASSO 3] Combinar os dados e renderizar
+        renderMetaList(metas, diarios);
         
     } catch (error) {
         console.error('Erro ao carregar lista de metas:', error);
-        listContainer.innerHTML = '<p class="error-message">Erro ao carregar metas.</p>';
+        listContainer.innerHTML = `<p class="error-message">${error.message}</p>`;
     }
 }
 
-function renderMetaList(metas) {
+// (MODIFICADO para calcular o progresso)
+function renderMetaList(metas, diarios) {
     listContainer.innerHTML = '<hr><h4>Metas Atuais</h4>'; 
     
     metas.forEach(meta => {
-        let prazoFormatado = 'Sem prazo';
-        let statusClass = 'status-andamento'; // (VM02)
-        let statusTexto = meta.status;
+        // Ignora metas de treino por enquanto
+        if (meta.tipo === 'Treino') return; 
 
-        if (meta.prazo) {
-            const prazoData = new Date(meta.prazo);
-            prazoFormatado = prazoData.toLocaleDateString('pt-BR', { timeZone: 'UTC' });
+        // [LÓGICA DE PROGRESSO]
+        let valorAtual = meta.valorInicial;
+        let progresso = 0;
+        let metaPerdaPeso = meta.valorAlvo < meta.valorInicial;
+
+        // Encontra o registro mais recente do diário (para 'Peso' ou 'Água')
+        const tipoDiario = meta.tipo === 'Peso' ? 'pesoKg' : 'aguaLitros';
+        const registroRecente = diarios
+            .filter(d => d[tipoDiario] > 0) // Pega apenas registros relevantes
+            .sort((a, b) => new Date(b.data) - new Date(a.data)) // Ordena por data (mais novo primeiro)
+            [0]; // Pega o primeiro
             
-            // Verifica se expirou (VM02)
-            if (new Date() > prazoData && meta.status === 'Em Andamento') {
-                statusClass = 'status-expirada';
-                statusTexto = 'Expirada';
-            }
+        if (registroRecente) {
+            valorAtual = registroRecente[tipoDiario];
         }
-        if (meta.status === 'Concluída') {
-            statusClass = 'status-concluida';
+
+        // Calcula a porcentagem do progresso
+        const totalAlcancado = valorAtual - meta.valorInicial;
+        const totalMeta = meta.valorAlvo - meta.valorInicial;
+
+        if (totalMeta !== 0) { // Evita divisão por zero
+            progresso = (totalAlcancado / totalMeta) * 100;
+        }
+
+        // Ajuste para metas de perda de peso (progresso deve ser positivo)
+        if (metaPerdaPeso && progresso < 0) progresso = 0;
+        if (!metaPerdaPeso && progresso < 0) progresso = 0;
+        if (progresso > 100) progresso = 100;
+
+        // Formata data fim (prazo)
+        let prazoFormatado = 'Sem prazo';
+        if (meta.dataFim) {
+            prazoFormatado = new Date(meta.dataFim).toLocaleDateString('pt-BR', { timeZone: 'UTC' });
         }
 
         listContainer.innerHTML += `
             <div class="meta-card">
                 <div class="meta-card-header">
                     <strong>${meta.tipo} (Alvo: ${meta.valorAlvo})</strong>
-                    <span class="meta-status ${statusClass}">${statusTexto}</span>
+                    <span class="meta-status status-andamento">${progresso.toFixed(0)}%</span>
                 </div>
                 <div class="meta-card-body">
-                    <p>Prazo: ${prazoFormatado}</p>
+                    <p>Início: ${meta.valorInicial} | Atual: ${valorAtual}</p>
+                    <div class="progress-bar-container">
+                        <div class="progress-bar-fill" style="width: ${progresso}%;"></div>
+                    </div>
                 </div>
                 <div class="action-buttons">
                     <button class="btn btn-secondary btn-edit-meta" data-id="${meta._id}">Editar</button>
@@ -140,20 +174,27 @@ function renderMetaList(metas) {
 
 // --- HANDLERS (Ações) ---
 
-// Salva o formulário (Criar ou Editar) (DM05 / EM04)
+// (MODIFICADO para enviar os novos campos)
 async function handleFormSubmit(e) {
     e.preventDefault();
     const token = localStorage.getItem('jwtToken');
 
     const data = {
         tipo: document.getElementById('meta-tipo').value,
+        valorInicial: parseFloat(document.getElementById('meta-inicial').value),
         valorAlvo: parseFloat(document.getElementById('meta-valor').value),
-        prazo: document.getElementById('meta-prazo').value || null
+        dataInicio: document.getElementById('meta-inicio').value,
+        dataFim: document.getElementById('meta-fim').value || null
     };
     
-    // (FE9.1 / FE9.2)
-    if (!data.tipo || !data.valorAlvo || data.valorAlvo <= 0) {
-        alert('Selecione um Tipo e insira um Valor Alvo positivo.');
+    if (!data.tipo || !data.valorInicial || !data.valorAlvo || !data.dataInicio) {
+        alert('Tipo, Valor Inicial, Valor Alvo e Data de Início são obrigatórios.');
+        return;
+    }
+    
+    // Validação de lógica
+    if (data.tipo === 'Peso' && data.valorInicial === data.valorAlvo) {
+        alert('O Valor Inicial não pode ser igual ao Valor Alvo.');
         return;
     }
 
@@ -176,7 +217,7 @@ async function handleFormSubmit(e) {
         } 
         
         alert('Meta salva com sucesso!');
-        loadDiario(); // Reseta o form e recarrega a lista
+        loadMetas(); // Reseta o form e recarrega a lista
 
     } catch (error) {
         console.error('Erro ao salvar meta:', error);
@@ -184,11 +225,12 @@ async function handleFormSubmit(e) {
     }
 }
 
-// Carrega dados para o formulário de EDIÇÃO (EM01)
+// (MODIFICADO para buscar o ID da meta, não do diário)
 async function handleEditClick(id) {
     try {
         const token = localStorage.getItem('jwtToken');
-        const res = await fetch(`${API_URL}/metas/${id}`, {
+        // Busca a META, não o diário
+        const res = await fetch(`${API_URL}/metas/${id}`, { 
             headers: { 'x-auth-token': token }
         });
         if (!res.ok) throw new Error('Falha ao buscar meta');
@@ -204,7 +246,7 @@ async function handleEditClick(id) {
     }
 }
 
-// Excluir uma meta (XM01)
+// (Não muda)
 async function handleDeleteClick(id) {
     if (!confirm('Tem certeza que deseja excluir esta meta?')) {
         return; 
@@ -220,7 +262,7 @@ async function handleDeleteClick(id) {
         if (!response.ok) throw new Error('Falha ao excluir.');
         
         alert('Meta excluída com sucesso.');
-        loadAndRenderList(); 
+        loadMetas(); 
 
     } catch (error) {
         console.error('Erro ao excluir meta:', error);
