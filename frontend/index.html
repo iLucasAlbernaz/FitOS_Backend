@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>FitOS - Seu Planejador Fitness</title>
     <link rel="stylesheet" href="style.css"> 
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" integrity="sha512-SnH5WK+bZxgPHs44uWIX+LLJAJ9/2PkPKZ5QiAj6Ta86w+fsb2TkcmfRyVX3pBnMFcV7oQPJkl9QevSCWr3W6A==" crossorigin="anonymous" referrerpolicy="no-referrer" />
 </head>
 <body>
 
@@ -15,11 +16,45 @@
             <p id="modal-message">Mensagem de sucesso aqui.</p>
         </div>
     </div>
-    <header class="app-header">
-        <img src="images/logo.png" alt="Logo FitOS" class="header-logo"> 
+    
+    <header class="site-header">
+        <div class="header-container container">
+            <img src="images/logo.png" alt="Logo FitOS" class="header-logo">
+            
+            <nav id="dashboard-nav" style="display: none;">
+                <button class="btn btn-nav" onclick="showDashboardSection('perfil')">Perfil</button>
+                <button class="btn btn-nav" onclick="showDashboardSection('metas')">Metas</button>
+                <button class="btn btn-nav" onclick="showDashboardSection('treinos')">Treinos</button>
+                <button class="btn btn-nav" onclick="showDashboardSection('diario')">Diário</button>
+                <button class="btn btn-nav" onclick="showDashboardSection('receitas')">Receitas</button>
+                <button class="btn btn-nav" onclick="showDashboardSection('dieta')">Plano de Dieta</button>
+                <button class="btn btn-nav" onclick="showDashboardSection('chat')">Assistente IA</button>
+            </nav>
+            
+            <div id="profile-menu" style="display: none;">
+                <i class="fas fa-user-circle" id="profile-menu-trigger"></i>
+                
+                <div id="profile-dropdown" style="display: none;">
+                    <div class="dropdown-item">
+                        <i class="fas fa-user icon"></i>
+                        <span id="dropdown-user-name">Carregando...</span>
+                    </div>
+                    <div class="dropdown-item">
+                        <i class="fas fa-envelope icon"></i>
+                        <span id="dropdown-user-email">...</span>
+                    </div>
+                    <hr>
+                    <button id="dropdown-logout-btn" class="dropdown-logout-button">
+                        <i class="fas fa-sign-out-alt icon"></i>
+                        Sair
+                    </button>
+                </div>
+                </div>
+        </div>
     </header>
 
     <main class="container">
+        
         <div id="auth-container" class="card auth-card">
             <div class="auth-grid">
                 <div class="form-column">
@@ -28,8 +63,14 @@
                         <h2 class="form-title">Login</h2>
                         <p id="message" class="message error-message"></p> 
                         <form id="login-form">
-                            <input type="email" id="login-email" class="input-field" placeholder="Email" required>
-                            <input type="password" id="login-senha" class="input-field" placeholder="Senha" required>
+                            <div class="input-icon-group">
+                                <i class="fas fa-envelope icon"></i>
+                                <input type="email" id="login-email" class="input-field" placeholder="Email" required>
+                            </div>
+                            <div class="input-icon-group">
+                                <i class="fas fa-lock icon"></i>
+                                <input type="password" id="login-senha" class="input-field" placeholder="Senha" required>
+                            </div>
                             <button type="submit" class="btn btn-primary">Entrar</button>
                         </form>
                         <p class="link-text">Não tem conta? <a href="#" onclick="showRegister()" class="link">Cadastre-se</a></p>
@@ -68,28 +109,13 @@
         </div> 
         
         <div id="app-dashboard" class="container dashboard-area" style="display: none;">
-
-            <header class="dashboard-menu">
-                <nav>
-                    <button class="btn btn-secondary" onclick="showDashboardSection('perfil')">Perfil</button>
-                    <button class="btn btn-secondary" onclick="showDashboardSection('metas')">Metas</button>
-                    <button class="btn btn-secondary" onclick="showDashboardSection('treinos')">Treinos</button>
-                    <button class="btn btn-secondary" onclick="showDashboardSection('diario')">Diário</button>
-                    <button class="btn btn-secondary" onclick="showDashboardSection('receitas')">Receitas</button>
-                    <button class="btn btn-secondary" onclick="showDashboardSection('dieta')">Plano de Dieta</button>
-                    <button class="btn btn-secondary" onclick="showDashboardSection('chat')">Assistente IA</button>
-                    <button onclick="logout()" class="btn btn-danger">Sair</button>
-                </nav>
-            </header>
-
+            
             <div class="main-content card">
-                <div id="user-info" class="info-block" style="margin-bottom: 20px;"></div>
 
                 <section id="section-perfil" class="dashboard-section">
                    <h3 class="section-title">Meu Perfil e Segurança</h3>
                    <div id="perfil-form-container"></div>
                 </section>
-                
                 <section id="section-metas" class="dashboard-section" style="display: none;">
                     <div class="section-header">
                         <h3 class="section-title">Minhas Metas</h3>
@@ -98,7 +124,6 @@
                     <div id="metas-form-container" style="display: none;"></div>
                     <div id="metas-list-container"></div>
                 </section>
-
                 <section id="section-treinos" class="dashboard-section" style="display: none;">
                    <div class="section-header">
                        <h3 class="section-title">Minhas Rotinas de Treino</h3>
@@ -107,20 +132,14 @@
                    <div id="treinos-list-container"></div>
                    <div id="treino-form-container" style="display: none;"></div>
                 </section>
-                
                 <section id="section-diario" class="dashboard-section" style="display: none;">
                     <div class="section-header">
                         <h3 class="section-title">Registro Diário</h3>
                         <button id="btn-show-create-diario-form" class="btn btn-primary" style="width: auto; margin-top: 0;">+ Novo Registro</button>
                     </div>
-                    
-                    <div id="diario-form-container" style="display: none;">
-                        </div>
-                    
-                    <div id="diario-list-container">
-                        </div>
+                    <div id="diario-form-container" style="display: none;"></div>
+                    <div id="diario-list-container"></div>
                 </section>
-                
                 <section id="section-dieta" class="dashboard-section" style="display: none;">
                    <h3 class="section-title">Meu Plano Alimentar</h3>
                    <div id="dieta-container"></div>
@@ -172,7 +191,7 @@
                     window.loadTreinos();
                 }
             }
-            // [GATILHO MODIFICADO]
+            // Gatilho do Diário
             if (sectionId === 'diario') {
                 if (window.loadDiario) {
                     window.loadDiario();

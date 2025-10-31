@@ -7,9 +7,10 @@
     --secondary-color: #4dd0e1; 
     --accent-color: #a7ffeb; 
     --danger-color: #ef5350; 
+    /* [NOVO] Cor de fundo da navbar */
+    --navbar-bg: #1f2937; 
     
     --background-gradient: linear-gradient(135deg, #1f2937 0%, #004d40 100%); 
-    
     --card-background: #ffffff;
     --text-color: #333333; 
     --light-text-color: #f5f5f5; 
@@ -26,50 +27,182 @@ body {
     min-height: 100vh;
     display: flex; 
     flex-direction: column; 
-    justify-content: center;
+    /* Padrão 'center' (para centralizar o login) */
+    justify-content: center; 
     align-items: center; 
     position: relative;
+    transition: justify-content 0.4s ease;
+}
+
+/* Quando logado, alinha tudo ao topo */
+body.dashboard-view {
+    justify-content: flex-start;
 }
 
 .container {
     max-width: 900px;
     width: 90%; 
     margin: 0 auto;
+    transition: margin 0.4s ease;
+}
+
+/* Adiciona margem no topo/baixo quando logado */
+body.dashboard-view main.container {
+    margin-top: 1.5rem;
+    margin-bottom: 1.5rem;
 }
 
 /* ========================================= */
-/* 2. HEADER E CARD */
+/* 2. [NOVO] HEADER PROFISSIONAL */
 /* ========================================= */
 
-.app-header {
-    background-color: transparent;
-    color: white;
-    padding: var(--spacing-unit) 0;
-    text-align: center;
+.site-header {
     width: 100%;
-    margin-bottom: 0; 
+    padding: 10px 0;
+    background-color: transparent;
+    transition: background-color 0.4s ease;
+}
+
+/* Wrapper interno para alinhar o logo e a nav */
+.header-container {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
 }
 
 .header-logo {
-    max-height: 300px; 
+    max-height: 80px; /* Padrão (pequeno) */
     width: auto;      
     display: block;   
-    margin: 0 auto;   
+    transition: max-height 0.4s ease;
 }
 
-.auth-card {
-    max-width: 800px; 
-    min-height: 400px; 
-    margin-bottom: calc(var(--spacing-unit) * 2); 
-    align-self: center; 
-    display: flex; 
-    flex-direction: column;
+/* Na tela de login (padrão), o logo fica grande e centralizado */
+body:not(.dashboard-view) .site-header {
+    padding: var(--spacing-unit) 0;
+    margin-bottom: 0;
 }
+body:not(.dashboard-view) .header-container {
+    justify-content: center; /* Centraliza o logo */
+}
+body:not(.dashboard-view) .header-logo {
+    max-height: 300px; /* Logo grande do login */
+}
+
+
+/* Estilo da Navbar quando logado */
+body.dashboard-view .site-header {
+    background-color: var(--navbar-bg); /* Fundo escuro */
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+    position: sticky; /* Fica preso no topo */
+    top: 0;
+    z-index: 100;
+}
+
+body.dashboard-view .header-logo {
+    max-height: 70px; /* [MODIFICADO] Logo um pouco maior, como pedido */
+    margin: 0;
+}
+
+/* Navegação Principal */
+#dashboard-nav {
+    display: grid; 
+    grid-template-columns: repeat(7, 1fr); /* 7 botões */
+    gap: 10px;
+    align-items: center;
+    flex-grow: 1; /* Ocupa o espaço */
+    margin-left: 30px; /* Espaço do logo */
+    margin-right: 30px; /* Espaço do perfil */
+}
+
+/* Botões da Navbar (Ghost Buttons) */
+.btn-nav {
+    background: transparent;
+    color: var(--primary-light);
+    font-weight: bold;
+    font-size: 0.9em;
+    padding: 10px 8px;
+    border: 2px solid transparent;
+    border-radius: 4px;
+    margin: 0;
+    transition: background-color 0.2s, color 0.2s;
+}
+.btn-nav:hover {
+    background-color: var(--primary-color);
+    color: white;
+}
+
+/* [NOVO] Menu de Perfil Dropdown */
+#profile-menu {
+    position: relative;
+}
+#profile-menu-trigger {
+    font-size: 2.2em; /* Tamanho do ícone de perfil */
+    color: var(--primary-light);
+    cursor: pointer;
+    transition: color 0.2s;
+}
+#profile-menu-trigger:hover {
+    color: white;
+}
+
+#profile-dropdown {
+    position: absolute;
+    top: 120%; /* Abaixo do ícone */
+    right: 0;
+    background-color: white;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    width: 220px;
+    z-index: 101;
+    padding: 10px;
+    border: 1px solid #eee;
+}
+#profile-dropdown span {
+    display: block;
+    padding: 5px 10px;
+    color: #555;
+    font-size: 0.9em;
+}
+#profile-dropdown strong {
+    display: block;
+    padding: 5px 10px;
+    color: #111;
+    font-weight: bold;
+}
+#profile-dropdown hr {
+    border: 0;
+    border-top: 1px solid #eee;
+    margin: 8px 0;
+}
+.btn-danger-nav {
+    background-color: var(--danger-color);
+    color: white;
+    font-weight: bold;
+    font-size: 0.9em;
+    padding: 10px 8px;
+    border: 2px solid var(--danger-color);
+    border-radius: 4px;
+    margin: 0;
+    transition: background-color 0.2s, color 0.2s;
+    width: 100%; /* Ocupa o dropdown */
+}
+.btn-danger-nav:hover {
+    background-color: #b31d1d;
+}
+
 
 /* ========================================= */
 /* 3. LAYOUT DE LOGIN */
 /* ========================================= */
-
+.auth-card {
+    max-width: 800px; 
+    min-height: 400px; 
+    margin: 1.5rem auto; 
+    align-self: center; 
+    display: flex; 
+    flex-direction: column;
+}
 .auth-grid {
     display: grid;
     grid-template-columns: 1fr 1fr;
@@ -77,11 +210,7 @@ body {
     align-items: stretch; 
     width: 100%; 
 }
-
-.form-column {
-    /* Coluna do formulário */
-}
-
+.form-column { }
 .auth-image-side {
     display: flex;
     justify-content: center;
@@ -90,14 +219,12 @@ body {
     background-color: #ffffff; 
     border-radius: 8px;
 }
-
 .auth-logo {
     max-width: 115%;
     max-height: 3000px; 
     height: auto;
     object-fit: contain;
 }
-
 #register-section {
     grid-column: 1 / -1; 
 }
@@ -108,6 +235,7 @@ body {
 /* ========================================= */
 /* 4. CARDS, INPUTS, BOTÕES */
 /* ========================================= */
+/* [REMOVIDO] .dashboard-menu foi removido daqui */
 
 .card {
     background: var(--card-background);
@@ -115,7 +243,6 @@ body {
     border-radius: 12px;
     box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
 }
-
 .form-title, .section-title {
     color: var(--primary-color);
     margin-top: 0;
@@ -123,7 +250,6 @@ body {
     padding-bottom: 10px;
     margin-bottom: var(--spacing-unit);
 }
-
 .input-field, select, textarea {
     width: 100%;
     padding: 10px;
@@ -131,16 +257,14 @@ body {
     border: 1px solid #ccc;
     border-radius: 4px;
     box-sizing: border-box;
-    font-family: var(--font-family); /* Garante que a fonte seja a mesma */
+    font-family: var(--font-family); 
 }
-
 .input-label {
     display: block;
     margin-bottom: 0.5rem;
     font-weight: bold;
     color: var(--primary-color);
 }
-
 .btn {
     display: block;
     width: 100%;
@@ -219,7 +343,6 @@ body {
     from { opacity: 0; transform: scale(0.9); }
     to { opacity: 1; transform: scale(1); }
 }
-
 .success-message {
     color: var(--primary-color);
     font-weight: bold;
@@ -235,39 +358,9 @@ body {
     margin-top: var(--spacing-unit);
     border-radius: 4px;
 }
-
 /* ========================================= */
-/* 6. DASHBOARD E LINKS */
+/* 6. LINKS */
 /* ========================================= */
-.dashboard-menu {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding-bottom: 10px;
-    margin-bottom: 20px;
-    border-bottom: 1px solid #ddd;
-}
-.dashboard-menu nav {
-    display: grid; 
-    /* [CORREÇÃO] Atualizado para 8 colunas */
-    grid-template-columns: repeat(8, 1fr); 
-    gap: 10px;
-    width: 100%; 
-}
-
-.dashboard-menu .btn {
-    width: 100%; 
-    margin-top: 0; 
-    box-sizing: border-box; 
-    font-size: 0.9em; /* Reduz um pouco a fonte para caber */
-    padding: 8px 5px; /* Ajusta o padding */
-}
-
-.dashboard-menu .btn-secondary {
-    width: auto;
-    margin-top: 0;
-}
-
 .link-text {
     text-align: center;
     margin-top: var(--spacing-unit);
@@ -279,7 +372,6 @@ body {
 .link:hover {
     text-decoration: underline;
 }
-
 /* ========================================= */
 /* 7. ESTILOS DO PLANO DE DIETA (UC002) */
 /* ========================================= */
@@ -295,23 +387,11 @@ body {
     margin-top: 0;
     color: var(--primary-color);
 }
-.meal-card ul {
-    list-style-type: none;
-    padding-left: 0;
-}
-.meal-card li {
-    padding: 10px 0;
-    border-bottom: 1px solid #eee;
-}
-.meal-card li:last-child {
-    border-bottom: none;
-}
-.meal-card li strong {
-    color: var(--text-color);
-}
-.meal-card li small {
-    color: #555;
-}
+.meal-card ul { list-style-type: none; padding-left: 0; }
+.meal-card li { padding: 10px 0; border-bottom: 1px solid #eee; }
+.meal-card li:last-child { border-bottom: none; }
+.meal-card li strong { color: var(--text-color); }
+.meal-card li small { color: #555; }
 .meal-totals {
     margin-top: 10px;
     padding-top: 10px;
@@ -343,8 +423,6 @@ body {
 .change-plan-section .btn-secondary:hover {
     background-color: #e0e0e0;
 }
-
-
 /* ========================================= */
 /* 8. ESTILOS DO TREINO (UC003) */
 /* ========================================= */
@@ -356,12 +434,7 @@ body {
     padding-bottom: 10px;
     margin-bottom: var(--spacing-unit);
 }
-.section-header h3 {
-    margin: 0;
-    padding: 0;
-    border: none;
-}
-
+.section-header h3 { margin: 0; padding: 0; border: none; }
 .treino-card {
     background: #fdfdfd;
     border: 1px solid #e0e0e0;
@@ -370,115 +443,28 @@ body {
     padding: var(--spacing-unit);
     margin-bottom: var(--spacing-unit);
 }
-.treino-card h4 {
-    margin: 0 0 5px 0;
-    color: var(--primary-color);
-}
-.treino-card small {
-    color: #555;
-    font-weight: bold;
-}
-.treino-card .exercicios-list ul {
-    list-style-type: disc;
-    padding-left: 20px;
-    margin: 10px 0 0 0;
-}
-.treino-card .exercicios-list {
-    margin-top: 10px;
-    font-size: 0.9em;
-}
-.treino-card .action-buttons {
-    margin-top: 15px;
-    display: flex;
-    gap: 10px;
-}
-.treino-card .action-buttons .btn {
-    width: 100px;
-    padding: 5px;
-    margin-top: 0;
-    font-size: 0.9em;
-    font-weight: normal;
-}
-.gerar-abc-container {
-    text-align: center;
-    padding: 20px;
-    background: #f0f7f7;
-    border-radius: 8px;
-}
-.treino-form {
-    background: #f9f9f9;
-    padding: var(--spacing-unit);
-    border-radius: 8px;
-    border: 1px solid #ddd;
-    margin-top: var(--spacing-unit);
-}
-.treino-form h4 {
-    margin-top: 0;
-}
-.treino-form .form-divider {
-    border: 0;
-    border-top: 1px dashed #ccc;
-    margin: 15px 0;
-}
-.treino-form .exercicio-item {
-    display: grid;
-    grid-template-columns: 2fr 1fr 1fr auto;
-    gap: 10px;
-    align-items: center;
-    margin-bottom: 10px;
-}
-.treino-form .exercicio-item input {
-    margin-bottom: 0;
-}
-.treino-form .exercicio-item button {
-    width: auto;
-    padding: 8px 12px;
-    margin-top: 0;
-    line-height: 1;
-}
-.exercicios-list-form ul {
-    list-style-type: none;
-    padding-left: 0;
-    max-height: 200px;
-    overflow-y: auto;
-    background: #fff;
-    border: 1px solid #eee;
-    padding: 10px;
-    border-radius: 4px;
-}
-.exercicios-list-form li {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 8px;
-    border-bottom: 1px solid #f0f0f0;
-}
-.exercicios-list-form li span {
-    flex: 1;
-}
-.exercicios-list-form li button {
-    width: auto;
-    padding: 2px 8px;
-    font-size: 0.8em;
-    margin: 0;
-}
-
+.treino-card h4 { margin: 0 0 5px 0; color: var(--primary-color); }
+.treino-card small { color: #555; font-weight: bold; }
+.treino-card .exercicios-list ul { list-style-type: disc; padding-left: 20px; margin: 10px 0 0 0; }
+.treino-card .exercicios-list { margin-top: 10px; font-size: 0.9em; }
+.treino-card .action-buttons { margin-top: 15px; display: flex; gap: 10px; }
+.treino-card .action-buttons .btn { width: 100px; padding: 5px; margin-top: 0; font-size: 0.9em; font-weight: normal; }
+.gerar-abc-container { text-align: center; padding: 20px; background: #f0f7f7; border-radius: 8px; }
+.treino-form { background: #f9f9f9; padding: var(--spacing-unit); border-radius: 8px; border: 1px solid #ddd; margin-top: var(--spacing-unit); }
+.treino-form h4 { margin-top: 0; }
+.treino-form .form-divider { border: 0; border-top: 1px dashed #ccc; margin: 15px 0; }
+.treino-form .exercicio-item { display: grid; grid-template-columns: 2fr 1fr 1fr auto; gap: 10px; align-items: center; margin-bottom: 10px; }
+.treino-form .exercicio-item input { margin-bottom: 0; }
+.treino-form .exercicio-item button { width: auto; padding: 8px 12px; margin-top: 0; line-height: 1; }
+.exercicios-list-form ul { list-style-type: none; padding-left: 0; max-height: 200px; overflow-y: auto; background: #fff; border: 1px solid #eee; padding: 10px; border-radius: 4px; }
+.exercicios-list-form li { display: flex; justify-content: space-between; align-items: center; padding: 8px; border-bottom: 1px solid #f0f0f0; }
+.exercicios-list-form li span { flex: 1; }
+.exercicios-list-form li button { width: auto; padding: 2px 8px; font-size: 0.8em; margin: 0; }
 /* ========================================= */
 /* 9. ESTILOS DO DIÁRIO (UC004) */
 /* ========================================= */
-
-.diario-form-grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 10px;
-}
-
-#diario-alimentos, #diario-treino {
-    min-height: 80px;
-    resize: vertical;
-}
-
-/* [CORRIGIDO] Alterado de #btn-cancelar-diario para .btn-cancel */
+.diario-form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+#diario-alimentos, #diario-treino { min-height: 80px; resize: vertical; }
 .btn-cancel {
     display: inline-block;
     width: auto;
@@ -487,109 +473,28 @@ body {
     color: #333;
     border: 1px solid #ccc;
     font-weight: bold;
-    padding: 10px; /* Adicionado padding */
-    margin-top: 0.5rem; /* Adicionado margem */
+    padding: 10px; 
+    margin-top: 0.5rem; 
 }
-.btn-cancel:hover {
-    background-color: #e0e0e0;
-}
-
-.diario-card {
-    background: #fdfdfd;
-    border: 1px solid #e0e0e0;
-    border-radius: 8px;
-    margin-bottom: var(--spacing-unit);
-    overflow: hidden; 
-}
-.diario-card-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    background: #f9f9f9;
-    padding: 10px var(--spacing-unit);
-    border-bottom: 1px solid #eee;
-    flex-wrap: wrap; 
-}
-/* [NOVO] Estilo para a data completa */
-.diario-card-header strong {
-    color: var(--primary-color);
-    flex-basis: 100%; /* Faz a data ocupar a linha de cima em telas menores */
-    margin-bottom: 5px;
-}
-
-.diario-card-body {
-    padding: 10px var(--spacing-unit);
-    font-size: 0.9em;
-}
-.diario-card-body p {
-    margin: 5px 0;
-}
-.diario-card .action-buttons {
-    padding: 0 var(--spacing-unit) 10px var(--spacing-unit);
-    display: flex;
-    gap: 10px;
-}
-.diario-card .action-buttons .btn {
-    width: 100px;
-    padding: 5px;
-    margin-top: 0;
-    font-size: 0.9em;
-    font-weight: normal;
-}
-
+.btn-cancel:hover { background-color: #e0e0e0; }
+.diario-card { background: #fdfdfd; border: 1px solid #e0e0e0; border-radius: 8px; margin-bottom: var(--spacing-unit); overflow: hidden; }
+.diario-card-header { display: flex; justify-content: space-between; align-items: center; background: #f9f9f9; padding: 10px var(--spacing-unit); border-bottom: 1px solid #eee; flex-wrap: wrap; }
+.diario-card-header strong { color: var(--primary-color); flex-basis: 100%; margin-bottom: 5px; }
+.diario-card-body { padding: 10px var(--spacing-unit); font-size: 0.9em; }
+.diario-card-body p { margin: 5px 0; }
+.diario-card .action-buttons { padding: 0 var(--spacing-unit) 10px var(--spacing-unit); display: flex; gap: 10px; }
+.diario-card .action-buttons .btn { width: 100px; padding: 5px; margin-top: 0; font-size: 0.9em; font-weight: normal; }
 /* ========================================= */
 /* 10. ESTILOS DO CHATBOT (UC006) */
-/* ========================================= */
-
-#chat-resposta {
-    /* Garante que o texto quebre a linha corretamente */
-    white-space: pre-wrap; 
-    line-height: 1.6;
-}
-
-.quick-replies {
-    display: flex;
-    gap: 10px;
-    margin-bottom: var(--spacing-unit);
-    flex-wrap: wrap; /* Permite que os botões quebrem a linha */
-}
-
-.quick-reply-btn {
-    width: auto !important; /* Sobrescreve o width: 100% */
-    margin-top: 0 !important;
-    background-color: #f0f7f7 !important;
-    font-weight: bold;
-    font-size: 0.9em;
-}
-
-.chat-form {
-    display: flex;
-    gap: 10px;
-    margin-top: var(--spacing-unit);
-}
-
-.chat-form input {
-    margin-bottom: 0;
-    flex: 1; /* Ocupa o espaço disponível */
-}
-
-.chat-form button {
-    width: auto; /* O botão se ajusta ao texto */
-    margin-top: 0;
-}
-
-/* ========================================= */
-/* 11. ESTILOS DO CHATBOT (UC006) */
 /* ========================================= */
 #chat-history-container {
     background-color: #fdfdfd;
     border: 1px solid #e0e0e0;
     border-radius: 8px;
-    height: 300px; /* Altura fixa para o histórico */
-    overflow-y: auto; /* Scroll automático */
+    height: 300px; 
+    overflow-y: auto; 
     padding: var(--spacing-unit);
     margin-bottom: var(--spacing-unit);
-    /* Reseta o estilo do info-message */
     border-left: 1px solid #e0e0e0; 
     background-color: #fdfdfd;
 }
@@ -599,20 +504,19 @@ body {
     margin-bottom: 10px;
     max-width: 80%;
     line-height: 1.6;
-    white-space: pre-wrap; /* Preserva quebras de linha */
+    white-space: pre-wrap; 
 }
 .user-message {
     background-color: var(--primary-color);
     color: white;
-    margin-left: auto; /* Alinha à direita */
+    margin-left: auto; 
     text-align: right;
 }
 .model-message {
     background-color: #f0f0f0;
     color: #333;
-    margin-right: auto; /* Alinha à esquerda */
+    margin-right: auto; 
 }
-/* Mensagem de erro no chat */
 .model-message.error-message {
     background-color: #fff0f0;
     color: var(--danger-color);
@@ -644,38 +548,21 @@ body {
     width: auto; 
     margin-top: 0;
 }
-
 /* ========================================= */
-/* 12. ESTILOS DAS METAS (UC009 - ATUALIZADO) */
+/* 11. ESTILOS DAS METAS (UC009 - ATUALIZADO) */
 /* ========================================= */
 .meta-form {
     background: #f9f9f9;
     padding: var(--spacing-unit);
     border-radius: 8px;
     border: 1px solid #ddd;
-    margin-top: var(--spacing-unit); /* [NOVO] Espaçamento do topo */
+    margin-top: var(--spacing-unit); 
 }
-/* Novo grid para o formulário */
 .meta-form-grid {
     display: grid;
     grid-template-columns: 1fr 1fr;
     gap: 10px;
 }
-/* Estiliza o botão de cancelar */
-.btn-cancel {
-    display: inline-block;
-    width: auto;
-    margin-left: 10px;
-    background-color: #f0f0f0; 
-    color: #333;
-    border: 1px solid #ccc;
-    font-weight: bold;
-    padding: 10px; 
-    margin-top: 0.5rem; 
-}
-.btn-cancel:hover { background-color: #e0e0e0; }
-
-/* Card de Meta */
 .meta-card {
     background: #fdfdfd;
     border: 1px solid #e0e0e0;
@@ -730,8 +617,6 @@ body {
 .status-expirada {
     background-color: var(--danger-color); /* Vermelho */
 }
-
-/* Barra de Progresso */
 .progress-bar-container {
     width: 100%;
     background-color: #e0e0e0;
@@ -745,8 +630,6 @@ body {
     border-radius: 4px;
     transition: width 0.5s ease;
 }
-
-/* Estilo para as datas */
 .meta-card-progress {
     font-weight: bold;
     color: #333;
@@ -756,21 +639,17 @@ body {
     color: #666;
     font-size: 0.9em;
 }
-
 /* ========================================= */
-/* 13. ESTILOS DO CALENDÁRIO DE METAS (UC009) */
+/* 12. ESTILOS DO CALENDÁRIO DE METAS (UC009) */
 /* ========================================= */
-
-/* [NOVO] Estilo para o título do calendário (Request 1) */
 .meta-card-body .meta-card-progress {
     text-align: center;
     font-weight: bold;
     color: #333;
 }
-
 .calendario-grid {
     display: grid;
-    grid-template-columns: repeat(7, 1fr); /* 7 dias da semana */
+    grid-template-columns: repeat(7, 1fr); 
     gap: 5px;
     margin-top: 10px;
     padding: 10px;
@@ -784,7 +663,7 @@ body {
     align-items: center;
     height: 30px;
     font-size: 0.8em;
-    border-radius: 50%; /* Deixa redondinho */
+    border-radius: 50%; 
 }
 .cal-header {
     font-weight: bold;
@@ -808,19 +687,15 @@ body {
     background: var(--primary-light);
     color: #333;
 }
-
 /* ========================================= */
-/* 14. ESTILOS DO PERFIL (MODO VISUALIZAÇÃO) */
+/* 13. ESTILOS DO PERFIL (MODO VISUALIZAÇÃO) */
 /* ========================================= */
-
 .profile-view {
     padding: 10px;
 }
-
 .profile-view-group {
     margin-bottom: 1.25rem;
 }
-
 .profile-view-group label {
     font-size: 0.9em;
     font-weight: bold;
@@ -828,17 +703,150 @@ body {
     display: block;
     margin-bottom: 4px;
 }
-
 .profile-view-group p {
     font-size: 1.1em;
     color: #333;
     margin: 0;
     padding-left: 5px;
 }
-
-/* Garante que o botão de editar não ocupe a tela toda */
 .profile-view .btn-primary {
     width: auto;
     padding-left: 20px;
     padding-right: 20px;
+}
+/* ========================================= */
+/* 13. ESTILOS DE ÍCONES DE INPUT (Login) */
+/* ========================================= */
+.input-icon-group {
+    position: relative;
+    margin-bottom: var(--spacing-unit); /* Espaço entre os campos */
+}
+.input-icon-group .icon {
+    position: absolute;
+    left: 15px; /* Posição do ícone */
+    top: 50%;
+    transform: translateY(-50%);
+    color: #aaa; /* Cor suave para o ícone */
+    font-size: 1em;
+}
+.input-icon-group .input-field {
+    padding-left: 40px; 
+    margin-bottom: 0; /* Remove a margem dupla */
+}
+
+/* ========================================= */
+/* 14. [NOVO] ESTILOS DO MENU DE PERFIL */
+/* ========================================= */
+
+/* Ícone do Perfil na Navbar */
+#profile-menu {
+    position: relative;
+}
+#profile-menu-trigger {
+    font-size: 2.2em; /* Tamanho do ícone */
+    color: var(--primary-light);
+    cursor: pointer;
+    transition: color 0.2s;
+}
+#profile-menu-trigger:hover {
+    color: white;
+}
+
+/* O card do Dropdown */
+#profile-dropdown {
+    position: absolute;
+    top: 130%; /* Posição abaixo do ícone */
+    right: 0;
+    background-color: white;
+    border-radius: 12px; /* Mais arredondado */
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2); /* Sombra mais forte */
+    width: 250px; /* Mais largo */
+    z-index: 101;
+    padding: 1rem; /* Mais espaçamento interno */
+    border: 1px solid #eee;
+}
+
+/* Itens do Dropdown (Nome e Email) */
+.dropdown-item {
+    display: flex;
+    align-items: center;
+    padding: 10px 5px;
+    color: #333;
+    font-size: 1em;
+}
+.dropdown-item .icon {
+    margin-right: 15px;
+    font-size: 1.1em;
+    color: var(--primary-color); /* Ícone verde */
+    width: 20px; /* Alinha os ícones */
+    text-align: center;
+}
+/* Estilo específico para o nome e email */
+#dropdown-user-name {
+    font-weight: bold;
+    color: #111;
+}
+#dropdown-user-email {
+    font-size: 0.9em;
+    color: #555;
+}
+
+#profile-dropdown hr {
+    border: 0;
+    border-top: 1px solid #eee;
+    margin: 8px 0;
+}
+
+/* Botão Sair (estilizado como item de menu) */
+.dropdown-logout-button {
+    /* Reseta o estilo de botão */
+    background: transparent;
+    border: none;
+    width: 100%;
+    text-align: left;
+    padding: 10px 5px;
+    margin: 0;
+    font-size: 1em;
+    font-family: var(--font-family);
+    font-weight: bold;
+    color: var(--danger-color); /* Texto vermelho */
+    display: flex;
+    align-items: center;
+    cursor: pointer;
+    border-radius: 4px;
+    transition: background-color 0.2s;
+}
+.dropdown-logout-button .icon {
+    margin-right: 15px;
+    font-size: 1.1em;
+    color: var(--danger-color); /* Ícone vermelho */
+    width: 20px; /* Alinha com os ícones de cima */
+    text-align: center;
+}
+.dropdown-logout-button:hover {
+    background-color: #fff0f0; /* Fundo vermelho bem claro */
+}
+
+/* Remove o estilo antigo do .btn-danger-nav que estava no dropdown */
+/* (Este CSS sobrescreve o antigo .btn-danger-nav, se ele ainda existir) */
+.btn-danger-nav {
+    background-color: var(--danger-color);
+    color: white;
+    font-weight: bold;
+    font-size: 0.9em;
+    padding: 10px 8px;
+    border: 2px solid var(--danger-color);
+    border-radius: 4px;
+    margin: 0;
+    transition: background-color 0.2s, color 0.2s;
+}
+.btn-danger-nav:hover {
+    background-color: #b31d1d;
+}
+/* Garante que o botão de logout no dropdown use o novo estilo */
+#profile-dropdown .btn-danger-nav {
+    /* Isso não é mais usado, .dropdown-logout-button é o correto, 
+       mas é uma garantia se o HTML estiver antigo */
+    width: 100%;
+    margin-top: 0;
 }

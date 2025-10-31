@@ -1,12 +1,12 @@
 import { API_URL, handleLogout } from './auth.js'; 
 
 // --- ELEMENTOS DA DOM ---
-const userInfoElement = document.getElementById('user-info');
+// const userInfoElement = document.getElementById('user-info'); // [REMOVIDO]
 const chatHistoryContainer = document.getElementById('chat-history-container'); 
 const perfilFormContainer = document.getElementById('perfil-form-container');
 const metasFormContainer = document.getElementById('metas-form-container');
 
-// --- Helpers do Chat (Não mudam) ---
+// --- (Helpers do Chat e loadChatHistory não mudam) ---
 function scrollToChatBottom() {
     if (chatHistoryContainer) {
         chatHistoryContainer.scrollTop = chatHistoryContainer.scrollHeight;
@@ -26,8 +26,6 @@ function appendChatMessage(role, content, isError = false) {
     chatHistoryContainer.appendChild(messageDiv);
     scrollToChatBottom();
 }
-
-// --- FUNÇÃO DE CARREGAR HISTÓRICO DO CHAT (Não muda) ---
 export async function loadChatHistory() {
     if (!chatHistoryContainer) return;
     chatHistoryContainer.innerHTML = '<p class="info-message">Carregando histórico...</p>';
@@ -55,7 +53,7 @@ export async function loadChatHistory() {
 }
 
 // --- FUNÇÃO 1: CARREGAR DADOS (Perfil) ---
-// (Não muda)
+// [MODIFICADO] Agora preenche o dropdown do header
 export async function loadDashboardData(token) {
     if (!token) return null;
     try {
@@ -65,10 +63,13 @@ export async function loadDashboardData(token) {
         });
         const perfil = await response.json();
         if (response.ok) {
-            userInfoElement.innerHTML = `
-                <p><strong>Usuário:</strong> ${perfil.nome}</p>
-                <p><strong>Email:</strong> ${perfil.email}</p>
-            `;
+            // [MODIFICADO] Remove a lógica do 'userInfoElement'
+            // [ADICIONADO] Preenche o novo dropdown de perfil
+            const dropName = document.getElementById('dropdown-user-name');
+            const dropEmail = document.getElementById('dropdown-user-email');
+            if(dropName) dropName.textContent = perfil.nome;
+            if(dropEmail) dropEmail.textContent = perfil.email;
+            
             return perfil; 
         } else {
              return null; 
@@ -80,16 +81,13 @@ export async function loadDashboardData(token) {
 }
 
 
-// --- [FUNÇÃO MODIFICADA] ---
-// Agora 'renderCrudForms' renderiza o MODO DE VISUALIZAÇÃO
+// --- FUNÇÃO 2: RENDERIZAR FORMULÁRIOS DE CRUD (Perfil e Metas) ---
+// [MODIFICADO] Remove a lógica do 'metasFormContainer'
 export function renderCrudForms(profile) {
-    // 1. Container "Metas" (Placeholder)
-    if (metasFormContainer) {
-        // (Lógica de Metas já foi movida para meta.js, mas mantemos o placeholder se necessário)
-        // metasFormContainer.innerHTML = `<p class="info-message">Em breve...</p>`;
-    }
-
-    // 2. Renderiza o MODO DE VISUALIZAÇÃO no Perfil
+    
+    // (O placeholder de Metas foi removido, pois meta.js já cuida disso)
+    
+    // Renderiza o MODO DE VISUALIZAÇÃO no Perfil
     if (perfilFormContainer) {
         perfilFormContainer.innerHTML = `
             <div class="profile-view">
@@ -194,17 +192,14 @@ function renderProfileForm(profile) {
                 </select>
                 
                 <button type="submit" class="btn btn-primary">Salvar Alterações</button>
-                <button type"button" id="btn-cancelar-edicao" class="btn btn-secondary" style="margin-top: 10px;">Cancelar</button>
+                <button type="button" id="btn-cancelar-edicao" class="btn btn-secondary" style="margin-top: 10px;">Cancelar</button>
             </form>
-            
-            `;
+        `;
 
-        // Adiciona o listener para o "Salvar"
         document.getElementById('update-perfil-form').addEventListener('submit', (e) => {
             handleUpdateProfile(e, profile); 
         });
 
-        // Adiciona o listener para o "Cancelar"
         document.getElementById('btn-cancelar-edicao').addEventListener('click', () => {
             renderCrudForms(profile); // Volta para o modo de visualização
         });
@@ -213,7 +208,7 @@ function renderProfileForm(profile) {
 
 
 // --- FUNÇÃO 3: LÓGICA DE ATUALIZAÇÃO (Perfil) ---
-// [MODIFICADO] Ao salvar, ele agora chama 'renderCrudForms'
+// [MODIFICADO] Ao salvar, preenche o dropdown do header
 async function handleUpdateProfile(e, currentProfile) {
     e.preventDefault();
     const token = localStorage.getItem('jwtToken');
@@ -245,12 +240,12 @@ async function handleUpdateProfile(e, currentProfile) {
             alert('Perfil atualizado com sucesso!');
             const updatedProfile = await response.json();
             
-            // Atualiza o info-block superior
-            userInfoElement.innerHTML = `
-                <p><strong>Usuário:</strong> ${updatedProfile.usuario.nome}</p>
-                <p><strong>Email:</strong> ${updatedProfile.usuario.email}</p>
-            `;
-            // [MODIFICADO] Volta para o modo de visualização
+            // [MODIFICADO] Atualiza o dropdown do header
+            const dropName = document.getElementById('dropdown-user-name');
+            const dropEmail = document.getElementById('dropdown-user-email');
+            if(dropName) dropName.textContent = updatedProfile.usuario.nome;
+            if(dropEmail) dropEmail.textContent = updatedProfile.usuario.email;
+            
             renderCrudForms(updatedProfile.usuario);
 
         } else {

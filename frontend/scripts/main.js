@@ -1,5 +1,4 @@
 import { handleRegister, handleLogin, handleLogout, displayMessage } from './auth.js';
-// [ATUALIZADO] Importa as novas funções do dashboard
 import { loadDashboardData, handleChatSubmit, renderCrudForms, setupChatListeners, loadChatHistory } from './dashboard.js'; 
 import { loadDietPlan } from './dieta.js';
 import { loadTreinos } from './treino.js';
@@ -13,98 +12,121 @@ const loginSection = document.getElementById('login-section');
 const registerSection = document.getElementById('register-section');
 const authGrid = document.querySelector('.auth-grid'); 
 const messageElement = document.getElementById('message');
+// [NOVAS REFERÊNCIAS DA NAVBAR]
+const dashboardNav = document.getElementById('dashboard-nav');
+const profileMenu = document.getElementById('profile-menu');
 
 // --- FUNÇÕES DE ALTERNÂNCIA DE TELA ---
 function showDashboard() {
     authContainer.style.display = 'none';
     dashboardElement.style.display = 'block';
+    dashboardNav.style.display = 'grid'; // Mostra a nav
+    profileMenu.style.display = 'block'; // Mostra o ícone de perfil
+    document.body.classList.add('dashboard-view');
 }
 
-// Mostra o Login (com grid e imagem)
 function showLogin() {
     authContainer.style.display = 'block';
     dashboardElement.style.display = 'none';
+    dashboardNav.style.display = 'none'; // Esconde a nav
+    profileMenu.style.display = 'none'; // Esconde o ícone de perfil
+    document.body.classList.remove('dashboard-view');
 
-    authGrid.style.display = 'grid'; // MOSTRA o grid
-    registerSection.style.display = 'none'; // Esconde o cadastro
+    authGrid.style.display = 'grid'; 
+    registerSection.style.display = 'none'; 
 
     if (messageElement) messageElement.textContent = '';
 }
 window.showLogin = showLogin;
 
-// Mostra o Cadastro (e ESCONDE o grid de login)
 function showRegister() {
     authContainer.style.display = 'block';
     dashboardElement.style.display = 'none';
+    dashboardNav.style.display = 'none'; // Esconde a nav
+    profileMenu.style.display = 'none'; // Esconde o ícone de perfil
+    document.body.classList.remove('dashboard-view');
 
-    authGrid.style.display = 'none'; // ESCONDE o grid de login
-    registerSection.style.display = 'block'; // Mostra o cadastro
+    authGrid.style.display = 'none'; 
+    registerSection.style.display = 'block'; 
 
     if (messageElement) messageElement.textContent = '';
 }
 window.showRegister = showRegister;
 
-
+// A função logout é chamada pelo novo botão no dropdown
 function logout() {
-    handleLogout(); // Limpa o localStorage
+    handleLogout(); 
     showLogin();
 }
-window.logout = logout;
+// [MODIFICADO] Não precisamos mais do window.logout
+// window.logout = logout; 
 
-// --- LÓGICA DO MODAL (Cadastro) ---
+
+// --- (O resto: Modal, Notificação, Eventos de Cadastro, Login, Chat...) ---
+// --- (Não precisa de NENHUMA outra alteração) ---
+
 function openModal(message) {
     const modalMessage = document.getElementById('modal-message');
     const modalTitle = document.querySelector('#success-modal .modal-title');
     const successModal = document.getElementById('success-modal');
     if (modalMessage && successModal && modalTitle) {
-        // Reseta o modal para o padrão de cadastro
         modalTitle.textContent = 'Ação Concluída!';
         modalMessage.textContent = message;
         successModal.style.display = 'block';
-
         setTimeout(() => {
             closeModal();
-            showLogin(); // Volta para o login após cadastro
+            showLogin(); 
         }, 4000);
     }
 }
-
-// --- FUNÇÃO DE NOTIFICAÇÃO DE BOAS-VINDAS ---
 function showWelcomeNotification(userName) {
     const modalTitle = document.querySelector('#success-modal .modal-title');
     const modalMessage = document.getElementById('modal-message');
     const successModal = document.getElementById('success-modal');
-    
     if (modalTitle && modalMessage && successModal) {
-        // Personaliza o modal para a notificação
         modalTitle.textContent = `Olá, ${userName.split(' ')[0]}!`;
         modalMessage.textContent = 'Que bom te ver por aqui. Bom treino!';
         successModal.style.display = 'block';
-
-        // Fecha o modal automaticamente após 4 segundos
         setTimeout(() => {
-            closeModal(); // Reusa a sua função global
-        }, 4000); // 4 segundos
+            closeModal(); 
+        }, 4000); 
     }
 }
-
-// (Função original do seu main.js)
 function closeModal() {
     const successModal = document.getElementById('success-modal');
     if (successModal) {
         successModal.style.display = 'none';
     }
 }
-window.closeModal = closeModal; // (Exportação original mantida)
-
-
-// --- INICIALIZAÇÃO E EVENT LISTENERS ---
+window.closeModal = closeModal; 
 document.addEventListener('DOMContentLoaded', () => {
+    
+    // --- [NOVO] LÓGICA DO DROPDOWN DE PERFIL ---
+    const profileIcon = document.getElementById('profile-menu-trigger');
+    const profileDropdown = document.getElementById('profile-dropdown');
+    
+    if(profileIcon && profileDropdown) {
+        profileIcon.addEventListener('click', (e) => {
+            e.stopPropagation(); // Impede que o clique feche o menu imediatamente
+            profileDropdown.style.display = profileDropdown.style.display === 'block' ? 'none' : 'block';
+        });
+
+        // Adiciona listener para o botão Sair
+        document.getElementById('dropdown-logout-btn').addEventListener('click', logout);
+    }
+    
+    // [NOVO] Fecha o dropdown se clicar fora dele
+    window.addEventListener('click', (e) => {
+        if (profileDropdown && profileDropdown.style.display === 'block') {
+            if (!profileIcon.contains(e.target) && !profileDropdown.contains(e.target)) {
+                profileDropdown.style.display = 'none';
+            }
+        }
+    });
 
     // --- 1. EVENTO DE CADASTRO ---
     document.getElementById('register-form').addEventListener('submit', async (e) => {
         e.preventDefault();
-
         const userData = {
             nome: document.getElementById('reg-nome').value,
             email: document.getElementById('reg-email').value,
@@ -121,9 +143,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 meta_agua_litros: 3.0
             }
         };
-
         const result = await handleRegister(userData);
-
         if (result.success) {
             openModal('Sua conta foi criada com sucesso! Redirecionando...');
         }
@@ -134,19 +154,13 @@ document.addEventListener('DOMContentLoaded', () => {
         e.preventDefault();
         const email = document.getElementById('login-email').value;
         const senha = document.getElementById('login-senha').value;
-
         const result = await handleLogin({ email, senha });
-
         if (result.success) {
             showDashboard();
             loadDashboardData(result.token).then(profile => {
                 if (profile) {
-                    // Chama a notificação de boas-vindas
                     showWelcomeNotification(profile.nome); 
-                    
                     renderCrudForms(profile);
-                    // Mostra a seção de perfil por padrão
-                    // (A função global showDashboardSection é definida no index.html)
                     if (window.showDashboardSection) {
                         window.showDashboardSection('perfil');
                     }
@@ -162,11 +176,11 @@ document.addEventListener('DOMContentLoaded', () => {
         const pergunta = perguntaInput.value;
         if (pergunta) {
             handleChatSubmit(pergunta);
-            perguntaInput.value = ''; // Limpa o campo após o envio
+            perguntaInput.value = ''; 
         }
     });
 
-    // --- [NOVO] Adiciona os listeners dos botões rápidos do chat ---
+    // --- Adiciona os listeners dos botões rápidos do chat ---
     setupChatListeners(); 
 
     // --- 4. VERIFICAR SESSÃO AO CARREGAR ---
@@ -176,22 +190,19 @@ document.addEventListener('DOMContentLoaded', () => {
         loadDashboardData(storedToken).then(profile => {
             if (profile) {
                 renderCrudForms(profile);
-                // Mostra o perfil por padrão ao recarregar a página
                 if (window.showDashboardSection) {
                     window.showDashboardSection('perfil');
                 }
             }
         });
     } else {
-        showLogin(); // Começa na tela de login se não houver token
+        showLogin(); 
     }
 });
 
 // --- FUNÇÕES GLOBAIS PARA NAVEGAÇÃO DO DASHBOARD ---
-// (Exporta as funções para o script do index.html)
-
 window.loadDietPlan = loadDietPlan;
 window.loadTreinos = loadTreinos;
 window.loadDiario = loadDiario;
-window.loadChatHistory = loadChatHistory; // <-- [ADICIONADO]
+window.loadChatHistory = loadChatHistory; 
 window.loadMetas = loadMetas;
