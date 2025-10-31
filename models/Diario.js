@@ -7,25 +7,23 @@ const DiarioSchema = new Schema({
         ref: 'Usuario',
         required: true
     },
-    // Data do registro (vamos garantir uma entrada por dia)
     data: {
         type: Date,
         required: true
     },
-    // Campos do UC004
     pesoKg: {
         type: Number,
-        required: [true, 'O campo Peso é obrigatório.'] // FE3.1
+        required: [true, 'O campo Peso é obrigatório.']
     },
     aguaLitros: {
         type: Number,
-        required: [true, 'O campo Água é obrigatório.'] // FE3.1
+        required: [true, 'O campo Água é obrigatório.']
     },
-    alimentosConsumidos: { // Campo de texto simples
+    alimentosConsumidos: { 
         type: String,
         trim: true
     },
-    treinoRealizado: { // Campo de texto simples
+    treinoRealizado: { 
         type: String,
         trim: true
     }
@@ -33,7 +31,7 @@ const DiarioSchema = new Schema({
     timestamps: true
 });
 
-// Garante que um usuário só pode ter um registro por dia
-DiarioSchema.index({ usuario: 1, data: 1 }, { unique: true });
+// [REMOVIDO] A linha DiarioSchema.index({ ... unique: true }) foi removida.
+// Nosso controller vai cuidar disso.
 
 module.exports = mongoose.model('Diario', DiarioSchema);
