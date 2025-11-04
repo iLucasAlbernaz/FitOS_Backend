@@ -1,8 +1,9 @@
-const { GoogleGenerativeAI } = require('@google/generative-ai');
+// [CORREÇÃO 1] Importa da biblioteca correta '@google/genai'
+const { GoogleGenAI } = require('@google/genai'); 
 const Chat = require('../models/Chat'); 
 
-// Inicializa o GenAI com a chave do seu .env
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+// [CORREÇÃO 2] Usa o construtor correto 'GoogleGenAI'
+const genAI = new GoogleGenAI(process.env.GEMINI_API_KEY);
 
 /**
  * @route   POST /api/chat
@@ -26,8 +27,8 @@ exports.handleChat = async (req, res) => {
 
         // 2. Prepara e envia o prompt para a IA
         
-        // [CORREÇÃO FINAL] Usando o modelo 'gemini-pro', que é compatível com a API v1beta
-        const model = genAI.getGenerativeModel({ model: "gemini-pro" });
+        // [CORREÇÃO 3] Usa a sintaxe correta (getGenerativeModel) e o nome do modelo
+        const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash-latest" }); 
 
         const prompt = `
             Você é o assistente de IA do app "FitOS".
@@ -38,6 +39,7 @@ exports.handleChat = async (req, res) => {
             Pergunta do usuário: "${pergunta}"
         `;
 
+        // [CORREÇÃO 4] Usa a sintaxe correta (generateContent)
         const result = await model.generateContent(prompt);
         const response = await result.response;
         const text = response.text();
