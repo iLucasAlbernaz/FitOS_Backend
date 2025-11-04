@@ -4,6 +4,8 @@ import { loadDietPlan } from './dieta.js';
 import { loadTreinos } from './treino.js';
 import { loadDiario } from './diario.js';
 import { loadMetas } from './meta.js';
+// [NOVO] Importa a função de receitas
+import { loadReceitas } from './receita.js'; 
 
 // --- ELEMENTOS DA DOM ---
 const dashboardElement = document.getElementById('app-dashboard');
@@ -12,7 +14,6 @@ const loginSection = document.getElementById('login-section');
 const registerSection = document.getElementById('register-section');
 const authGrid = document.querySelector('.auth-grid'); 
 const messageElement = document.getElementById('message');
-// [NOVAS REFERÊNCIAS DA NAVBAR]
 const dashboardNav = document.getElementById('dashboard-nav');
 const profileMenu = document.getElementById('profile-menu');
 
@@ -58,13 +59,10 @@ function logout() {
     handleLogout(); 
     showLogin();
 }
-// [MODIFICADO] Não precisamos mais do window.logout
-// window.logout = logout; 
+// window.logout = logout; // Não é mais global
 
 
-// --- (O resto: Modal, Notificação, Eventos de Cadastro, Login, Chat...) ---
-// --- (Não precisa de NENHUMA outra alteração) ---
-
+// --- Funções de Modal e Notificação ---
 function openModal(message) {
     const modalMessage = document.getElementById('modal-message');
     const modalTitle = document.querySelector('#success-modal .modal-title');
@@ -101,21 +99,18 @@ function closeModal() {
 window.closeModal = closeModal; 
 document.addEventListener('DOMContentLoaded', () => {
     
-    // --- [NOVO] LÓGICA DO DROPDOWN DE PERFIL ---
+    // --- LÓGICA DO DROPDOWN DE PERFIL ---
     const profileIcon = document.getElementById('profile-menu-trigger');
     const profileDropdown = document.getElementById('profile-dropdown');
     
     if(profileIcon && profileDropdown) {
         profileIcon.addEventListener('click', (e) => {
-            e.stopPropagation(); // Impede que o clique feche o menu imediatamente
+            e.stopPropagation(); 
             profileDropdown.style.display = profileDropdown.style.display === 'block' ? 'none' : 'block';
         });
-
-        // Adiciona listener para o botão Sair
         document.getElementById('dropdown-logout-btn').addEventListener('click', logout);
     }
     
-    // [NOVO] Fecha o dropdown se clicar fora dele
     window.addEventListener('click', (e) => {
         if (profileDropdown && profileDropdown.style.display === 'block') {
             if (!profileIcon.contains(e.target) && !profileDropdown.contains(e.target)) {
@@ -206,3 +201,4 @@ window.loadTreinos = loadTreinos;
 window.loadDiario = loadDiario;
 window.loadChatHistory = loadChatHistory; 
 window.loadMetas = loadMetas;
+window.loadReceitas = loadReceitas; // <-- [ADICIONADO]

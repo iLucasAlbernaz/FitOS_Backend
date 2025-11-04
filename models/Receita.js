@@ -1,46 +1,48 @@
 const mongoose = require('mongoose');
+const Schema = mongoose.Schema;
 
-const MacrosSchema = new mongoose.Schema({
-    calorias: { type: Number, required: true },
-    proteinas_g: { type: Number, required: true },
-    carboidratos_g: { type: Number, required: true },
-    gorduras_g: { type: Number, required: true }
+// Sub-documento para Macros
+const MacrosSchema = new Schema({
+    calorias: { type: Number, required: true, default: 0 },
+    proteinas: { type: Number, required: true, default: 0 },
+    carboidratos: { type: Number, required: true, default: 0 },
+    gorduras: { type: Number, required: true, default: 0 }
 }, { _id: false });
 
-const IngredientesSchema = new mongoose.Schema({
+// Sub-documento para Ingredientes
+const IngredienteSchema = new Schema({
     nome: { type: String, required: true },
-    quantidade: { type: String, required: true }
+    quantidade: { type: String, required: true } // Ex: "1 xícara" ou "100g"
 }, { _id: false });
 
-const ReceitaSchema = new mongoose.Schema({
-    
-    autor_usuario_id: {
+const ReceitaSchema = new Schema({
+    // [PADRONIZADO] para 'usuario'
+    usuario: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'Usuario',
         required: true
     },
-    
     nome: {
         type: String,
-        required: true,
-        trim: true,
-        unique: true
+        required: [true, 'O Nome é obrigatório'],
+        trim: true
     },
+    // [NOVO] Campo 'descricao' do seu modelo
     descricao: {
         type: String,
-        required: true
+        required: [true, 'A Descrição é obrigatória']
     },
-    modo_preparo: {
+    // [PADRONIZADO] para 'modoPreparo'
+    modoPreparo: {
         type: String
     },
-
-    macros_estimados: {
+    // [PADRONIZADO] para 'macros'
+    macros: {
         type: MacrosSchema,
         required: true
     },
-    
     ingredientes: {
-        type: [IngredientesSchema],
+        type: [IngredienteSchema],
         required: true
     }
 }, {

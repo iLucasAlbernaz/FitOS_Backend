@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale-1.0">
     <title>FitOS - Seu Planejador Fitness</title>
     <link rel="stylesheet" href="style.css"> 
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" integrity="sha512-SnH5WK+bZxgPHs44uWIX+LLJAJ9/2PkPKZ5QiAj6Ta86w+fsb2TkcmfRyVX3pBnMFcV7oQPJkl9QevSCWr3W6A==" crossorigin="anonymous" referrerpolicy="no-referrer" />
@@ -20,7 +20,6 @@
     <header class="site-header">
         <div class="header-container container">
             <img src="images/logo.png" alt="Logo FitOS" class="header-logo">
-            
             <nav id="dashboard-nav" style="display: none;">
                 <button class="btn btn-nav" onclick="showDashboardSection('perfil')">Perfil</button>
                 <button class="btn btn-nav" onclick="showDashboardSection('metas')">Metas</button>
@@ -30,7 +29,6 @@
                 <button class="btn btn-nav" onclick="showDashboardSection('dieta')">Plano de Dieta</button>
                 <button class="btn btn-nav" onclick="showDashboardSection('chat')">Assistente IA</button>
             </nav>
-            
             <div id="profile-menu" style="display: none;">
                 <i class="fas fa-user-circle" id="profile-menu-trigger"></i>
                 <div id="profile-dropdown" style="display: none;">
@@ -110,11 +108,12 @@
         <div id="app-dashboard" class="container dashboard-area" style="display: none;">
             
             <div class="main-content card">
-
+                
                 <section id="section-perfil" class="dashboard-section">
                    <h3 class="section-title">Meu Perfil e Segurança</h3>
                    <div id="perfil-form-container"></div>
                 </section>
+                
                 <section id="section-metas" class="dashboard-section" style="display: none;">
                     <div class="section-header">
                         <h3 class="section-title">Minhas Metas</h3>
@@ -123,6 +122,7 @@
                     <div id="metas-form-container" style="display: none;"></div>
                     <div id="metas-list-container"></div>
                 </section>
+
                 <section id="section-treinos" class="dashboard-section" style="display: none;">
                    <div class="section-header">
                        <h3 class="section-title">Minhas Rotinas de Treino</h3>
@@ -131,6 +131,7 @@
                    <div id="treinos-list-container"></div>
                    <div id="treino-form-container" style="display: none;"></div>
                 </section>
+                
                 <section id="section-diario" class="dashboard-section" style="display: none;">
                     <div class="section-header">
                         <h3 class="section-title">Registro Diário</h3>
@@ -139,36 +140,36 @@
                     <div id="diario-form-container" style="display: none;"></div>
                     <div id="diario-list-container"></div>
                 </section>
+                
                 <section id="section-dieta" class="dashboard-section" style="display: none;">
                    <h3 class="section-title">Meu Plano Alimentar</h3>
                    <div id="dieta-container"></div>
                 </section>
+                
                 <section id="section-receitas" class="dashboard-section" style="display: none;">
-                   <h3 class="section-title">Minhas Receitas</h3>
-                   <div id="receitas-form-container"></div>
-                   <div id="receitas-list-container"></div>
+                   <div class="section-header">
+                       <h3 class="section-title">Minhas Receitas</h3>
+                       <button id="btn-show-create-receita-form" class="btn btn-primary" style="width: auto; margin-top: 0;">+ Nova Receita</button>
+                   </div>
+                   <div id="receitas-list-container">
+                        </div>
+                   <div id="receitas-form-container" style="display: none;">
+                        </div>
                 </section>
                 
                 <section id="section-chat" class="dashboard-section" style="display: none;">
                    <h3 class="section-title">Assistente de IA</h3>
-                   
-                   <div id="chat-history-container" class="info-message">
-                       </div>
-                   
-                   <div class="chat-action-area">
-                       <form id="chat-form" class="chat-form">
-                           <input type="text" id="chat-pergunta" class="input-field" placeholder="Pergunte sobre dieta ou treino..." required>
-                           <button type="submit" class="btn btn-primary"><i class="fas fa-paper-plane"></i></button>
-                       </form>
-                       
-                       <div class="quick-replies">
-                           <button class="btn btn-secondary quick-reply-btn" data-pergunta="Me dê uma sugestão de treino para peito">Treino para Peito</button>
-                           <button class="btn btn-secondary quick-reply-btn" data-pergunta="Quais alimentos são ricos em fibras?">Alimentos Ricos em Fibras</button>
-                           <button class="btn btn-secondary quick-reply-btn" data-pergunta="Quantas proteínas devo consumir por dia?">Cálculo de Proteína</button>
-                       </div>
+                   <div id="chat-history-container" class="info-message"></div>
+                   <div class="quick-replies">
+                       <button class="btn btn-secondary quick-reply-btn" data-pergunta="Me dê uma sugestão de treino para peito">Treino para Peito</button>
+                       <button class="btn btn-secondary quick-reply-btn" data-pergunta="Quais alimentos são ricos em fibras?">Alimentos Ricos em Fibras</button>
+                       <button class="btn btn-secondary quick-reply-btn" data-pergunta="Quantas proteínas devo consumir por dia?">Cálculo de Proteína</button>
                    </div>
+                   <form id="chat-form" class="chat-form">
+                       <input type="text" id="chat-pergunta" class="input-field" placeholder="Pergunte sobre dieta ou treino..." required>
+                       <button type="submit" class="btn btn-primary">Perguntar</button>
+                   </form>
                 </section>
-                
             </div>
         </div>
     </main>
@@ -214,6 +215,13 @@
             if (sectionId === 'metas') {
                 if (window.loadMetas) {
                     window.loadMetas();
+                }
+            }
+            
+            // [GATILHO ADICIONADO]
+            if (sectionId === 'receitas') {
+                if (window.loadReceitas) {
+                    window.loadReceitas();
                 }
             }
         }

@@ -1029,3 +1029,113 @@ body.dashboard-view .header-logo {
     width: 100%;
     margin-top: 0;
 }
+/* ========================================= */
+/* 15. ESTILOS DAS RECEITAS (UC007 - NOVO) */
+/* ========================================= */
+.receita-card {
+    background: #fdfdfd;
+    border: 1px solid #e0e0e0;
+    border-left: 5px solid var(--primary-color);
+    border-radius: 8px;
+    padding: var(--spacing-unit);
+    margin-bottom: var(--spacing-unit);
+}
+.receita-card h4 {
+    margin: 0 0 5px 0;
+    color: var(--primary-color);
+}
+.receita-descricao {
+    font-style: italic;
+    color: #555;
+    margin: 0 0 10px 0;
+    font-size: 0.95em;
+}
+.receita-macros {
+    font-size: 0.9em;
+    font-weight: bold;
+    color: #333;
+    background: #f0f7f7;
+    padding: 8px;
+    border-radius: 4px;
+    margin-bottom: 10px;
+}
+.receita-details {
+    font-size: 0.9em;
+}
+.receita-details summary {
+    cursor: pointer;
+    font-weight: bold;
+    color: var(--primary-color);
+    margin-bottom: 5px;
+}
+.receita-details ul {
+    list-style-type: disc;
+    padding-left: 20px;
+}
+.receita-details p {
+    white-space: pre-wrap; /* Preserva quebras de linha no modo preparo */
+    margin-top: 5px;
+}
+.receita-card .action-buttons {
+    margin-top: 15px;
+    display: flex;
+    gap: 10px;
+}
+.receita-card .action-buttons .btn {
+    width: 100px;
+    padding: 5px;
+    margin-top: 0;
+    font-size: 0.9em;
+    font-weight: normal;
+}
+
+/* Formulário de Receita */
+.receita-form {
+    background: #f9f9f9;
+    padding: var(--spacing-unit);
+    border-radius: 8px;
+    border: 1px solid #ddd;
+    margin-top: var(--spacing-unit);
+}
+.receita-form h4 {
+    margin-top: 0;
+}
+.receita-form .form-divider {
+    border: 0;
+    border-top: 1px dashed #ccc;
+    margin: 15px 0;
+}
+.receita-form textarea {
+    min-height: 100px;
+    resize: vertical;
+}
+/* Grid para os macros */
+.macros-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 10px;
+}
+/* Input de ingredientes (similar ao de Treinos) */
+.ingrediente-item {
+    display: grid;
+    grid-template-columns: 1.5fr 1fr auto; /* Nome, Qtd, Botão */
+    gap: 10px;
+    align-items: center;
+    margin-bottom: 10px;
+}
+.ingrediente-item input {
+    margin-bottom: 0;
+}
+.ingrediente-item button {
+    width: auto;
+    padding: 8px 12px;
+    margin-top: 0;
+    line-height: 1;
+}
+
+/* Reutiliza o estilo do form de treinos para a lista de ingredientes */
+.exercicios-list-form { }
+.exercicios-list-form ul { }
+.exercicios-list-form li { }
+.exercicios-list-form li span { }
+.exercicios-list-form li button { }
