@@ -1,8 +1,8 @@
-const { GoogleGenAI } = require('@google/genai');
+const { GoogleGenerativeAI } = require('@google/generative-ai');
 const Chat = require('../models/Chat'); 
 
-// Usa o nome correto da classe
-const genAI = new GoogleGenAI(process.env.GEMINI_API_KEY);
+// Inicializa o GenAI com a chave do seu .env
+const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 
 /**
  * @route   POST /api/chat
@@ -24,28 +24,23 @@ exports.handleChat = async (req, res) => {
         });
         await perguntaUsuario.save();
 
-        // 2. [CORREÇÃO] Prepara e envia o prompt para a IA (usando a NOVA SINTAXE)
-        const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash-latest" });
+        // 2. Prepara e envia o prompt para a IA
+        
+        // [CORREÇÃO FINAL] Usando o modelo 'gemini-pro', que é compatível com a API v1beta
+        const model = genAI.getGenerativeModel({ model: "gemini-pro" });
 
-        // Define o "contexto" ou "personalidade" do bot
-        const chat = model.startChat({
-            history: [
-                {
-                    role: "user",
-                    parts: [{ text: "Você é o assistente de IA do app 'FitOS'. Sua especialidade é nutrição, fitness e saúde. Responda de forma clara, motivadora e direta (no máximo 3 frases). Não use markdown ou formatação especial." }],
-                },
-                {
-                    role: "model",
-                    parts: [{ text: "Entendido. Eu sou o FitOS. Estou pronto para ajudar com dúvidas de fitness e nutrição." }],
-                }
-            ]
-        });
+        const prompt = `
+            Você é o assistente de IA do app "FitOS".
+            Sua especialidade é nutrição, fitness e saúde.
+            Responda de forma clara, motivadora e direta (no máximo 3 frases).
+            Não use markdown ou formatação especial.
+            
+            Pergunta do usuário: "${pergunta}"
+        `;
 
-        // Agora, envia a pergunta do usuário
-        const result = await chat.sendMessage(pergunta);
+        const result = await model.generateContent(prompt);
         const response = await result.response;
         const text = response.text();
-        // --- Fim da Correção ---
 
         // 3. Salva a resposta da IA no histórico
         const respostaIA = new Chat({
