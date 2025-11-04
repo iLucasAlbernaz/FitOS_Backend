@@ -26,8 +26,8 @@ exports.handleChat = async (req, res) => {
 
         // 2. Prepara e envia o prompt para a IA
         
-        // [CORREÇÃO FINAL] Usando o modelo '1.0-pro' que é compatível com v1beta
-        const model = genAI.getGenerativeModel({ model: "gemini-1.0-pro" });
+        // [CORREÇÃO FINAL] Usando o modelo mais recente e estável
+        const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash-latest" });
 
         const prompt = `
             Você é o assistente de IA do app "FitOS".
