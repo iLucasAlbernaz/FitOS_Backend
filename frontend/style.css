@@ -485,68 +485,247 @@ body.dashboard-view .header-logo {
 .diario-card .action-buttons { padding: 0 var(--spacing-unit) 10px var(--spacing-unit); display: flex; gap: 10px; }
 .diario-card .action-buttons .btn { width: 100px; padding: 5px; margin-top: 0; font-size: 0.9em; font-weight: normal; }
 /* ========================================= */
-/* 10. ESTILOS DO CHATBOT (UC006) */
+/* 10. ESTILOS DO CHATBOT (UC006 - REVISADO) */
 /* ========================================= */
 #chat-history-container {
-    background-color: #fdfdfd;
+    background-color: #ffffff;
     border: 1px solid #e0e0e0;
     border-radius: 8px;
-    height: 300px; 
+    height: 380px; 
     overflow-y: auto; 
     padding: var(--spacing-unit);
-    margin-bottom: var(--spacing-unit);
+    scroll-behavior: smooth; 
     border-left: 1px solid #e0e0e0; 
     background-color: #fdfdfd;
 }
-.chat-message {
-    padding: 8px 12px;
-    border-radius: 12px;
-    margin-bottom: 10px;
-    max-width: 80%;
-    line-height: 1.6;
-    white-space: pre-wrap; 
+
+/* Wrapper para a mensagem (Avatar + Bolha) */
+.chat-message-wrapper {
+    display: flex;
+    margin-bottom: 12px; 
+    align-items: flex-end; 
+    max-width: 100%;
 }
-.user-message {
+
+/* Avatar da IA */
+.chat-avatar {
+    width: 32px; 
+    height: 32px; 
+    min-width: 32px; 
+    border-radius: 50%;
     background-color: var(--primary-color);
     color: white;
-    margin-left: auto; 
-    text-align: right;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.9em; 
+    margin-right: 8px; 
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1); 
 }
-.model-message {
-    background-color: #f0f0f0;
-    color: #333;
+.chat-avatar .fas {
+    transform: translateY(1px); 
+}
+
+
+/* Bolha de Mensagem (Geral) */
+.chat-message {
+    padding: 10px 15px;
+    border-radius: 18px; 
+    max-width: 75%; 
+    line-height: 1.5;
+    white-space: pre-wrap; 
+    word-wrap: break-word; 
+    box-shadow: 0 1px 2px rgba(0,0,0,0.08); 
+    position: relative; 
+}
+
+/* Bolha do Usuário */
+.user-message-wrapper {
+    justify-content: flex-end; 
+    margin-left: auto; 
+}
+.user-message {
+    background-color: var(--primary-color); 
+    color: white;
+    border-bottom-right-radius: 4px; /* "Cauda" */
+    margin-right: 5px; 
+}
+.user-message::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    right: -4px; 
+    width: 0;
+    height: 0;
+    border: 8px solid transparent;
+    border-left-color: var(--primary-color);
+    border-bottom-color: var(--primary-color);
+    border-radius: 0 0 0 10px; 
+    transform: rotate(45deg); 
+}
+
+
+/* Bolha do Modelo (IA) */
+.model-message-wrapper {
+    justify-content: flex-start; 
     margin-right: auto; 
 }
+.model-message {
+    background-color: #e2e2e2; 
+    color: #333;
+    border-bottom-left-radius: 4px; /* "Cauda" */
+    margin-left: 5px; 
+}
+.model-message::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: -4px; 
+    width: 0;
+    height: 0;
+    border: 8px solid transparent;
+    border-right-color: #e2e2e2;
+    border-bottom-color: #e2e2e2;
+    border-radius: 0 0 10px 0; 
+    transform: rotate(-45deg); 
+}
+
+/* Mensagem de Erro (dentro da bolha do modelo) */
 .model-message.error-message {
-    background-color: #fff0f0;
+    background-color: #fee; 
     color: var(--danger-color);
     border: 1px solid var(--danger-color);
 }
+.model-message.error-message::after {
+    border-right-color: #fee;
+    border-bottom-color: #fee;
+}
+
+/* [NOVO] Balão "Digitando..." */
+.model-message.temporary-bubble {
+    background-color: #e2e2e2;
+    width: 60px; /* Largura fixa para os 3 pontos */
+    padding-top: 13px; /* Ajusta o alinhamento vertical */
+    padding-bottom: 11px;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.08);
+}
+.model-message.temporary-bubble::after {
+    border-right-color: #e2e2e2;
+    border-bottom-color: #e2e2e2;
+}
+
+/* [NOVO] Animação dos 3 pontos */
+.loading-dots {
+    display: flex; 
+    justify-content: center; 
+    align-items: center;
+    height: 10px; /* Altura para alinhar os pontos */
+}
+.loading-dots span {
+    display: inline-block;
+    width: 8px; 
+    height: 8px; 
+    background-color: #999; /* Cor dos pontos */
+    border-radius: 50%;
+    margin: 0 3px;
+    animation: bounce 1.4s infinite ease-in-out both;
+}
+.loading-dots span:nth-child(1) { animation-delay: -0.32s; }
+.loading-dots span:nth-child(2) { animation-delay: -0.16s; }
+.loading-dots span:nth-child(3) { animation-delay: 0s; }
+
+@keyframes bounce {
+  0%, 80%, 100% {
+    transform: scale(0.6);
+    opacity: 0.5;
+  }
+  40% {
+    transform: scale(1.0);
+    opacity: 1.0;
+  }
+}
+
+
+/* Área de Ação (Input + Botões Rápidos) */
+.chat-action-area {
+    margin-top: 15px; 
+    background-color: #f8f8f8; 
+    padding: 10px 15px; 
+    border-radius: 8px;
+    border: 1px solid #e0e0e0;
+    box-shadow: 0 -2px 5px rgba(0,0,0,0.05); 
+}
+
+/* Formulário de Input */
+.chat-form {
+    display: flex;
+    gap: 0; 
+    margin-top: 0;
+    margin-bottom: 10px; 
+}
+.chat-form .input-field { 
+    margin-bottom: 0;
+    flex: 1; 
+    border-radius: 20px 0 0 20px; 
+    border-right: none; 
+    padding: 10px 18px; 
+    font-size: 1em;
+    height: 45px; 
+    border-color: #ccc; 
+}
+.chat-form .input-field:focus {
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 2px rgba(38, 166, 154, 0.2); /* Sombra usa a cor primária */
+}
+.chat-form button {
+    width: 50px; 
+    height: 45px; 
+    margin-top: 0;
+    border-radius: 0 20px 20px 0; 
+    font-size: 1.2em; 
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: none; 
+}
+.chat-form button:hover {
+    filter: brightness(1.1); /* Ilumina o botão */
+}
+
+
+/* Botões Rápidos */
 .quick-replies {
     display: flex;
-    gap: 10px;
-    margin-bottom: var(--spacing-unit);
+    gap: 8px; 
+    margin-top: 0; 
     flex-wrap: wrap; 
+    justify-content: center; 
 }
 .quick-reply-btn {
     width: auto !important; 
     margin-top: 0 !important;
-    background-color: #f0f7f7 !important;
-    font-weight: bold;
-    font-size: 0.9em;
+    background-color: #eef7f7 !important; 
+    color: var(--primary-color) !important; 
+    border: 1px solid var(--primary-light) !important; 
+    font-weight: 600; 
+    font-size: 0.85em; 
+    border-radius: 20px; 
+    padding: 6px 14px;
+    transition: all 0.2s ease;
 }
-.chat-form {
-    display: flex;
-    gap: 10px;
-    margin-top: var(--spacing-unit);
+.quick-reply-btn:hover {
+    background-color: var(--primary-color) !important;
+    color: white !important;
+    transform: translateY(-1px); 
+    box-shadow: 0 2px 5px rgba(38, 166, 154, 0.2);
 }
-.chat-form input {
-    margin-bottom: 0;
-    flex: 1; 
-}
-.chat-form button {
-    width: auto; 
-    margin-top: 0;
+
+/* Mensagem de informação (quando não há histórico) */
+.info-message {
+    text-align: center;
+    color: #666;
+    font-style: italic;
+    padding: 20px;
 }
 /* ========================================= */
 /* 11. ESTILOS DAS METAS (UC009 - ATUALIZADO) */

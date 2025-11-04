@@ -33,7 +33,6 @@
             
             <div id="profile-menu" style="display: none;">
                 <i class="fas fa-user-circle" id="profile-menu-trigger"></i>
-                
                 <div id="profile-dropdown" style="display: none;">
                     <div class="dropdown-item">
                         <i class="fas fa-user icon"></i>
@@ -49,7 +48,7 @@
                         Sair
                     </button>
                 </div>
-                </div>
+            </div>
         </div>
     </header>
 
@@ -149,19 +148,27 @@
                    <div id="receitas-form-container"></div>
                    <div id="receitas-list-container"></div>
                 </section>
+                
                 <section id="section-chat" class="dashboard-section" style="display: none;">
                    <h3 class="section-title">Assistente de IA</h3>
-                   <div id="chat-history-container" class="info-message"></div>
-                   <div class="quick-replies">
-                       <button class="btn btn-secondary quick-reply-btn" data-pergunta="Me dê uma sugestão de treino para peito">Treino para Peito</button>
-                       <button class="btn btn-secondary quick-reply-btn" data-pergunta="Quais alimentos são ricos em fibras?">Alimentos Ricos em Fibras</button>
-                       <button class="btn btn-secondary quick-reply-btn" data-pergunta="Quantas proteínas devo consumir por dia?">Cálculo de Proteína</button>
+                   
+                   <div id="chat-history-container" class="info-message">
+                       </div>
+                   
+                   <div class="chat-action-area">
+                       <form id="chat-form" class="chat-form">
+                           <input type="text" id="chat-pergunta" class="input-field" placeholder="Pergunte sobre dieta ou treino..." required>
+                           <button type="submit" class="btn btn-primary"><i class="fas fa-paper-plane"></i></button>
+                       </form>
+                       
+                       <div class="quick-replies">
+                           <button class="btn btn-secondary quick-reply-btn" data-pergunta="Me dê uma sugestão de treino para peito">Treino para Peito</button>
+                           <button class="btn btn-secondary quick-reply-btn" data-pergunta="Quais alimentos são ricos em fibras?">Alimentos Ricos em Fibras</button>
+                           <button class="btn btn-secondary quick-reply-btn" data-pergunta="Quantas proteínas devo consumir por dia?">Cálculo de Proteína</button>
+                       </div>
                    </div>
-                   <form id="chat-form" class="chat-form">
-                       <input type="text" id="chat-pergunta" class="input-field" placeholder="Pergunte sobre dieta ou treino..." required>
-                       <button type="submit" class="btn btn-primary">Perguntar</button>
-                   </form>
                 </section>
+                
             </div>
         </div>
     </main>

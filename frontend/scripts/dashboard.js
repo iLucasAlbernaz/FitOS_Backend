@@ -1,31 +1,67 @@
 import { API_URL, handleLogout } from './auth.js'; 
 
 // --- ELEMENTOS DA DOM ---
-// const userInfoElement = document.getElementById('user-info'); // [REMOVIDO]
 const chatHistoryContainer = document.getElementById('chat-history-container'); 
 const perfilFormContainer = document.getElementById('perfil-form-container');
 const metasFormContainer = document.getElementById('metas-form-container');
 
-// --- (Helpers do Chat e loadChatHistory não mudam) ---
+// --- Helper para rolar o chat para o final ---
 function scrollToChatBottom() {
     if (chatHistoryContainer) {
         chatHistoryContainer.scrollTop = chatHistoryContainer.scrollHeight;
     }
 }
-function appendChatMessage(role, content, isError = false) {
-    if (!chatHistoryContainer) return;
+
+// --- [MODIFICADO] Helper para adicionar uma mensagem ao histórico (com Avatar) ---
+// Adicionado isTemporary para mensagens de loading
+function appendChatMessage(role, content, isError = false, isTemporary = false) {
+    if (!chatHistoryContainer) return null; // Retorna null se não houver container
+
     const messageDiv = document.createElement('div');
-    messageDiv.classList.add('chat-message');
-    if (role === 'user') {
-        messageDiv.classList.add('user-message');
-    } else {
-        messageDiv.classList.add('model-message');
-        if (isError) messageDiv.classList.add('error-message');
+    messageDiv.classList.add('chat-message-wrapper'); 
+    
+    // [NOVO] Adiciona uma classe se for temporário, para podermos remover
+    if (isTemporary) {
+        messageDiv.classList.add('temporary-message'); 
     }
-    messageDiv.textContent = content;
+
+    let messageHTML = '';
+    
+    if (role === 'user') {
+        messageDiv.classList.add('user-message-wrapper');
+        messageHTML = `<div class="chat-message user-message">${content}</div>`;
+    } else {
+        messageDiv.classList.add('model-message-wrapper');
+        let errorClass = isError ? 'error-message' : '';
+        
+        // [NOVO] Adiciona classe ao balão se for temporário
+        if (isTemporary) {
+            errorClass += ' temporary-bubble';
+        }
+
+        // [NOVO] Substitui o 'content' pela animação de 3 pontos se for temporário
+        const bubbleContent = isTemporary 
+            ? '<span class="loading-dots"><span>.</span><span>.</span><span>.</span></span>'
+            : content;
+
+        messageHTML = `
+            <div class="chat-avatar">
+                <i class="fas fa-robot"></i>
+            </div>
+            <div class="chat-message model-message ${errorClass}">
+                ${bubbleContent}
+            </div>
+        `;
+    }
+    
+    messageDiv.innerHTML = messageHTML;
     chatHistoryContainer.appendChild(messageDiv);
     scrollToChatBottom();
+
+    return isTemporary ? messageDiv : null; // Retorna a div se for temporária
 }
+
+// --- FUNÇÃO PARA CARREGAR O HISTÓRICO DE CHAT ---
 export async function loadChatHistory() {
     if (!chatHistoryContainer) return;
     chatHistoryContainer.innerHTML = '<p class="info-message">Carregando histórico...</p>';
@@ -53,7 +89,6 @@ export async function loadChatHistory() {
 }
 
 // --- FUNÇÃO 1: CARREGAR DADOS (Perfil) ---
-// [MODIFICADO] Agora preenche o dropdown do header
 export async function loadDashboardData(token) {
     if (!token) return null;
     try {
@@ -63,13 +98,10 @@ export async function loadDashboardData(token) {
         });
         const perfil = await response.json();
         if (response.ok) {
-            // [MODIFICADO] Remove a lógica do 'userInfoElement'
-            // [ADICIONADO] Preenche o novo dropdown de perfil
             const dropName = document.getElementById('dropdown-user-name');
             const dropEmail = document.getElementById('dropdown-user-email');
             if(dropName) dropName.textContent = perfil.nome;
             if(dropEmail) dropEmail.textContent = perfil.email;
-            
             return perfil; 
         } else {
              return null; 
@@ -80,14 +112,8 @@ export async function loadDashboardData(token) {
     }
 }
 
-
-// --- FUNÇÃO 2: RENDERIZAR FORMULÁRIOS DE CRUD (Perfil e Metas) ---
-// [MODIFICADO] Remove a lógica do 'metasFormContainer'
+// --- FUNÇÃO 2: RENDERIZAR MODO DE VISUALIZAÇÃO (Perfil) ---
 export function renderCrudForms(profile) {
-    
-    // (O placeholder de Metas foi removido, pois meta.js já cuida disso)
-    
-    // Renderiza o MODO DE VISUALIZAÇÃO no Perfil
     if (perfilFormContainer) {
         perfilFormContainer.innerHTML = `
             <div class="profile-view">
@@ -121,12 +147,9 @@ export function renderCrudForms(profile) {
                     <label>Objetivo Principal:</label>
                     <p>${profile.objetivos.principal}</p>
                 </div>
-                
                 <button id="btn-edit-profile" class="btn btn-primary" style="margin-top: 20px;">Editar Dados</button>
             </div>
-        
             <hr style="margin: 2rem 0; border: 1px solid #eee;">
-        
             <details class="danger-zone-details">
                 <summary style="color: var(--danger-color); cursor: pointer; font-weight: bold;">
                     Zona de Perigo: Opções da Conta
@@ -138,77 +161,58 @@ export function renderCrudForms(profile) {
                 </div>
             </details>
         `;
-
-        // Adiciona o listener para o novo botão "Editar"
         document.getElementById('btn-edit-profile').addEventListener('click', () => {
-            renderProfileForm(profile); // Chama a função que renderiza o formulário
+            renderProfileForm(profile); 
         });
-        
-        // Adiciona o listener para o botão "Excluir"
         document.getElementById('delete-account-btn').addEventListener('click', () => {
             handleDeleteProfile();
         });
     }
 }
 
-// --- [NOVA FUNÇÃO] ---
-// Renderiza o MODO DE EDIÇÃO (o formulário)
+// --- FUNÇÃO 2B: Renderiza o MODO DE EDIÇÃO (Perfil) ---
 function renderProfileForm(profile) {
     if (perfilFormContainer) {
         perfilFormContainer.innerHTML = `
             <h4 style="color: var(--primary-color);">Meus Dados Cadastrais</h4>
             <form id="update-perfil-form">
-
                 <label class="input-label">Nome Completo:</label>
                 <input type="text" id="update-nome" class="input-field" value="${profile.nome}" required>
-
                 <label class="input-label">Email:</label>
                 <input type="email" id="update-email" class="input-field" value="${profile.email}" required>
-                
                 <hr style="margin: 1.5rem 0; border: 1px solid #eee;">
-
                 <label class="input-label">Altura (m) - Ex: 1.75:</label>
                 <input type="number" id="update-altura" class="input-field" value="${profile.dados_biometricos.altura_cm}" step="0.01" required>
-
                 <label class="input-label">Peso Atual (kg):</label>
                 <input type="number" id="update-peso" class="input-field" value="${profile.dados_biometricos.peso_atual_kg}" step="0.01" required>
-
                 <label class="input-label">Idade:</label>
                 <input type="number" id="update-idade" class="input-field" value="${profile.dados_biometricos.idade}" required>
-
                 <label class="input-label">Gênero:</label>
                 <select id="update-sexo" class="input-field" required>
                     <option value="M" ${profile.dados_biometricos.sexo === 'M' ? 'selected' : ''}>Masculino</option>
                     <option value="F" ${profile.dados_biometricos.sexo === 'F' ? 'selected' : ''}>Feminino</option>
                 </select>
-
                 <hr style="margin: 1.5rem 0; border: 1px solid #eee;">
-
                 <label class="input-label">Meu Objetivo Principal:</label>
                 <select id="update-objetivo" class="input-field" required>
                     <option value="Perda de Peso" ${profile.objetivos.principal === 'Perda de Peso' ? 'selected' : ''}>Perda de Peso</option>
                     <option value="Ganho de Massa" ${profile.objetivos.principal === 'Ganho de Massa' ? 'selected' : ''}>Ganho de Massa</option>
                     <option value="Manutenção" ${profile.objetivos.principal === 'Manutenção' ? 'selected' : ''}>Manutenção</option>
                 </select>
-                
                 <button type="submit" class="btn btn-primary">Salvar Alterações</button>
                 <button type="button" id="btn-cancelar-edicao" class="btn btn-secondary" style="margin-top: 10px;">Cancelar</button>
             </form>
         `;
-
         document.getElementById('update-perfil-form').addEventListener('submit', (e) => {
             handleUpdateProfile(e, profile); 
         });
-
         document.getElementById('btn-cancelar-edicao').addEventListener('click', () => {
             renderCrudForms(profile); // Volta para o modo de visualização
         });
     }
 }
 
-
 // --- FUNÇÃO 3: LÓGICA DE ATUALIZAÇÃO (Perfil) ---
-// [MODIFICADO] Ao salvar, preenche o dropdown do header
 async function handleUpdateProfile(e, currentProfile) {
     e.preventDefault();
     const token = localStorage.getItem('jwtToken');
@@ -239,15 +243,11 @@ async function handleUpdateProfile(e, currentProfile) {
         if (response.ok) {
             alert('Perfil atualizado com sucesso!');
             const updatedProfile = await response.json();
-            
-            // [MODIFICADO] Atualiza o dropdown do header
             const dropName = document.getElementById('dropdown-user-name');
             const dropEmail = document.getElementById('dropdown-user-email');
             if(dropName) dropName.textContent = updatedProfile.usuario.nome;
             if(dropEmail) dropEmail.textContent = updatedProfile.usuario.email;
-            
             renderCrudForms(updatedProfile.usuario);
-
         } else {
             alert('Falha ao atualizar perfil. Verifique o console.');
         }
@@ -257,7 +257,6 @@ async function handleUpdateProfile(e, currentProfile) {
 }
 
 // --- FUNÇÃO 4: LÓGICA DE EXCLUSÃO (Perfil) ---
-// (Não muda)
 async function handleDeleteProfile() {
     if (!confirm("ATENÇÃO: Você tem certeza que deseja excluir sua conta? Esta ação é permanente.")) {
         return; 
@@ -281,14 +280,17 @@ async function handleDeleteProfile() {
     }
 }
 
-
-// --- FUNÇÃO 5: CHATBOT IA (Não muda) ---
+// --- FUNÇÃO 5: CHATBOT IA (UC006) ---
+// [MODIFICADO] Lida com o 'loading'
 export async function handleChatSubmit(pergunta) {
     const perguntaInput = document.getElementById('chat-pergunta');
     perguntaInput.value = pergunta; 
     
     appendChatMessage('user', pergunta);
     
+    // [MODIFICADO] Mostra "digitando"
+    const loadingMessageDiv = appendChatMessage('model', '...', false, true); 
+
     try {
         const response = await fetch(`${API_URL}/chat`, {
             method: 'POST',
@@ -301,6 +303,11 @@ export async function handleChatSubmit(pergunta) {
         
         const data = await response.json();
         
+        // Remove a mensagem "Pensando..."
+        if (loadingMessageDiv) {
+            loadingMessageDiv.remove();
+        }
+
         if (response.ok) {
             appendChatMessage('model', data.resposta);
         } else {
@@ -312,12 +319,17 @@ export async function handleChatSubmit(pergunta) {
             }
         }
     } catch (error) {
+        // Remove "Pensando..." em caso de erro
+        if (loadingMessageDiv) {
+            loadingMessageDiv.remove();
+        }
+        
         appendChatMessage('model', 'O chatbot está temporariamente fora do ar. Tente novamente mais tarde.', true);
         console.error('Erro no chat:', error);
     }
 }
 
-// --- FUNÇÃO 6: Listeners dos Botões Rápidos (Não muda) ---
+// --- FUNÇÃO 6: Listeners dos Botões Rápidos (FA1) ---
 export function setupChatListeners() {
     document.querySelectorAll('.quick-reply-btn').forEach(button => {
         button.addEventListener('click', (e) => {
