@@ -1,30 +1,30 @@
 const mongoose = require('mongoose');
+const Schema = mongoose.Schema;
 
 const NotificacaoSchema = new mongoose.Schema({
-    // Liga a notificação ao destinatário
-    usuario_id: {
+    usuario: {
         type: mongoose.Schema.Types.ObjectId,
-        ref: 'Usuario', 
-        required: true
+        ref: 'Usuario',
+        required: true,
     },
-    
-    // Dados da notificação (Tipo, Mensagem e Status)
     tipo: {
-        type: String,       
-        enum: ['Meta Alcançada', 'Lembrete', 'Sistema'], 
+        type: String,
+        enum: ['SISTEMA', 'META_CONCLUIDA', 'LEMBRETE'],
         required: true
     },
     mensagem: {
         type: String,
-        required: true
+        required: true,
+        trim: true
     },
-    status: {
-        type: String,
-        enum: ['Não Lida', 'Lida'],
-        default: 'Não Lida'
+    lida: {
+        type: Boolean,
+        default: false
+    },
+    dataEnvio: {
+        type: Date,
+        default: Date.now
     }
-}, {
-    timestamps: true 
-});
+}, { timestamps: true });
 
 module.exports = mongoose.model('Notificacao', NotificacaoSchema);

@@ -1,4 +1,5 @@
 const Meta = require('../models/Meta');
+const { sendNotification } = require('./notificacaoController'); 
 
 // 1. VISUALIZAR METAS (GET /api/metas)
 exports.getMetas = async (req, res) => {
@@ -11,14 +12,12 @@ exports.getMetas = async (req, res) => {
     }
 };
 
-// 2. [NOVO] VISUALIZAR UMA META (Para Edição)
-// GET /api/metas/:id
+// 2. VISUALIZAR UMA META (GET /api/metas/:id)
 exports.getMetaById = async (req, res) => {
     try {
         const meta = await Meta.findById(req.params.id);
         if (!meta) return res.status(404).json({ msg: 'Meta não encontrada' });
 
-        // Validação de segurança
         if (meta.usuario.toString() !== req.usuario.id) {
             return res.status(401).json({ msg: 'Não autorizado' });
         }
@@ -32,7 +31,8 @@ exports.getMetaById = async (req, res) => {
     }
 };
 
-// 3. DEFINIR META (POST /api/metas)
+// 3. DEFINIR META (Gatilho de Notificação)
+// POST /api/metas
 exports.createMeta = async (req, res) => {
     const { tipo, valorAlvo, valorInicial, dataInicio, dataFim, periodo } = req.body;
 
@@ -40,14 +40,13 @@ exports.createMeta = async (req, res) => {
         return res.status(400).json({ msg: 'Tipo, Valor Alvo e Data de Início são obrigatórios.' });
     }
     
-    if (tipo === 'Peso' || tipo === 'Água') {
-        if (!valorInicial) {
-            return res.status(400).json({ msg: 'Valor Inicial é obrigatório para metas de Peso ou Água.' });
-        }
-    } else if (tipo === 'Treino') {
-        if (!periodo) {
-            return res.status(400).json({ msg: 'Período (Semana/Mês) é obrigatório para metas de Treino.' });
-        }
+    const inicio = new Date(dataInicio);
+    if (inicio.getTime() < new Date().setHours(0, 0, 0, 0)) {
+        return res.status(400).json({ msg: 'A Data de Início não pode ser no passado.' });
+    }
+    
+    if (valorAlvo < 0 || (valorInicial && valorInicial < 0)) {
+        return res.status(400).json({ msg: 'Valores Alvo e Inicial não podem ser negativos.' });
     }
 
     try {
@@ -56,13 +55,21 @@ exports.createMeta = async (req, res) => {
             tipo,
             valorInicial: valorInicial || 0,
             valorAlvo,
-            dataInicio: new Date(dataInicio), 
+            dataInicio: inicio, 
             dataFim: dataFim ? new Date(dataFim) : null,
             periodo: periodo || null,
             status: 'Em Andamento'
         });
 
         const meta = await novaMeta.save();
+
+        // [GATILHO DE NOTIFICAÇÃO] Dispara uma notificação de "Meta Criada"
+        await sendNotification(
+            req.usuario.id, 
+            'SISTEMA', 
+            `Sua nova meta de ${tipo} (Alvo: ${valorAlvo}) foi criada com sucesso!`
+        );
+
         res.status(201).json(meta);
     } catch (err) {
         console.error(err.message);
@@ -77,7 +84,6 @@ exports.updateMeta = async (req, res) => {
     try {
         let meta = await Meta.findById(req.params.id);
         if (!meta) return res.status(404).json({ msg: 'Meta não encontrada' });
-
         if (meta.usuario.toString() !== req.usuario.id) {
             return res.status(401).json({ msg: 'Não autorizado' });
         }

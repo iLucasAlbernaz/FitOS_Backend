@@ -4,8 +4,8 @@ import { loadDietPlan } from './dieta.js';
 import { loadTreinos } from './treino.js';
 import { loadDiario } from './diario.js';
 import { loadMetas } from './meta.js';
-// [NOVO] Importa a função de receitas
 import { loadReceitas } from './receita.js'; 
+import { loadNotificacoes } from './notificacao.js'; // [CORRIGIDO] Caminho direto
 
 // --- ELEMENTOS DA DOM ---
 const dashboardElement = document.getElementById('app-dashboard');
@@ -22,7 +22,7 @@ function showDashboard() {
     authContainer.style.display = 'none';
     dashboardElement.style.display = 'block';
     dashboardNav.style.display = 'grid'; // Mostra a nav
-    profileMenu.style.display = 'block'; // Mostra o ícone de perfil
+    profileMenu.style.display = 'flex'; // Mostra o ícone de perfil
     document.body.classList.add('dashboard-view');
 }
 
@@ -59,7 +59,6 @@ function logout() {
     handleLogout(); 
     showLogin();
 }
-// window.logout = logout; // Não é mais global
 
 
 // --- Funções de Modal e Notificação ---
@@ -156,6 +155,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (profile) {
                     showWelcomeNotification(profile.nome); 
                     renderCrudForms(profile);
+                    
+                    // [NOVO] Carrega notificações ao fazer login
+                    loadNotificacoes(); 
+                    
                     if (window.showDashboardSection) {
                         window.showDashboardSection('perfil');
                     }
@@ -185,6 +188,10 @@ document.addEventListener('DOMContentLoaded', () => {
         loadDashboardData(storedToken).then(profile => {
             if (profile) {
                 renderCrudForms(profile);
+                
+                // [NOVO] Carrega notificações ao recarregar a sessão
+                loadNotificacoes(); 
+                
                 if (window.showDashboardSection) {
                     window.showDashboardSection('perfil');
                 }
@@ -201,4 +208,5 @@ window.loadTreinos = loadTreinos;
 window.loadDiario = loadDiario;
 window.loadChatHistory = loadChatHistory; 
 window.loadMetas = loadMetas;
-window.loadReceitas = loadReceitas; // <-- [ADICIONADO]
+window.loadReceitas = loadReceitas;
+window.loadNotificacoes = loadNotificacoes; // [NOVO] Exportação

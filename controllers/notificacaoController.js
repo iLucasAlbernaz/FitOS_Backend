@@ -1,54 +1,80 @@
 const Notificacao = require('../models/Notificacao');
 
-// [POST] Simulação do Sistema Criando Notificação (Ex: Meta de água batida)
-exports.criarNotificacaoSistema = async (req, res) => {
+/**
+ * Helper para criar e salvar uma nova notificação (Usado por outros controllers)
+ */
+exports.sendNotification = async (userId, tipo, mensagem) => {
     try {
         const novaNotificacao = new Notificacao({
-            usuario_id: req.usuario.id, // Pega ID do token
-            tipo: req.body.tipo || 'Sistema', 
-            mensagem: req.body.mensagem,
-            status: 'Não Lida'
+            usuario: userId,
+            tipo: tipo,
+            mensagem: mensagem,
+            lida: false
         });
-
         await novaNotificacao.save();
-
-        res.status(201).json({ 
-            mensagem: "Notificação criada (simulação de sistema)!", 
-            notificacao: novaNotificacao 
-        });
     } catch (error) {
-        res.status(500).json({ mensagem: "Erro interno ao criar notificação." });
+        console.error("Erro ao criar notificação:", error.message);
     }
 };
 
-// [GET] Buscar todas as notificações do usuário logado
-exports.buscarNotificacoes = async (req, res) => {
+/**
+ * @route   GET /api/notificacoes
+ * @desc    Busca as 10 últimas notificações do usuário logado
+ */
+exports.getNotificacoes = async (req, res) => {
     try {
-        const notificacoes = await Notificacao.find({ usuario_id: req.usuario.id })
-            .sort({ createdAt: -1 });
+        // [CORRIGIDO] Usa req.usuario.id (assumindo que o middleware é 'auth')
+        const userId = req.usuario.id; 
+        
+        const notificacoes = await Notificacao.find({ usuario: userId })
+                                              .sort({ createdAt: -1 })
+                                              .limit(10); 
 
-        res.status(200).json(notificacoes);
+        const naoLidasCount = await Notificacao.countDocuments({ 
+            usuario: userId, 
+            lida: false 
+        });
+
+        res.json({
+            notificacoes,
+            naoLidasCount
+        });
+
     } catch (error) {
-        res.status(500).json({ mensagem: "Erro interno ao buscar notificações." });
+        console.error("Erro ao buscar notificações:", error.message);
+        res.status(500).send('Erro no Servidor');
     }
 };
 
-// [DELETE] Deletar uma notificação específica
-exports.deletarNotificacao = async (req, res) => {
+/**
+ * @route   PUT /api/notificacoes/marcar-lida/:id
+ * @desc    Marca uma notificação específica como lida
+ */
+exports.markAsRead = async (req, res) => {
     try {
-        const { id } = req.params;
-
-        const notificacao = await Notificacao.findOneAndDelete({ 
-            _id: id, 
-            usuario_id: req.usuario.id // Garante que só o dono possa deletar
-        });
+        const userId = req.usuario.id; // [CORRIGIDO]
+        let notificacao = await Notificacao.findById(req.params.id);
 
         if (!notificacao) {
-            return res.status(404).json({ mensagem: "Notificação não encontrada ou não pertence a você." });
+            return res.status(404).json({ msg: 'Notificação não encontrada' });
+        }
+        
+        if (notificacao.usuario.toString() !== userId) {
+            return res.status(401).json({ msg: 'Não autorizado' });
         }
 
-        res.status(200).json({ mensagem: "Notificação excluída com sucesso!" });
+        notificacao.lida = true;
+        await notificacao.save();
+        
+        const naoLidasCount = await Notificacao.countDocuments({ 
+            usuario: userId, 
+            lida: false 
+        });
+
+        res.json({ msg: 'Notificação marcada como lida.', naoLidasCount });
+
     } catch (error) {
-        res.status(500).json({ mensagem: "Erro interno ao deletar notificação." });
+        console.error("Erro ao marcar como lida:", error.message);
+        res.status(500).send('Erro no Servidor');
     }
 };

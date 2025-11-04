@@ -395,7 +395,12 @@ async function handleFormSubmit(e) {
         } 
         
         alert('Meta salva com sucesso!');
-        loadMetas(); // Reseta o form e recarrega a lista
+        loadMetas(); 
+        
+        // [GATILHO DE NOTIFICAÇÃO] Recarrega as notificações após o sucesso
+        if(window.loadNotificacoes) {
+            window.loadNotificacoes();
+        }
 
     } catch (error) {
         console.error('Erro ao salvar meta:', error);
@@ -403,7 +408,7 @@ async function handleFormSubmit(e) {
     }
 }
 
-// [MODIFICADO] A linha com o erro de digitação foi corrigida
+// (Não muda)
 async function handleEditClick(id) {
     try {
         const token = localStorage.getItem('jwtToken');
@@ -414,12 +419,11 @@ async function handleEditClick(id) {
         
         const meta = await res.json();
         
-        // [CORREÇÃO] Chamando renderMetaForm (com "Meta")
         renderMetaForm('Editar Meta', meta, id, true); // true = mostrar
         window.scrollTo(0, 0); 
 
     } catch (error) {
-        console.error('Erro:', error); // Linha 436 do erro original
+        console.error('Erro:', error);
         alert('Não foi possível carregar a meta para edição.');
     }
 }

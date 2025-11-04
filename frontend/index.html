@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale-1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>FitOS - Seu Planejador Fitness</title>
     <link rel="stylesheet" href="style.css"> 
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" integrity="sha512-SnH5WK+bZxgPHs44uWIX+LLJAJ9/2PkPKZ5QiAj6Ta86w+fsb2TkcmfRyVX3pBnMFcV7oQPJkl9QevSCWr3W6A==" crossorigin="anonymous" referrerpolicy="no-referrer" />
@@ -20,6 +20,7 @@
     <header class="site-header">
         <div class="header-container container">
             <img src="images/logo.png" alt="Logo FitOS" class="header-logo">
+            
             <nav id="dashboard-nav" style="display: none;">
                 <button class="btn btn-nav" onclick="showDashboardSection('perfil')">Perfil</button>
                 <button class="btn btn-nav" onclick="showDashboardSection('metas')">Metas</button>
@@ -29,6 +30,20 @@
                 <button class="btn btn-nav" onclick="showDashboardSection('dieta')">Plano de Dieta</button>
                 <button class="btn btn-nav" onclick="showDashboardSection('chat')">Assistente IA</button>
             </nav>
+            
+            <div id="notificacao-menu" style="display: none;">
+                <i class="fas fa-bell" id="notificacao-menu-trigger"></i>
+                <span id="notificacao-count" class="badge" style="display: none;">0</span> 
+                <div id="notificacao-dropdown" style="display: none;">
+                    <h4 class="dropdown-title">Notificações</h4>
+                    <div id="notificacao-list">
+                        <p class="no-notifications-message">Carregando...</p>
+                    </div>
+                    <div id="mark-all-read-btn" class="dropdown-footer">
+                        Marcar todas como lidas
+                    </div>
+                </div>
+            </div>
             <div id="profile-menu" style="display: none;">
                 <i class="fas fa-user-circle" id="profile-menu-trigger"></i>
                 <div id="profile-dropdown" style="display: none;">
@@ -160,18 +175,14 @@
                 <section id="section-chat" class="dashboard-section" style="display: none;">
                    <h3 class="section-title">Assistente de IA</h3>
                    <div id="chat-history-container" class="info-message"></div>
-                   <br>
                    <div class="quick-replies">
                        <button class="btn btn-secondary quick-reply-btn" data-pergunta="Me dê uma sugestão de treino para peito">Treino para Peito</button>
                        <button class="btn btn-secondary quick-reply-btn" data-pergunta="Quais alimentos são ricos em fibras?">Alimentos Ricos em Fibras</button>
                        <button class="btn btn-secondary quick-reply-btn" data-pergunta="Quantas proteínas devo consumir por dia?">Cálculo de Proteína</button>
                    </div>
-                   <br>
                    <form id="chat-form" class="chat-form">
                        <input type="text" id="chat-pergunta" class="input-field" placeholder="Pergunte sobre dieta ou treino..." required>
-                       <button type="submit" class="btn btn-primary">
-                               <i class="fas fa-paper-plane"></i>
-                           </button>
+                       <button type="submit" class="btn btn-primary"><i class="fas fa-paper-plane"></i></button>
                    </form>
                 </section>
             </div>
@@ -221,8 +232,7 @@
                     window.loadMetas();
                 }
             }
-            
-            // [GATILHO ADICIONADO]
+            // Gatilho das Receitas
             if (sectionId === 'receitas') {
                 if (window.loadReceitas) {
                     window.loadReceitas();

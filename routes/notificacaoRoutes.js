@@ -1,11 +1,14 @@
-    const express = require('express');
+const express = require('express');
 const router = express.Router();
+const auth = require('../middleware/auth');
 const notificacaoController = require('../controllers/notificacaoController');
-const authMiddleware = require('../middleware/auth'); 
 
-// Rotas Protegidas (POST/GET/DELETE)
-router.post('/', authMiddleware, notificacaoController.criarNotificacaoSistema);
-router.get('/', authMiddleware, notificacaoController.buscarNotificacoes);
-router.delete('/:id', authMiddleware, notificacaoController.deletarNotificacao);
+// @route   GET /api/notificacoes
+// @desc    Busca todas as notificações do usuário
+router.get('/', auth, notificacaoController.getNotificacoes);
+
+// @route   PUT /api/notificacoes/marcar-lida/:id
+// @desc    Marca uma notificação como lida
+router.put('/marcar-lida/:id', auth, notificacaoController.markAsRead);
 
 module.exports = router;
