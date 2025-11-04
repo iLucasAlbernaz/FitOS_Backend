@@ -25,7 +25,7 @@ exports.handleChat = async (req, res) => {
         });
         await perguntaUsuario.save();
 
-        // 2. [CORREÇÃO] Prepara e envia o prompt para a IA (usando a NOVA SINTAXE)
+        // 2. Prepara e envia o prompt para a IA (usando a NOVA SINTAXE)
         
         // Define o "contexto" ou "personalidade" do bot
         const prompt = `
@@ -43,7 +43,8 @@ exports.handleChat = async (req, res) => {
             contents: [{ role: "user", parts: [{ text: prompt }] }],
         });
 
-        const text = response.response.text();
+        // [A CORREÇÃO ESTÁ AQUI] Removido o ".response" extra
+        const text = response.text();
         // --- Fim da Correção ---
 
         // 3. Salva a resposta da IA no histórico
