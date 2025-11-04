@@ -1,5 +1,5 @@
 const { GoogleGenerativeAI } = require('@google/generative-ai');
-const Chat = require('../models/Chat'); // Importa o novo modelo
+const Chat = require('../models/Chat'); 
 
 // Inicializa o GenAI com a chave do seu .env
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
@@ -25,7 +25,10 @@ exports.handleChat = async (req, res) => {
         await perguntaUsuario.save();
 
         // 2. Prepara e envia o prompt para a IA
-        const model = genAI.getGenerativeModel({ model: "gemini-pro" });
+        
+        // [CORREÇÃO AQUI] Trocamos 'gemini-pro' pelo modelo mais recente.
+        const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+
         const prompt = `
             Você é o assistente de IA do app "FitOS".
             Sua especialidade é nutrição, fitness e saúde.
