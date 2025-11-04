@@ -25,24 +25,30 @@ exports.handleChat = async (req, res) => {
         });
         await perguntaUsuario.save();
 
-        // 2. Prepara e envia o prompt para a IA
+        // 2. [CORREÇÃO] Prepara e envia o prompt para a IA (usando a NOVA SINTAXE)
         
         // [CORREÇÃO 3] Usa a sintaxe correta (getGenerativeModel) e o nome do modelo
         const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash-latest" }); 
 
-        const prompt = `
-            Você é o assistente de IA do app "FitOS".
-            Sua especialidade é nutrição, fitness e saúde.
-            Responda de forma clara, motivadora e direta (no máximo 3 frases).
-            Não use markdown ou formatação especial.
-            
-            Pergunta do usuário: "${pergunta}"
-        `;
+        // Define o "contexto" ou "personalidade" do bot
+        const chat = model.startChat({
+            history: [
+                {
+                    role: "user",
+                    parts: [{ text: "Você é o assistente de IA do app 'FitOS'. Sua especialidade é nutrição, fitness e saúde. Responda de forma clara, motivadora e direta (no máximo 3 frases). Não use markdown ou formatação especial." }],
+                },
+                {
+                    role: "model",
+                    parts: [{ text: "Entendido. Eu sou o FitOS. Estou pronto para ajudar com dúvidas de fitness e nutrição." }],
+                }
+            ]
+        });
 
-        // [CORREÇÃO 4] Usa a sintaxe correta (generateContent)
-        const result = await model.generateContent(prompt);
+        // [CORREÇÃO 4] Usa a sintaxe correta (sendMessage)
+        const result = await chat.sendMessage(pergunta);
         const response = await result.response;
         const text = response.text();
+        // --- Fim da Correção ---
 
         // 3. Salva a resposta da IA no histórico
         const respostaIA = new Chat({
