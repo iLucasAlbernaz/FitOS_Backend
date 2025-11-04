@@ -165,7 +165,7 @@ function renderForm(title, data = {}, show = false) {
             
             <hr class="form-divider">
             <button type="submit" class="btn btn-primary">Salvar Receita</button>
-            <button type="button" id="btn-cancelar-receita" class="btn btn-secondary" style="margin-left: 10px; width: auto; display: inline-block;">Cancelar</button>
+            <button type="button" id="btn-cancelar-receita" class="btn btn-secondary">Cancelar</button>
         </form>
     `;
 
