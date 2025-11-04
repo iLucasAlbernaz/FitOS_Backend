@@ -39,12 +39,12 @@ exports.handleChat = async (req, res) => {
         
         // [CORREÇÃO 3] Usa a sintaxe correta: genAI.models.generateContent
         const response = await genAI.models.generateContent({
-            model: "gemini-2.5-flash", // O modelo da sua imagem
+            model: "gemini-1.5-flash", // O modelo da sua imagem
             contents: [{ role: "user", parts: [{ text: prompt }] }],
         });
 
-        // [A CORREÇÃO ESTÁ AQUI] Removido o ".response" extra
-        const text = response.text();
+        // [A CORREÇÃO FINAL ESTÁ AQUI] É .text (propriedade), NÃO .text() (função)
+        const text = response.text;
         // --- Fim da Correção ---
 
         // 3. Salva a resposta da IA no histórico
