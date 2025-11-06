@@ -1318,13 +1318,46 @@ body.dashboard-view .header-logo {
 }
 
 /* Container dos gráficos (importante para o 'responsive') */
-#painel-peso-container,
-#painel-treino-container {
+#painel-peso-container {
     position: relative;
     height: 300px;
 }
 
-/* O card de macros ocupa as 2 colunas */
-.painel-grid .painel-card:nth-child(3) {
-    grid-column: 1 / -1;
+/* [NOVO] Estilo para o Medidor (Gauge) */
+.gauge-container {
+    position: relative;
+    height: 300px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-end; /* Alinha o texto embaixo */
+}
+.gauge-container canvas {
+    /* Faz o canvas ficar por cima do texto */
+    position: absolute;
+    top: 0;
+    left: 0;
+}
+.gauge-text {
+    position: relative;
+    z-index: 10;
+    text-align: center;
+    margin-top: -50px; /* Puxa o texto para cima, para o meio do gráfico */
+}
+.gauge-value {
+    font-size: 3.5em; /* 2 */
+    font-weight: 700;
+    color: var(--primary-color);
+}
+.gauge-total {
+    font-size: 2em; /* / 5 */
+    font-weight: 300;
+    color: #999;
+}
+.gauge-label {
+    display: block;
+    font-size: 1em;
+    font-weight: 600;
+    color: #555;
+    margin-top: -10px; /* Ajuste fino */
 }

@@ -1,7 +1,7 @@
 const Diario = require('../models/Diario');
-const Meta = require('../models/Meta');
+const Meta = require('../models/Meta'); // <-- [ADICIONADO]
 
-// --- Helpers de Data (copiados de meta.js) ---
+// --- Helpers de Data ---
 function getInicioSemana(d) { 
     d = new Date(d);
     const day = d.getDay();
@@ -25,24 +25,33 @@ exports.getDashboardStats = async (req, res) => {
         const hoje = new Date();
         
         // --- 1. DADOS DE EVOLUÇÃO DO PESO ---
-        // Busca os últimos 12 meses de registros do diário (ou todos, se forem poucos)
         const registrosDiario = await Diario.find({ 
             usuario: userId,
-            pesoKg: { $gt: 0 } // Apenas registros que contenham peso
-        }).sort({ data: 1 }); // Ordena do mais antigo para o mais novo
+            pesoKg: { $gt: 0 } 
+        }).sort({ data: 1 }); 
+
+        // [MODIFICADO] Busca a meta de peso ativa
+        const metaPeso = await Meta.findOne({
+            usuario: userId,
+            tipo: 'Peso',
+            status: 'Em Andamento'
+        });
 
         let weightData = {
             labels: [],
-            data: []
+            data: [],
+            goalData: [] // [NOVO] Array para a linha da meta
         };
         
         if (registrosDiario.length < 2) {
-            // (FE3.1) Dados insuficientes
             weightData = null;
         } else {
             registrosDiario.forEach(d => {
                 weightData.labels.push(new Date(d.data).toLocaleDateString('pt-BR', { timeZone: 'UTC', day: '2-digit', month: '2-digit' }));
                 weightData.data.push(d.pesoKg);
+                
+                // Adiciona o valor da meta (ou null) para cada ponto de dado
+                weightData.goalData.push(metaPeso ? metaPeso.valorAlvo : null);
             });
         }
 
@@ -53,7 +62,6 @@ exports.getDashboardStats = async (req, res) => {
             periodo: 'Semana'
         };
 
-        // Busca a meta de treino ativa do usuário
         const metaTreino = await Meta.findOne({ 
             usuario: userId, 
             tipo: 'Treino', 
@@ -61,16 +69,13 @@ exports.getDashboardStats = async (req, res) => {
         });
 
         if (!metaTreino) {
-            // (FE3.1) Sem meta, não há dados
             workoutData = null;
         } else {
             workoutData.total = metaTreino.valorAlvo;
             workoutData.periodo = metaTreino.periodo;
 
-            // Define o início do período (Semana ou Mês)
             const inicioPeriodo = metaTreino.periodo === 'Mês' ? getInicioMes(hoje) : getInicioSemana(hoje);
             
-            // Conta quantos dias o usuário registrou treino no diário DENTRO do período
             const treinosNoPeriodo = await Diario.countDocuments({
                 usuario: userId,
                 treinoRealizado: { $ne: null, $ne: "" },
@@ -81,7 +86,6 @@ exports.getDashboardStats = async (req, res) => {
         }
 
         // --- 3. DADOS DE MACROS (Não implementado) ---
-        // (Seria implementado aqui quando o Diário for atualizado)
         const macroData = null;
 
 
@@ -89,7 +93,6 @@ exports.getDashboardStats = async (req, res) => {
 
     } catch (error) {
         console.error("Erro ao gerar estatísticas:", error.message);
-        // (FE3.2) Erro de Carregamento
         res.status(500).json({ msg: 'Erro ao carregar o painel de desempenho. Tente novamente mais tarde.' });
     }
 };

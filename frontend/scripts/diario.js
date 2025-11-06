@@ -58,7 +58,7 @@ function renderForm(title = 'Novo Registro Diário', data = {}, editId = null, s
             <textarea id="diario-treino" class="input-field" placeholder="Treino realizado...">${data.treinoRealizado || ''}</textarea>
             
             <button type="submit" class="btn btn-primary">${editId ? 'Salvar Alterações' : 'Salvar Registro'}</button>
-            <button type="button" id="btn-cancelar-diario" class="btn btn-secondary" style="margin-left: 10px; width: auto; display: inline-block;">Cancelar</button>
+            <button type="button" id="btn-cancelar-diario" class="btn btn-secondary">Cancelar</button>
         </form>
     `;
 

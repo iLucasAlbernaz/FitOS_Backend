@@ -1,6 +1,6 @@
 import { API_URL } from './auth.js'; 
 
-// Variáveis para guardar as instâncias dos gráficos (para podermos destruí-los)
+// Variáveis para guardar as instâncias dos gráficos
 let weightChartInstance = null;
 let workoutChartInstance = null;
 
@@ -11,11 +11,9 @@ export async function loadPainel() {
     const token = localStorage.getItem('jwtToken');
     if (!token) return;
 
-    // Elementos dos containers
     const pesoContainer = document.getElementById('painel-peso-container');
     const treinoContainer = document.getElementById('painel-treino-container');
     
-    // Reseta os containers
     pesoContainer.innerHTML = '<p class="info-message">Carregando dados de peso...</p>';
     treinoContainer.innerHTML = '<p class="info-message">Carregando dados de treino...</p>';
     
@@ -25,15 +23,8 @@ export async function loadPainel() {
         });
 
         if (!response.ok) {
-            // (FE3.1) Lida com "Dados insuficientes" (404)
-            if (response.status === 404) {
-                const err = await response.json();
-                pesoContainer.innerHTML = `<p class="info-message">${err.msg || 'Dados insuficientes.'}</p>`;
-                treinoContainer.innerHTML = `<p class="info-message">${err.msg || 'Dados insuficientes.'}</p>`;
-            } else {
-                throw new Error('Falha ao carregar dados do painel.');
-            }
-            return;
+            const err = await response.json();
+            throw new Error(err.msg || 'Falha ao carregar dados do painel.');
         }
 
         const stats = await response.json();
@@ -42,53 +33,59 @@ export async function loadPainel() {
         if (stats.weightData) {
             renderWeightChart(pesoContainer, stats.weightData);
         } else {
-            // (FE3.1)
-            pesoContainer.innerHTML = '<p class="info-message">Ainda não há dados suficientes para exibir a evolução do peso. Adicione pelo menos 2 registros no Diário.</p>';
+            pesoContainer.innerHTML = '<p class="info-message">Adicione pelo menos 2 registros de peso no Diário para ver sua evolução.</p>';
         }
 
         // 2. Renderiza o Gráfico de Treino
         if (stats.workoutData) {
             renderWorkoutChart(treinoContainer, stats.workoutData);
         } else {
-            // (FE3.1)
-            treinoContainer.innerHTML = '<p class="info-message">Nenhuma meta de treino ativa encontrada. Defina uma meta de treino para ver seu progresso.</p>';
+            treinoContainer.innerHTML = '<p class="info-message">Defina uma Meta de Treino para ver seu progresso.</p>';
         }
 
     } catch (error) {
         console.error('Erro ao carregar painel:', error);
-        // (FE3.2) Erro de carregamento
-        pesoContainer.innerHTML = '<p class="error-message">Erro ao carregar o painel. Tente novamente mais tarde.</p>';
-        treinoContainer.innerHTML = '';
+        pesoContainer.innerHTML = `<p class="error-message">${error.message}</p>`;
+        treinoContainer.innerHTML = `<p class="error-message">Erro ao carregar dados. Tente novamente mais tarde.</p>`;
     }
 }
 
 
 /**
- * Renderiza o gráfico de linha para Evolução do Peso
+ * [MODIFICADO] Renderiza o gráfico de linha com a LINHA DA META
  */
 function renderWeightChart(container, stats) {
-    // Limpa o container e recria o canvas
     container.innerHTML = '<canvas id="weightChart"></canvas>';
     const ctx = container.querySelector('#weightChart').getContext('2d');
 
-    // Destrói o gráfico antigo, se ele existir
     if (weightChartInstance) {
         weightChartInstance.destroy();
     }
     
-    // Cria o novo gráfico
     weightChartInstance = new Chart(ctx, {
         type: 'line',
         data: {
-            labels: stats.labels, // Datas (ex: "30/10", "31/10")
-            datasets: [{
-                label: 'Peso (kg)',
-                data: stats.data, // Pesos (ex: 82, 81.8)
-                borderColor: 'rgb(38, 166, 154)', // Verde FitOS
-                backgroundColor: 'rgba(38, 166, 154, 0.1)',
-                fill: true,
-                tension: 0.1 // Linha levemente curvada
-            }]
+            labels: stats.labels, // Datas
+            datasets: [
+                {
+                    label: 'Seu Peso (kg)',
+                    data: stats.data, // Pesos
+                    borderColor: 'rgb(38, 166, 154)', // Verde FitOS
+                    backgroundColor: 'rgba(38, 166, 154, 0.1)',
+                    fill: true,
+                    tension: 0.1 
+                },
+                // [NOVO] A Linha da Meta
+                {
+                    label: 'Sua Meta',
+                    data: stats.goalData, // Array com o valor da meta (ex: [75, 75, 75])
+                    borderColor: 'rgb(239, 83, 80)', // Vermelho (cor de perigo)
+                    fill: false,
+                    borderDash: [5, 5], // Linha pontilhada
+                    pointRadius: 0, // Sem bolinhas
+                    tension: 0
+                }
+            ]
         },
         options: {
             responsive: true,
@@ -98,11 +95,25 @@ function renderWeightChart(container, stats) {
 }
 
 /**
- * Renderiza o gráfico de rosca (Doughnut) para Frequência de Treino
+ * [MODIFICADO] Renderiza o gráfico de "Medidor" (Gauge)
  */
 function renderWorkoutChart(container, stats) {
-    container.innerHTML = '<canvas id="workoutChart"></canvas>';
+    // Limpa o canvas, mas preserva o div do texto
+    const canvas = container.querySelector('#workoutChart');
+    if (!canvas) {
+         container.innerHTML = '<canvas id="workoutChart"></canvas><div id="workout-gauge-text" class="gauge-text"></div>';
+    }
     const ctx = container.querySelector('#workoutChart').getContext('2d');
+    
+    // Atualiza o texto (ex: 2/5)
+    const gaugeTextEl = document.getElementById('workout-gauge-text');
+    if (gaugeTextEl) {
+        gaugeTextEl.innerHTML = `
+            <span class="gauge-value">${stats.completed}</span>
+            <span class="gauge-total">/ ${stats.total}</span>
+            <span class="gauge-label">${stats.periodo}</span>
+        `;
+    }
 
     if (workoutChartInstance) {
         workoutChartInstance.destroy();
@@ -115,28 +126,28 @@ function renderWorkoutChart(container, stats) {
         data: {
             labels: ['Treinos Concluídos', 'Treinos Faltantes'],
             datasets: [{
-                label: `Progresso da ${stats.periodo}`,
                 data: [stats.completed, treinosFaltantes],
                 backgroundColor: [
                     'rgb(38, 166, 154)',  // Verde FitOS
                     '#e0e0e0'              // Cinza claro
                 ],
+                borderWidth: 0, // Sem bordas
                 hoverOffset: 4
             }]
         },
         options: {
             responsive: true,
-            maintainAspectRatio: false,
+            maintainAspectRatio: true, // Mantém o aspecto
+            cutout: '75%', // O "buraco" do meio
+            // [NOVO] Faz o gráfico ser um Semicírculo (Gauge)
+            rotation: -90, 
+            circumference: 180, 
             plugins: {
                 legend: {
-                    position: 'bottom',
+                    display: false // Esconde a legenda
                 },
                 tooltip: {
-                    callbacks: {
-                        label: function(context) {
-                            return `${context.label}: ${context.raw} treinos`;
-                        }
-                    }
+                    enabled: false // Desativa o tooltip
                 }
             }
         }
