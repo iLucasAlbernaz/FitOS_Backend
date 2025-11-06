@@ -131,6 +131,25 @@ body.dashboard-view .header-logo {
     background-color: var(--primary-color);
     color: white;
 }
+#notificacao-menu,
+#profile-menu {
+    position: relative;
+    display: flex; 
+    align-items: center;
+    gap: 15px; 
+}
+/* Esconde ambos por padrão */
+#notificacao-menu,
+#profile-menu {
+    display: none;
+}
+/* Mostra ambos quando logado */
+body.dashboard-view #notificacao-menu,
+body.dashboard-view #profile-menu {
+    display: flex;
+}
+
+#notificacao-menu-trigger,
 
 /* [NOVO] Menu de Perfil Dropdown */
 #profile-menu {
@@ -1145,12 +1164,20 @@ body.dashboard-view .header-logo {
 
 #notificacao-menu {
     position: relative;
-    display: flex;
+    display: flex; /* [CORRIGIDO] Alterado para flex */
     align-items: center;
     cursor: pointer;
     color: var(--primary-light);
-    margin-right: 15px; /* Espaçamento entre sino e perfil */
+    margin-right: 15px; 
     transition: color 0.3s;
+}
+/* [NOVA REGRA] Esconde por padrão */
+#notificacao-menu {
+    display: none;
+}
+/* [NOVA REGRA] Mostra quando logado */
+body.dashboard-view #notificacao-menu {
+    display: flex;
 }
 
 #notificacao-menu-trigger {
