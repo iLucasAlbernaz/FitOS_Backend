@@ -5,7 +5,8 @@ import { loadTreinos } from './treino.js';
 import { loadDiario } from './diario.js';
 import { loadMetas } from './meta.js';
 import { loadReceitas } from './receita.js'; 
-import { loadNotificacoes } from './notificacao.js'; // [CORRIGIDO] Caminho direto
+import { loadNotificacoes } from './notificacao.js';
+import { loadPainel } from './painel.js';
 
 // --- ELEMENTOS DA DOM ---
 const dashboardElement = document.getElementById('app-dashboard');
@@ -209,4 +210,5 @@ window.loadDiario = loadDiario;
 window.loadChatHistory = loadChatHistory; 
 window.loadMetas = loadMetas;
 window.loadReceitas = loadReceitas;
-window.loadNotificacoes = loadNotificacoes; // [NOVO] Exportação
+window.loadNotificacoes = loadNotificacoes;
+window.loadPainel = loadPainel;

@@ -107,7 +107,7 @@ body.dashboard-view .header-logo {
 /* Navegação Principal */
 #dashboard-nav {
     display: grid; 
-    grid-template-columns: repeat(7, 1fr); /* 7 botões */
+    grid-template-columns: repeat(8, 1fr); /* 7 botões */
     gap: 10px;
     align-items: center;
     flex-grow: 1; /* Ocupa o espaço */
@@ -1140,7 +1140,7 @@ body.dashboard-view .header-logo {
 .exercicios-list-form li span { }
 .exercicios-list-form li button { }
 /* ====================================================== */
-/* SEÇÃO 16: NOTIFICAÇÕES (UC010) */
+/* 16. NOTIFICAÇÕES (UC010) */
 /* ====================================================== */
 
 #notificacao-menu {
@@ -1292,4 +1292,39 @@ body.dashboard-view .header-logo {
     font-size: 0.75em;
     color: #a0a0a0;
     margin-top: 3px;
+}
+/* ========================================= */
+/* 17. ESTILOS DO PAINEL (UC005) */
+/* ========================================= */
+
+.painel-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr; /* 2 colunas */
+    gap: var(--spacing-unit);
+}
+
+.painel-card {
+    background: #fdfdfd;
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    padding: var(--spacing-unit);
+}
+
+.painel-card h4 {
+    margin-top: 0;
+    margin-bottom: 15px;
+    text-align: center;
+    color: var(--primary-color);
+}
+
+/* Container dos gráficos (importante para o 'responsive') */
+#painel-peso-container,
+#painel-treino-container {
+    position: relative;
+    height: 300px;
+}
+
+/* O card de macros ocupa as 2 colunas */
+.painel-grid .painel-card:nth-child(3) {
+    grid-column: 1 / -1;
 }

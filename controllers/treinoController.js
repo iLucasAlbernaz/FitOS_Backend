@@ -37,15 +37,10 @@ const treinoCTemplate = {
     ]
 };
 
-// --- FUNÇÕES CRUD ---
-
-// 1. GERAR TREINOS ABC (Fluxo Novo)
-// POST /api/treinos/gerar-abc
 exports.gerarTreinosABC = async (req, res) => {
     try {
         const usuarioId = req.usuario.id;
 
-        // Limpa treinos antigos antes de gerar novos (opcional)
         await Treino.deleteMany({ usuario: usuarioId });
 
         const treinosParaSalvar = [
@@ -62,8 +57,6 @@ exports.gerarTreinosABC = async (req, res) => {
     }
 };
 
-// 2. VISUALIZAR TODOS (Fluxo VR02)
-// GET /api/treinos
 exports.getTreinos = async (req, res) => {
     try {
         const treinos = await Treino.find({ usuario: req.usuario.id }).sort({ nome: 1 });
@@ -74,14 +67,11 @@ exports.getTreinos = async (req, res) => {
     }
 };
 
-// 3. VISUALIZAR UM (Necessário para Edição)
-// GET /api/treinos/:id
 exports.getTreinoById = async (req, res) => {
     try {
         const treino = await Treino.findById(req.params.id);
         if (!treino) return res.status(404).json({ msg: 'Treino não encontrado' });
 
-        // Validação de segurança (o treino é mesmo do usuário logado?)
         if (treino.usuario.toString() !== req.usuario.id) {
             return res.status(401).json({ msg: 'Não autorizado' });
         }
@@ -92,12 +82,9 @@ exports.getTreinoById = async (req, res) => {
     }
 };
 
-// 4. CADASTRAR TREINO (Fluxo RT01)
-// POST /api/treinos
 exports.createTreino = async (req, res) => {
     const { nome, grupoMuscular, exercicios } = req.body;
 
-    // Validação (FE3.1)
     if (!nome || !grupoMuscular || !exercicios || exercicios.length === 0) {
         return res.status(400).json({ msg: 'Por favor, preencha todos os campos e adicione ao menos um exercício.' });
     }
@@ -118,8 +105,6 @@ exports.createTreino = async (req, res) => {
     }
 };
 
-// 5. EDITAR TREINO (Fluxo ER01)
-// PUT /api/treinos/:id
 exports.updateTreino = async (req, res) => {
     try {
         let treino = await Treino.findById(req.params.id);
@@ -131,8 +116,8 @@ exports.updateTreino = async (req, res) => {
 
         treino = await Treino.findByIdAndUpdate(
             req.params.id,
-            { $set: req.body }, // Atualiza os campos enviados
-            { new: true }       // Retorna o documento atualizado
+            { $set: req.body }, 
+            { new: true }       
         );
         res.json(treino);
     } catch (err) {
@@ -141,8 +126,6 @@ exports.updateTreino = async (req, res) => {
     }
 };
 
-// 6. EXCLUIR TREINO (Fluxo XR01)
-// DELETE /api/treinos/:id
 exports.deleteTreino = async (req, res) => {
     try {
         let treino = await Treino.findById(req.params.id);

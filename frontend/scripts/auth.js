@@ -1,16 +1,13 @@
 // Define a URL base da API
 export const API_URL = 'https://fitos-backend-o8up.onrender.com/api';
 
-// Elementos essenciais para feedback
 const messageElement = document.getElementById('message');
 
-// Função utilitária para exibir mensagens
 export function displayMessage(message, type) {
     messageElement.textContent = message;
     messageElement.className = `message ${type}-message`;
 }
 
-// --- LÓGICA DE CADASTRO (POST /api/usuarios) ---
 export async function handleRegister(userData) {
     try {
         displayMessage('Cadastrando...', 'default');
@@ -23,25 +20,21 @@ export async function handleRegister(userData) {
 
         const data = await response.json();
 
-        // 1. CORREÇÃO CRÍTICA: Verifica explicitamente o Status 201 (Created)
         if (response.status === 201) { 
             displayMessage(data.mensagem + ' Faça login agora.', 'success');
             return { success: true };
         } else {
-            // Trata erros como 400 Bad Request (Validação, Email Duplicado)
             displayMessage(data.mensagem || 'Erro desconhecido no cadastro.', 'error');
             return { success: false };
         }
 
     } catch (error) {
-        // Erro de rede (servidor offline)
         displayMessage('Erro de rede. Verifique se o servidor está ativo.', 'error');
         console.error('Erro de rede:', error);
         return { success: false };
     }
 }
 
-// --- LÓGICA DE LOGIN (POST /api/auth/login) ---
 export async function handleLogin(loginData) {
     try {
         displayMessage('Verificando credenciais...', 'default');
@@ -54,8 +47,8 @@ export async function handleLogin(loginData) {
 
         const data = await response.json();
         
-        if (response.ok) { // Status 200 OK
-            // Salva o Token JWT e retorna sucesso
+        if (response.ok) { 
+
             localStorage.setItem('jwtToken', data.token);
             return { success: true, token: data.token, user: data.usuario };
         } else {
@@ -70,7 +63,6 @@ export async function handleLogin(loginData) {
     }
 }
 
-// --- LÓGICA DE LOGOUT ---
 export function handleLogout() {
     localStorage.removeItem('jwtToken');
 }

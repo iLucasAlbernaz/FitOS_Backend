@@ -1,8 +1,5 @@
-// [CORREÇÃO 1] Importa da biblioteca correta '@google/genai'
 const { GoogleGenAI } = require('@google/genai'); 
 const Chat = require('../models/Chat'); 
-
-// [CORREÇÃO 2] Usa o construtor correto 'GoogleGenAI'
 const genAI = new GoogleGenAI(process.env.GEMINI_API_KEY);
 
 /**
@@ -27,7 +24,6 @@ exports.handleChat = async (req, res) => {
 
         // 2. Prepara e envia o prompt para a IA (usando a NOVA SINTAXE)
         
-        // Define o "contexto" ou "personalidade" do bot
         const prompt = `
             Você é o assistente de IA do app "FitOS".
             Sua especialidade é nutrição, fitness e saúde.
@@ -37,17 +33,12 @@ exports.handleChat = async (req, res) => {
             Pergunta do usuário: "${pergunta}"
         `;
         
-        // [CORREÇÃO 3] Usa a sintaxe correta: genAI.models.generateContent
         const response = await genAI.models.generateContent({
             model: "gemini-2.5-flash", // O modelo da sua imagem
             contents: [{ role: "user", parts: [{ text: prompt }] }],
         });
 
-        // [A CORREÇÃO FINAL ESTÁ AQUI] É .text (propriedade), NÃO .text() (função)
         const text = response.text;
-        // --- Fim da Correção ---
-
-        // 3. Salva a resposta da IA no histórico
         const respostaIA = new Chat({
             usuario: req.usuario.id,
             role: 'model',
@@ -55,11 +46,10 @@ exports.handleChat = async (req, res) => {
         });
         await respostaIA.save();
 
-        // 4. Retorna a resposta da IA para o frontend
         res.json({ resposta: text });
 
     } catch (error) {
-        // (FE3.1) Lida com erros da API da IA
+
         console.error("Erro na API do Gemini:", error);
         res.status(503).json({ mensagem: "O chatbot está temporariamente fora do ar. Tente novamente mais tarde." });
     }
@@ -72,7 +62,7 @@ exports.handleChat = async (req, res) => {
 exports.getHistorico = async (req, res) => {
     try {
         const historico = await Chat.find({ usuario: req.usuario.id })
-                                    .sort({ createdAt: 1 }); // Ordena do mais antigo para o mais novo
+                                    .sort({ createdAt: 1 });
 
         res.json(historico);
 

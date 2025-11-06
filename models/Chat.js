@@ -7,10 +7,10 @@ const ChatSchema = new Schema({
         ref: 'Usuario',
         required: true
     },
-    // 'role' define quem enviou a mensagem: o usuário ou a IA
+    
     role: {
         type: String,
-        enum: ['user', 'model'], // 'user' (usuário) ou 'model' (IA)
+        enum: ['user', 'model'], 
         required: true
     },
     content: {
@@ -18,7 +18,7 @@ const ChatSchema = new Schema({
         required: true
     }
 }, {
-    timestamps: true // Salva a data de criação
+    timestamps: true 
 });
 
 module.exports = mongoose.model('Chat', ChatSchema);

@@ -47,7 +47,7 @@ async function loadAndRenderList() {
 
 // Renderiza os cards da lista
 function renderReceitaList(receitas) {
-    listContainer.innerHTML = '<hr style="border: 1px solid #eee; margin: 2rem 0;"><h4>Minhas Receitas</h4>';
+    listContainer.innerHTML = '<h4>Receitas</h4>';
     receitas.forEach(receita => {
         // Formata os macros para exibição
         const macrosHtml = `

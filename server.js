@@ -13,6 +13,7 @@ const treinoRoutes = require('./routes/treinoRoutes');
 const notificacaoRoutes = require('./routes/notificacaoRoutes');
 const chatRoutes = require('./routes/chatRoutes');
 const metaRoutes = require('./routes/metaRoutes');
+const statsRoutes = require('./routes/statsRoutes');
 
 const app = express();
 
@@ -31,6 +32,7 @@ app.use('/api/notificacoes', notificacaoRoutes);
 app.use('/api/chat', chatRoutes);
 app.use('/api/dieta', require('./routes/dietaRoutes'));
 app.use('/api/metas', metaRoutes);
+app.use('/api/stats', statsRoutes);
 
 const connectDB = async () => {
     try {

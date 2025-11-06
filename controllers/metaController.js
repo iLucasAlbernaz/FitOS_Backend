@@ -1,7 +1,6 @@
 const Meta = require('../models/Meta');
 const { sendNotification } = require('./notificacaoController'); 
 
-// 1. VISUALIZAR METAS (GET /api/metas)
 exports.getMetas = async (req, res) => {
     try {
         const metas = await Meta.find({ usuario: req.usuario.id }).sort({ dataFim: 1 });
@@ -12,7 +11,6 @@ exports.getMetas = async (req, res) => {
     }
 };
 
-// 2. VISUALIZAR UMA META (GET /api/metas/:id)
 exports.getMetaById = async (req, res) => {
     try {
         const meta = await Meta.findById(req.params.id);
@@ -31,8 +29,7 @@ exports.getMetaById = async (req, res) => {
     }
 };
 
-// 3. DEFINIR META (Gatilho de Notificação)
-// POST /api/metas
+
 exports.createMeta = async (req, res) => {
     const { tipo, valorAlvo, valorInicial, dataInicio, dataFim, periodo } = req.body;
 
@@ -63,7 +60,6 @@ exports.createMeta = async (req, res) => {
 
         const meta = await novaMeta.save();
 
-        // [GATILHO DE NOTIFICAÇÃO] Dispara uma notificação de "Meta Criada"
         await sendNotification(
             req.usuario.id, 
             'SISTEMA', 
@@ -77,7 +73,6 @@ exports.createMeta = async (req, res) => {
     }
 };
 
-// 4. EDITAR META (PUT /api/metas/:id)
 exports.updateMeta = async (req, res) => {
     const { dataInicio, dataFim } = req.body;
 
@@ -106,7 +101,6 @@ exports.updateMeta = async (req, res) => {
     }
 };
 
-// 5. EXCLUIR META (DELETE /api/metas/:id)
 exports.deleteMeta = async (req, res) => {
     try {
         let meta = await Meta.findById(req.params.id);

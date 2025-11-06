@@ -1,7 +1,6 @@
 const Dieta = require('../models/Dieta');
 const Usuario = require('../models/Usuario');
 
-// --- (Os templates 'templatePerdaPeso' e 'templateGanhoMassa' continuam os mesmos) ---
 const templatePerdaPeso = {
     cafeDaManha: {
         alimentos: [
@@ -53,7 +52,6 @@ const templateGanhoMassa = {
     }
 };
 
-// --- (getMeuPlano não muda) ---
 exports.getMeuPlano = async (req, res) => {
     try {
         const dieta = await Dieta.findOne({ usuario: req.usuario.id });
@@ -78,14 +76,14 @@ exports.gerarMeuPlano = async (req, res) => {
     const usuarioId = req.usuario.id;
 
     let templateEscolhido;
-    let nomePlanoParaSalvar; // <-- Variável adicionada
+    let nomePlanoParaSalvar;
 
     if (tipoPlano === 'perda-peso') {
         templateEscolhido = templatePerdaPeso;
-        nomePlanoParaSalvar = 'Perda de Peso'; // <-- Nome salvo
+        nomePlanoParaSalvar = 'Perda de Peso';
     } else if (tipoPlano === 'ganho-massa') {
         templateEscolhido = templateGanhoMassa;
-        nomePlanoParaSalvar = 'Ganho de Massa'; // <-- Nome salvo
+        nomePlanoParaSalvar = 'Ganho de Massa';
     } else {
         return res.status(400).json({ msg: 'Tipo de plano inválido.' });
     }
@@ -95,7 +93,7 @@ exports.gerarMeuPlano = async (req, res) => {
 
         const novoPlano = new Dieta({
             usuario: usuarioId,
-            nomePlano: nomePlanoParaSalvar, // <-- CAMPO NOVO SENDO SALVO
+            nomePlano: nomePlanoParaSalvar,
             cafeDaManha: templateEscolhido.cafeDaManha,
             almoco: templateEscolhido.almoco,
             jantar: templateEscolhido.jantar,

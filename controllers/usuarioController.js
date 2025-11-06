@@ -1,7 +1,7 @@
 const Usuario = require('../models/Usuario');
 const bcrypt = require('bcryptjs'); 
 
-// Importar os modelos relacionados para exclusão em cascata
+
 const Dieta = require('../models/Dieta');
 const Diario = require('../models/Diario');
 const Receita = require('../models/Receita');
@@ -68,18 +68,18 @@ exports.atualizarPerfil = async (req, res) => {
     }
 };
 
-// --- FUNÇÃO MODIFICADA ---
+
 exports.deletarPerfil = async (req, res) => {
     try {
-        // [ATUALIZADO] Passo 1: Deletar dados associados
+        
         await Dieta.findOneAndDelete({ usuario: req.usuario.id });
         await Diario.deleteMany({ usuario: req.usuario.id });
         await Receita.deleteMany({ usuario: req.usuario.id });
         await Treino.deleteMany({ usuario: req.usuario.id });
-        await Chat.deleteMany({ usuario: req.usuario.id }); // <-- [ADICIONADO]
+        await Chat.deleteMany({ usuario: req.usuario.id }); 
         await Meta.deleteMany({ usuario: req.usuario.id });
 
-        // Passo 2: Deletar o próprio usuário
+        
         const usuario = await Usuario.findByIdAndDelete(req.usuario.id);
         if (!usuario) {
             return res.status(404).json({ mensagem: "Usuário não encontrado." });

@@ -1,17 +1,14 @@
 import { API_URL } from './auth.js';
 
-// --- Elementos DOM ---
 const listContainer = document.getElementById('treinos-list-container');
 const formContainer = document.getElementById('treino-form-container');
 const showCreateFormBtn = document.getElementById('btn-show-create-form');
 
-// --- Variáveis de Estado ---
-let currentExercicios = []; // Array para guardar exercícios do formulário
-let currentEditId = null;  // Guarda o ID do treino sendo editado
+let currentExercicios = []; 
+let currentEditId = null;  
 
-// --- FUNÇÃO PRINCIPAL (Chamada pelo index.html) ---
 export async function loadTreinos() {
-    // Reseta o estado
+    
     formContainer.style.display = 'none';
     listContainer.style.display = 'block';
     showCreateFormBtn.style.display = 'block';
@@ -30,10 +27,10 @@ export async function loadTreinos() {
         const treinos = await response.json();
         
         if (treinos.length === 0) {
-            // Fluxo: Sem treinos. Mostra o botão "Gerar ABC".
+            
             renderGerarABCButton();
         } else {
-            // Fluxo: Tem treinos. Mostra a lista. (VR02)
+            
             renderTreinoList(treinos);
         }
     } catch (error) {
@@ -42,7 +39,6 @@ export async function loadTreinos() {
     }
 }
 
-// --- RENDERIZAÇÃO DA LISTA ---
 
 function renderGerarABCButton() {
     listContainer.innerHTML = `
@@ -57,7 +53,7 @@ function renderGerarABCButton() {
 }
 
 function renderTreinoList(treinos) {
-    listContainer.innerHTML = ''; // Limpa a lista
+    listContainer.innerHTML = ''; 
     treinos.forEach(treino => {
         const exerciciosHtml = treino.exercicios.map(ex => 
             `<li>${ex.nome} (${ex.series}x ${ex.repeticoes})</li>`
@@ -78,7 +74,6 @@ function renderTreinoList(treinos) {
         `;
     });
 
-    // Adiciona event listeners para os botões de editar/excluir
     listContainer.querySelectorAll('.btn-edit').forEach(btn => 
         btn.addEventListener('click', (e) => handleEditClick(e.target.dataset.id))
     );
@@ -272,9 +267,8 @@ async function handleDeleteClick(id) {
 
         if (!response.ok) throw new Error('Falha ao excluir.');
         
-        // XR04: Confirmação
         alert('Rotina excluída com sucesso.');
-        loadTreinos(); // Recarrega a lista
+        loadTreinos(); 
 
     } catch (error) {
         console.error('Erro ao excluir:', error);
@@ -294,7 +288,7 @@ async function handleGerarABC() {
         if (!response.ok) throw new Error('Falha ao gerar treinos.');
         
         alert('Rotina ABC gerada com sucesso!');
-        loadTreinos(); // Recarrega a lista
+        loadTreinos(); 
 
     } catch (error) {
         console.error('Erro ao gerar ABC:', error);

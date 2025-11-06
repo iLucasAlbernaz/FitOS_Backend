@@ -22,18 +22,18 @@ exports.loginUsuario = async (req, res) => {
         // 1. O Payload (dados que identificam o usuário no token)
         const payload = {
             usuario: {
-                id: usuario.id // Usamos o ID do MongoDB para identificar
+                id: usuario.id 
             }
         };
 
         // 2. Assina o token com a chave secreta e define o tempo de expiração
         const token = jwt.sign(
             payload,
-            process.env.JWT_SECRET, // Chave secreta do .env
-            { expiresIn: '5h' }     // Token expira em 5 horas
+            process.env.JWT_SECRET, 
+            { expiresIn: '5h' }     
         );
 
-        // Se chegou aqui, o login foi um sucesso!
+        
         res.status(200).json({
             mensagem: "Login realizado com sucesso!",
             token: token,

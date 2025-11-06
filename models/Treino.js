@@ -1,11 +1,10 @@
 const mongoose = require('mongoose');
 const Schema = mongoose.Schema;
 
-// Um sub-documento para cada exercício
 const ExercicioSchema = new Schema({
     nome: { type: String, required: true },
-    series: { type: String, required: true },      // Ex: "3" ou "4"
-    repeticoes: { type: String, required: true } // Ex: "8-12" ou "15"
+    series: { type: String, required: true },      
+    repeticoes: { type: String, required: true } 
 });
 
 const TreinoSchema = new Schema({
@@ -14,15 +13,15 @@ const TreinoSchema = new Schema({
         ref: 'Usuario',
         required: true
     },
-    nome: { // Ex: "Treino A"
+    nome: { 
         type: String,
         required: true
     },
-    grupoMuscular: { // Ex: "Peito e Tríceps"
+    grupoMuscular: { 
         type: String,
         required: true
     },
-    exercicios: [ExercicioSchema] // Uma lista de exercícios
+    exercicios: [ExercicioSchema] 
 }, {
     timestamps: true
 });

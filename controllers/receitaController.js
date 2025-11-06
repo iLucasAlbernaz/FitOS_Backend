@@ -1,7 +1,5 @@
 const Receita = require('../models/Receita');
 
-// 1. VISUALIZAR RECEITAS (Fluxo RC01)
-// GET /api/receitas
 exports.getReceitas = async (req, res) => {
     try {
         const receitas = await Receita.find({ usuario: req.usuario.id }).sort({ createdAt: -1 });
@@ -12,8 +10,6 @@ exports.getReceitas = async (req, res) => {
     }
 };
 
-// 2. VISUALIZAR UMA (Para Edição)
-// GET /api/receitas/:id
 exports.getReceitaById = async (req, res) => {
     try {
         const receita = await Receita.findById(req.params.id);
@@ -29,17 +25,15 @@ exports.getReceitaById = async (req, res) => {
     }
 };
 
-// 3. CRIAR RECEITA (Fluxo RC01)
-// POST /api/receitas
 exports.createReceita = async (req, res) => {
-    // Pega os dados estruturados do body
+    
     const { nome, descricao, ingredientes, modoPreparo, macros } = req.body;
 
-    // Validação (FE3.1)
+
     if (!nome || !descricao || !ingredientes || ingredientes.length === 0 || !macros) {
         return res.status(400).json({ msg: 'Nome, Descrição, Macros e ao menos um Ingrediente são obrigatórios.' });
     }
-    // Validação (FE3.2)
+
     if (macros.calorias < 0 || macros.proteinas < 0 || macros.carboidratos < 0 || macros.gorduras < 0) {
          return res.status(400).json({ msg: 'Valores nutricionais não podem ser negativos.' });
     }
@@ -62,8 +56,6 @@ exports.createReceita = async (req, res) => {
     }
 };
 
-// 4. EDITAR RECEITA (Fluxo ER01)
-// PUT /api/receitas/:id
 exports.updateReceita = async (req, res) => {
     try {
         let receita = await Receita.findById(req.params.id);
@@ -85,8 +77,6 @@ exports.updateReceita = async (req, res) => {
     }
 };
 
-// 5. EXCLUIR RECEITA (Fluxo XR01)
-// DELETE /api/receitas/:id
 exports.deleteReceita = async (req, res) => {
     try {
         let receita = await Receita.findById(req.params.id);

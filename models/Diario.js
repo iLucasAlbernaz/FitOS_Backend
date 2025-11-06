@@ -31,7 +31,4 @@ const DiarioSchema = new Schema({
     timestamps: true
 });
 
-// [REMOVIDO] A linha DiarioSchema.index({ ... unique: true }) foi removida.
-// Nosso controller vai cuidar disso.
-
 module.exports = mongoose.model('Diario', DiarioSchema);

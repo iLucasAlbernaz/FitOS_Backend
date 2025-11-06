@@ -1,56 +1,43 @@
 import { API_URL } from './auth.js';
 
-// --- Elementos DOM ---
 const formContainer = document.getElementById('diario-form-container');
 const listContainer = document.getElementById('diario-list-container');
-// [NOVO] O botão "+ Novo Registro"
 const showCreateFormBtn = document.getElementById('btn-show-create-diario-form');
 
-// --- Variável de Estado ---
-let currentEditId = null; // Guarda o ID do registro sendo editado
+let currentEditId = null; 
 
-/**
- * Helper: Converte a data de 'hoje' para o formato 'YYYY-MM-DD'
- */
+
 function getHojeFormatado() {
     return new Date().toISOString().split('T')[0];
 }
 
-/**
- * Helper: Converte um objeto Date (do banco) para 'YYYY-MM-DD'
- */
+
 function formatarDataParaInput(dateString) {
     if (!dateString) return getHojeFormatado();
     return new Date(dateString).toISOString().split('T')[0];
 }
 
-// --- FUNÇÃO PRINCIPAL (Chamada pelo index.html) ---
-// [MODIFICADA] Agora reseta a visualização para a lista
 export async function loadDiario() {
-    // 1. Gerencia a visibilidade
+    
     formContainer.style.display = 'none';
     listContainer.style.display = 'block';
     showCreateFormBtn.style.display = 'block';
     
-    // 2. Renderiza o formulário (mas o deixa oculto)
-    renderForm('Novo Registro Diário', {}, null, false); // false = não mostrar
+    renderForm('Novo Registro Diário', {}, null, false);
     
-    // 3. Carrega e renderiza a lista de registros antigos
     loadAndRenderList();
 }
 
-// --- [NOVO] Funções para mostrar/esconder o formulário ---
 function showCreateForm() {
     currentEditId = null;
-    renderForm('Novo Registro Diário', {}, null, true); // true = mostrar
+    renderForm('Novo Registro Diário', {}, null, true); 
 }
-// Adiciona o listener ao botão "+ Novo Registro"
+
 if (showCreateFormBtn) {
     showCreateFormBtn.addEventListener('click', showCreateForm);
 }
 
-// --- RENDERIZAÇÃO DO FORMULÁRIO (Criar/Editar) ---
-// [MODIFICADO] Adicionado o parâmetro 'show'
+
 function renderForm(title = 'Novo Registro Diário', data = {}, editId = null, show = false) {
     currentEditId = editId; 
 
@@ -75,7 +62,6 @@ function renderForm(title = 'Novo Registro Diário', data = {}, editId = null, s
         </form>
     `;
 
-    // [MODIFICADO] Controla a visibilidade
     if (show) {
         formContainer.style.display = 'block';
         listContainer.style.display = 'none';
@@ -84,18 +70,16 @@ function renderForm(title = 'Novo Registro Diário', data = {}, editId = null, s
         formContainer.style.display = 'none';
     }
 
-    // Event Listeners do Formulário
     document.getElementById('diario-form').addEventListener('submit', handleFormSubmit);
     
     const cancelBtn = document.getElementById('btn-cancelar-diario');
     if (cancelBtn) {
         cancelBtn.addEventListener('click', () => {
-            loadDiario(); // Reseta o formulário para a lista
+            loadDiario(); 
         });
     }
 }
 
-// --- RENDERIZAÇÃO DA LISTA ---
 async function loadAndRenderList() {
     listContainer.innerHTML = '<p class="info-message">Carregando histórico...</p>';
     const token = localStorage.getItem('jwtToken');
@@ -121,7 +105,6 @@ async function loadAndRenderList() {
     }
 }
 
-// (Função não modificada)
 function renderDiarioList(registros) {
     listContainer.innerHTML = '<h4>Histórico de Registros</h4>'; 
     
@@ -160,9 +143,7 @@ function renderDiarioList(registros) {
     );
 }
 
-// --- HANDLERS (Ações) ---
 
-// (Função não modificada)
 async function handleFormSubmit(e) {
     e.preventDefault();
     const token = localStorage.getItem('jwtToken');
@@ -203,7 +184,7 @@ async function handleFormSubmit(e) {
             }
         } else {
             alert('Registro salvo com sucesso!');
-            loadDiario(); // Reseta o form e recarrega a lista
+            loadDiario(); 
         }
 
     } catch (error) {
@@ -212,7 +193,6 @@ async function handleFormSubmit(e) {
     }
 }
 
-// [MODIFICADO] handleEditClick agora mostra o formulário
 async function handleEditClick(id) {
     try {
         const token = localStorage.getItem('jwtToken');
@@ -225,7 +205,6 @@ async function handleEditClick(id) {
         
         const dataFormatada = new Date(registro.data).toLocaleDateString('pt-BR', { timeZone: 'UTC' });
         
-        // [MODIFICADO] Chama renderForm com 'true' para mostrar
         renderForm(`Editar Registro de ${dataFormatada}`, registro, id, true); 
         
         window.scrollTo(0, 0); 
@@ -236,7 +215,6 @@ async function handleEditClick(id) {
     }
 }
 
-// (Função não modificada)
 async function handleDeleteClick(id) {
     if (!confirm('Tem certeza que deseja excluir este registro do diário?')) {
         return;
@@ -252,7 +230,7 @@ async function handleDeleteClick(id) {
         if (!response.ok) throw new Error('Falha ao excluir.');
         
         alert('Registro excluído com sucesso.');
-        loadAndRenderList(); // Apenas recarrega a lista
+        loadAndRenderList(); 
 
     } catch (error) {
         console.error('Erro ao excluir:', error);

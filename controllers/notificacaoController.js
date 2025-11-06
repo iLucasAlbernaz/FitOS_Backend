@@ -1,8 +1,5 @@
 const Notificacao = require('../models/Notificacao');
 
-/**
- * Helper para criar e salvar uma nova notificação (Usado por outros controllers)
- */
 exports.sendNotification = async (userId, tipo, mensagem) => {
     try {
         const novaNotificacao = new Notificacao({
@@ -23,7 +20,7 @@ exports.sendNotification = async (userId, tipo, mensagem) => {
  */
 exports.getNotificacoes = async (req, res) => {
     try {
-        // [CORRIGIDO] Usa req.usuario.id (assumindo que o middleware é 'auth')
+       
         const userId = req.usuario.id; 
         
         const notificacoes = await Notificacao.find({ usuario: userId })
@@ -52,7 +49,7 @@ exports.getNotificacoes = async (req, res) => {
  */
 exports.markAsRead = async (req, res) => {
     try {
-        const userId = req.usuario.id; // [CORRIGIDO]
+        const userId = req.usuario.id; 
         let notificacao = await Notificacao.findById(req.params.id);
 
         if (!notificacao) {

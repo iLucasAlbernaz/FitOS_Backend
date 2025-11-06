@@ -6,6 +6,7 @@
     <title>FitOS - Seu Planejador Fitness</title>
     <link rel="stylesheet" href="style.css"> 
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" integrity="sha512-SnH5WK+bZxgPHs44uWIX+LLJAJ9/2PkPKZ5QiAj6Ta86w+fsb2TkcmfRyVX3pBnMFcV7oQPJkl9QevSCWr3W6A==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
 
@@ -22,6 +23,7 @@
             <img src="images/logo.png" alt="Logo FitOS" class="header-logo">
             
             <nav id="dashboard-nav" style="display: none;">
+                <button class="btn btn-nav" onclick="showDashboardSection('painel')">Painel</button>
                 <button class="btn btn-nav" onclick="showDashboardSection('perfil')">Perfil</button>
                 <button class="btn btn-nav" onclick="showDashboardSection('metas')">Metas</button>
                 <button class="btn btn-nav" onclick="showDashboardSection('treinos')">Treinos</button>
@@ -124,6 +126,30 @@
             
             <div class="main-content card">
                 
+                <section id="section-painel" class="dashboard-section">
+                    <h3 class="section-title">Painel de Desempenho</h3>
+                    <div class="painel-grid">
+                        <div class="painel-card">
+                            <h4>Evolução do Peso</h4>
+                            <div id="painel-peso-container">
+                                <canvas id="weightChart"></canvas>
+                            </div>
+                        </div>
+                        <div class="painel-card">
+                            <h4>Frequência de Treino</h4>
+                            <div id="painel-treino-container">
+                                <canvas id="workoutChart"></canvas>
+                            </div>
+                        </div>
+                        <div class="painel-card">
+                            <h4>Ingestão de Macronutrientes</h4>
+                            <div id="painel-macro-container">
+                                <p class="info-message">O gráfico de macros ainda não está disponível. Para ativá-lo, o "Diário" precisa ser atualizado para registrar macros.</p>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+                
                 <section id="section-perfil" class="dashboard-section">
                    <h3 class="section-title">Meu Perfil e Segurança</h3>
                    <div id="perfil-form-container"></div>
@@ -167,9 +193,9 @@
                        <button id="btn-show-create-receita-form" class="btn btn-primary" style="width: auto; margin-top: 0;">+ Nova Receita</button>
                    </div>
                    <div id="receitas-list-container">
-                        </div>
+                   </div>
                    <div id="receitas-form-container" style="display: none;">
-                        </div>
+                   </div>
                 </section>
                 
                 <section id="section-chat" class="dashboard-section" style="display: none;">
@@ -202,37 +228,37 @@
                 targetSection.style.display = 'block';
             }
             
-            // Gatilho do Plano de Dieta
+            // [GATILHO ADICIONADO]
+            if (sectionId === 'painel') {
+                if (window.loadPainel) {
+                    window.loadPainel();
+                }
+            }
             if (sectionId === 'dieta') {
                 if (window.loadDietPlan) {
                     window.loadDietPlan();
                 }
             }
-            // Gatilho dos Treinos
             if (sectionId === 'treinos') {
                 if (window.loadTreinos) {
                     window.loadTreinos();
                 }
             }
-            // Gatilho do Diário
             if (sectionId === 'diario') {
                 if (window.loadDiario) {
                     window.loadDiario();
                 }
             }
-            // Gatilho do Chat
             if (sectionId === 'chat') {
                 if (window.loadChatHistory) {
                     window.loadChatHistory();
                 }
             }
-            // Gatilho das Metas
             if (sectionId === 'metas') {
                 if (window.loadMetas) {
                     window.loadMetas();
                 }
             }
-            // Gatilho das Receitas
             if (sectionId === 'receitas') {
                 if (window.loadReceitas) {
                     window.loadReceitas();
