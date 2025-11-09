@@ -47,9 +47,6 @@ exports.createMeta = async (req, res) => {
         if (!valorInicial) {
             return res.status(400).json({ msg: 'Valor Inicial é obrigatório para metas de Peso.' });
         }
-        if (valorAlvo <= 0 || valorInicial <= 0) {
-            return res.status(400).json({ msg: 'Valores de Peso devem ser positivos.' });
-        }
     } else if (tipo === 'Água' || tipo === 'Treino') {
         if (!periodo) {
             return res.status(400).json({ msg: 'Período (Semana/Mês) é obrigatório para esta meta.' });
@@ -133,9 +130,11 @@ exports.deleteMeta = async (req, res) => {
     try {
         let meta = await Meta.findById(req.params.id);
         if (!meta) return res.status(404).json({ msg: 'Meta não encontrada' });
+
         if (meta.usuario.toString() !== req.usuario.id) {
             return res.status(401).json({ msg: 'Não autorizado' });
         }
+
         await Meta.findByIdAndDelete(req.params.id);
         res.json({ msg: 'Meta removida com sucesso.' });
     } catch (err) {

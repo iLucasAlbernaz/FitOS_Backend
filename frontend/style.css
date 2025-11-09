@@ -1388,3 +1388,13 @@ body.dashboard-view #notificacao-menu {
     color: #555;
     margin-top: -10px; /* Ajuste fino */
 }
+
+.meta-card-agua .meta-card-header strong {
+    color: #007bff; /* Azul para Água */
+}
+.meta-card-agua .progress-bar-fill {
+    background-color: #007bff; /* Barra azul */
+}
+.meta-card-agua .meta-status {
+    background-color: #007bff; /* Badge azul */
+}

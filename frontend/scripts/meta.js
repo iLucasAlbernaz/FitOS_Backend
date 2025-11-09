@@ -54,7 +54,7 @@ function renderMetaForm(title = 'Definir Nova Meta', data = {}, editId = null, s
     
     // [MODIFICADO] Lógica de visibilidade
     let valorInicialDisplay = (data.tipo === 'Peso') ? 'block' : 'none';
-    let periodoDisplay = (data.tipo === 'Treino' || data.tipo === 'Água') ? 'block' : 'none';
+    let periodoDisplay = (data.tipo === 'Treino') ? 'block' : 'none';
     
     let valorAlvoLabel = 'Valor Alvo';
     if (data.tipo === 'Treino') valorAlvoLabel = 'Frequência Alvo (vezes)';
@@ -73,7 +73,6 @@ function renderMetaForm(title = 'Definir Nova Meta', data = {}, editId = null, s
                 <option value="Treino" ${data.tipo === 'Treino' ? 'selected' : ''}>Meta de Treino (Frequência)</option>
             </select>
             
-            <!-- [MODIFICADO] Campo de Período (para Treino E Água) -->
             <div id="meta-periodo-group" style="display: ${periodoDisplay};">
                 <label for="meta-periodo" class="input-label">Período:</label>
                 <select id="meta-periodo" class="input-field">
@@ -82,7 +81,6 @@ function renderMetaForm(title = 'Definir Nova Meta', data = {}, editId = null, s
                 </select>
             </div>
 
-            <!-- [MODIFICADO] Campo de Valor Inicial (só para Peso) -->
             <div id="meta-inicial-group" style="display: ${valorInicialDisplay};">
                 <label for="meta-inicial" class="input-label">Valor Inicial:</label>
                 <input type="number" step="0.1" id="meta-inicial" class="input-field" placeholder="Ex: 82" value="${data.valorInicial || ''}">
@@ -98,7 +96,7 @@ function renderMetaForm(title = 'Definir Nova Meta', data = {}, editId = null, s
             </div>
             
             <button type="submit" class="btn btn-primary">${editId ? 'Salvar Alterações' : 'Definir Meta'}</button>
-            <button type="button" id="btn-cancelar-meta" class="btn btn-secondary">Cancelar</button>
+            <button type="button" id="btn-cancelar-meta" class="btn btn-secondary" style="margin-left: 10px; width: auto; display: inline-block;">Cancelar</button>
         </form>
     `;
     
@@ -119,7 +117,7 @@ function renderMetaForm(title = 'Definir Nova Meta', data = {}, editId = null, s
 
         // Lógica de visibilidade
         document.getElementById('meta-inicial-group').style.display = (tipo === 'Peso') ? 'block' : 'none';
-        document.getElementById('meta-periodo-group').style.display = (tipo === 'Treino' || tipo === 'Água') ? 'block' : 'none';
+        document.getElementById('meta-periodo-group').style.display = (tipo === 'Treino') ? 'block' : 'none';
         
         if (tipo === 'Treino') {
             valorLabel.textContent = 'Frequência Alvo (vezes):';
@@ -178,27 +176,32 @@ async function loadAndRenderList() {
     }
 }
 
-// [MODIFICADO] Divide a lógica de renderização
+// [MODIFICADO] Divide a lógica de renderização em 3 tipos
 function renderMetaList(metas, diarios) {
-    listContainer.innerHTML = '<h4>Metas Atuais</h4>'; 
+    listContainer.innerHTML = '<hr style="border: 1px solid #eee; margin: 2rem 0;"><h4>Metas Atuais</h4>'; 
+    
     const hoje = new Date();
+    const hojeStr = hoje.toISOString().split('T')[0];
     
     // Processa os dados do diário UMA VEZ
     const diasTreinados = new Set();
-    const diasAguaOk = new Map(); // Map para guardar o dia e a qtd
+    let aguaHoje = 0;
+    
     diarios.forEach(d => {
         const diaStr = new Date(d.data).toISOString().split('T')[0];
+        
         if (d.treinoRealizado && d.treinoRealizado.trim() !== '') {
             diasTreinados.add(diaStr);
         }
-        if (d.aguaLitros > 0) {
-            diasAguaOk.set(diaStr, d.aguaLitros);
+        if (diaStr === hojeStr) {
+            aguaHoje = d.aguaLitros || 0;
         }
     });
 
     metas.forEach(meta => {
+        
+        // --- TIPO 1: PESO (Longo Prazo) ---
         if (meta.tipo === 'Peso') {
-            // Lógica do Peso (encontra o registro mais recente)
             let valorAtual = meta.valorInicial;
             const registrosRelevantes = diarios
                 .filter(d => d.pesoKg > 0 && new Date(d.data) >= new Date(meta.dataInicio)) 
@@ -206,38 +209,33 @@ function renderMetaList(metas, diarios) {
             if (registrosRelevantes.length > 0) {
                 valorAtual = registrosRelevantes[0].pesoKg;
             }
-            
             listContainer.innerHTML += renderCardValor(meta, calcularProgresso(meta.valorInicial, valorAtual, meta.valorAlvo), valorAtual);
-
-        } else if (meta.tipo === 'Água' || meta.tipo === 'Treino') {
-            // Lógica de Hábitos (Água e Treino)
+        
+        // --- TIPO 2: ÁGUA (Hábito Diário) ---
+        } else if (meta.tipo === 'Água') {
+            const progressoAgua = calcularProgresso(0, aguaHoje, meta.valorAlvo);
+            listContainer.innerHTML += renderCardAgua(meta, progressoAgua, aguaHoje);
+            
+        // --- TIPO 3: TREINO (Hábito Periódico) ---
+        } else if (meta.tipo === 'Treino') {
             const inicioPeriodo = meta.periodo === 'Mês' ? getInicioMes(hoje) : getInicioSemana(hoje);
             const fimPeriodo = meta.periodo === 'Mês' 
                 ? new Date(hoje.getFullYear(), hoje.getMonth() + 1, 0) 
                 : new Date(inicioPeriodo.getFullYear(), inicioPeriodo.getMonth(), inicioPeriodo.getDate() + 6); 
 
-            let diasCompletos = 0;
+            let treinosNoPeriodo = 0;
             const diasMarcados = new Set();
             
-            const iteradorDias = new Date(inicioPeriodo);
-            while (iteradorDias <= fimPeriodo) {
-                if (iteradorDias > hoje) break; // Não conta dias futuros
-                
-                const diaStr = iteradorDias.toISOString().split('T')[0];
-                
-                if (meta.tipo === 'Treino' && diasTreinados.has(diaStr)) {
-                    diasCompletos++;
-                    diasMarcados.add(iteradorDias.getUTCDate());
-                } else if (meta.tipo === 'Água' && (diasAguaOk.get(diaStr) || 0) >= meta.valorAlvo) {
-                    diasCompletos++;
-                    diasMarcados.add(iteradorDias.getUTCDate());
+            diasTreinados.forEach(diaString => {
+                const dia = new Date(diaString);
+                dia.setUTCHours(4); 
+                if (dia >= inicioPeriodo && dia <= fimPeriodo) {
+                    treinosNoPeriodo++;
+                    diasMarcados.add(dia.getUTCDate()); 
                 }
-                
-                iteradorDias.setUTCDate(iteradorDias.getUTCDate() + 1);
-            }
-            
+            });
             const calendarioHtml = renderCalendario(meta.periodo, diasMarcados);
-            listContainer.innerHTML += renderCardHabito(meta, diasCompletos, calendarioHtml);
+            listContainer.innerHTML += renderCardTreino(meta, treinosNoPeriodo, calendarioHtml);
         }
     });
 
@@ -255,13 +253,14 @@ function renderMetaList(metas, diarios) {
 function calcularProgresso(inicio, atual, alvo) {
     const totalAlcancado = atual - inicio;
     const totalMeta = alvo - inicio;
-    if (totalMeta === 0) return (totalAlcancado > 0 ? 100 : 0); // Evita divisão por zero
+    if (totalMeta === 0) return (totalAlcancado > 0 ? 100 : 0); 
     let progresso = (totalAlcancado / totalMeta) * 100;
     if (progresso < 0) progresso = 0;
     if (progresso > 100) progresso = 100;
     return progresso;
 }
 
+// (Não muda)
 function renderCardValor(meta, progresso, valorAtual) {
     const dataInicioFormatada = new Date(meta.dataInicio).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric', timeZone: 'UTC' });
     let dataFimFormatada = 'Sem prazo';
@@ -292,8 +291,31 @@ function renderCardValor(meta, progresso, valorAtual) {
     `;
 }
 
-// [MODIFICADO] Renomeado para Hábito (Treino e Água)
-function renderCardHabito(meta, diasCompletos, calendarioHtml) {
+// [NOVO] Card específico para Água (Progresso Diário)
+function renderCardAgua(meta, progresso, valorAtual) {
+    return `
+        <div class="meta-card meta-card-agua">
+            <div class="meta-card-header">
+                <strong>${meta.tipo} (Alvo: ${meta.valorAlvo} L)</strong>
+                <span class="meta-status status-andamento">${progresso.toFixed(0)}%</span>
+            </div>
+            <div class="meta-card-body">
+                <p class="meta-card-progress">Progresso de Hoje: ${valorAtual} L / ${meta.valorAlvo} L</p>
+                <div class="progress-bar-container">
+                    <div class="progress-bar-fill" style="width: ${progresso}%;"></div>
+                </div>
+            </div>
+            <div class="action-buttons">
+                <button class="btn btn-secondary btn-edit-meta" data-id="${meta._id}">Editar</button>
+                <button class="btn btn-danger btn-delete-meta" data-id="${meta._id}">Excluir</button>
+            </div>
+        </div>
+    `;
+}
+
+
+// (Não muda)
+function renderCardTreino(meta, treinosFeitos, calendarioHtml) {
     const hoje = new Date();
     const mes = hoje.toLocaleDateString('pt-BR', { month: 'long' });
     const mesCapitalizado = mes.charAt(0).toUpperCase() + mes.slice(1);
@@ -301,18 +323,13 @@ function renderCardHabito(meta, diasCompletos, calendarioHtml) {
     const tituloCalendario = meta.periodo === 'Mês' 
         ? `${mesCapitalizado} ${hoje.getFullYear()}`
         : 'Esta Semana';
-    
-    // Define o título do card
-    const tituloMeta = meta.tipo === 'Treino' 
-        ? `Meta de Treino (${meta.periodo})`
-        : `Meta de Água (${meta.valorAlvo}L/${meta.periodo})`;
         
     return `
         <div class="meta-card">
             <div class="meta-card-header">
-                <strong>${tituloMeta}</strong>
+                <strong>Meta de Treino (${meta.periodo})</strong>
                 <span class="meta-status status-andamento">
-                    ${diasCompletos} de ${meta.valorAlvo} ${meta.periodo === 'Mês' ? 'dias' : ''}
+                    ${treinosFeitos} de ${meta.valorAlvo}
                 </span>
             </div>
             <div class="meta-card-body">
@@ -333,27 +350,22 @@ function renderCalendario(periodo, diasMarcados) {
     const diaHoje = hoje.getUTCDate();
     const mesHoje = hoje.getUTCMonth();
     const anoHoje = hoje.getUTCFullYear();
-
     let html = '<div class="calendario-grid">';
-    
     const diasSemana = ['D', 'S', 'T', 'Q', 'Q', 'S', 'S'];
     diasSemana.forEach(dia => {
         html += `<div class="cal-dia cal-header">${dia}</div>`;
     });
-    
     if (periodo === 'Semana') {
-        const inicioSemana = getInicioSemana(hoje); // Começa no Domingo
-        
+        const inicioSemana = getInicioSemana(hoje); 
         for (let i = 0; i < 7; i++) { 
             const diaAtual = new Date(inicioSemana);
             diaAtual.setUTCDate(diaAtual.getUTCDate() + i);
             const diaNum = diaAtual.getUTCDate();
-            
             let classes = 'cal-dia';
             if (diaNum === diaHoje && diaAtual.getUTCMonth() === mesHoje && diaAtual.getUTCFullYear() === anoHoje) {
                 classes += ' cal-hoje'; 
             }
-            if (diasMarcados.has(diaNum)) { // Usa o Set de dias marcados
+            if (diasMarcados.has(diaNum)) { 
                 classes += ' cal-treino'; 
             }
             html += `<div class="${classes}">${diaNum}</div>`;
@@ -361,7 +373,6 @@ function renderCalendario(periodo, diasMarcados) {
     } else { 
         const primeiroDia = new Date(anoHoje, mesHoje, 1).getUTCDay(); 
         const diasNoMes = new Date(anoHoje, mesHoje + 1, 0).getUTCDate(); 
-        
         for (let i = 0; i < primeiroDia; i++) {
             html += '<div class="cal-dia cal-vazio"></div>';
         }
@@ -370,13 +381,12 @@ function renderCalendario(periodo, diasMarcados) {
             if (dia === diaHoje && mesHoje === hoje.getUTCMonth() && anoHoje === anoHoje) {
                 classes += ' cal-hoje'; 
             }
-            if (diasMarcados.has(dia)) { // Usa o Set de dias marcados
+            if (diasMarcados.has(dia)) { 
                 classes += ' cal-treino'; 
             }
             html += `<div class="${classes}">${dia}</div>`;
         }
     }
-    
     html += '</div>';
     return html;
 }
@@ -402,9 +412,9 @@ async function handleFormSubmit(e) {
     }
     
     // [NOVA VALIDAÇÃO]
-    if (data.tipo === 'Treino' || data.tipo === 'Água') {
+    if (data.tipo === 'Treino') {
         if (!data.periodo) {
-             alert('Selecione um Período (Semana/Mês) para esta meta.');
+             alert('Selecione um Período (Semana/Mês) para a meta de Treino.');
              return;
         }
     }
