@@ -16,34 +16,18 @@ function formatarDataParaInput(dateString) {
 function getHojeFormatado() {
     return new Date().toISOString().split('T')[0];
 }
+// Começa no Domingo (dia 0)
 function getInicioSemana(d) { 
     d = new Date(d);
-    const day = d.getDay();
-    const diff = d.getDate() - day;
+    const day = d.getDay(); 
+    const diff = d.getDate() - day; 
     return new Date(d.setDate(diff));
 }
 function getInicioMes(d) { 
     return new Date(d.getFullYear(), d.getMonth(), 1);
 }
 
-// --- [NOVO] Helper para buscar o peso atual do perfil ---
-async function fetchCurrentWeight() {
-    const token = localStorage.getItem('jwtToken');
-    try {
-        const response = await fetch(`${API_URL}/usuarios/perfil`, {
-            headers: { 'x-auth-token': token }
-        });
-        if (response.ok) {
-            const perfil = await response.json();
-            return perfil.dados_biometricos.peso_atual_kg;
-        }
-    } catch (error) {
-        console.error("Erro ao buscar peso do perfil:", error);
-    }
-    return ''; // Retorna vazio se falhar
-}
-
-// --- FUNÇÃO PRINCIPAL ---
+// --- FUNÇÃO PRINCIPAL (Não muda) ---
 export async function loadMetas() {
     formContainer.style.display = 'none';
     listContainer.style.display = 'block';
@@ -61,14 +45,17 @@ if (showCreateFormBtn) {
     showCreateFormBtn.addEventListener('click', showCreateForm);
 }
 
+// [MODIFICADO] Mostra/esconde campos dinamicamente
 function renderMetaForm(title = 'Definir Nova Meta', data = {}, editId = null, show = false) {
     currentEditId = editId; 
 
     const dataInicio = data.dataInicio ? formatarDataParaInput(data.dataInicio) : (editId ? '' : getHojeFormatado());
     const dataFim = data.dataFim ? formatarDataParaInput(data.dataFim) : '';
     
-    let valorInicialDisplay = (data.tipo === 'Peso' || data.tipo === 'Água') ? 'block' : 'none';
-    let periodoDisplay = (data.tipo === 'Treino') ? 'block' : 'none';
+    // [MODIFICADO] Lógica de visibilidade
+    let valorInicialDisplay = (data.tipo === 'Peso') ? 'block' : 'none';
+    let periodoDisplay = (data.tipo === 'Treino' || data.tipo === 'Água') ? 'block' : 'none';
+    
     let valorAlvoLabel = 'Valor Alvo';
     if (data.tipo === 'Treino') valorAlvoLabel = 'Frequência Alvo (vezes)';
     if (data.tipo === 'Água') valorAlvoLabel = 'Valor Alvo (Litros/dia)';
@@ -86,6 +73,7 @@ function renderMetaForm(title = 'Definir Nova Meta', data = {}, editId = null, s
                 <option value="Treino" ${data.tipo === 'Treino' ? 'selected' : ''}>Meta de Treino (Frequência)</option>
             </select>
             
+            <!-- [MODIFICADO] Campo de Período (para Treino E Água) -->
             <div id="meta-periodo-group" style="display: ${periodoDisplay};">
                 <label for="meta-periodo" class="input-label">Período:</label>
                 <select id="meta-periodo" class="input-field">
@@ -94,13 +82,14 @@ function renderMetaForm(title = 'Definir Nova Meta', data = {}, editId = null, s
                 </select>
             </div>
 
+            <!-- [MODIFICADO] Campo de Valor Inicial (só para Peso) -->
             <div id="meta-inicial-group" style="display: ${valorInicialDisplay};">
                 <label for="meta-inicial" class="input-label">Valor Inicial:</label>
                 <input type="number" step="0.1" id="meta-inicial" class="input-field" placeholder="Ex: 82" value="${data.valorInicial || ''}">
             </div>
             
             <label for="meta-valor" class="input-label" id="label-valor-alvo">${valorAlvoLabel}:</label>
-            <input type="number" step="0.1" id="meta-valor" class="input-field" placeholder="Ex: 75" value="${data.valorAlvo || ''}" required>
+            <input type="number" step="0.1" id="meta-valor" class="input-field" placeholder="Ex: 75 (kg) ou 3 (Litros)" value="${data.valorAlvo || ''}" required>
             
             <label class="input-label" style="margin-top: 10px;">Período da Meta:</label>
             <div class="meta-form-grid">
@@ -109,7 +98,7 @@ function renderMetaForm(title = 'Definir Nova Meta', data = {}, editId = null, s
             </div>
             
             <button type="submit" class="btn btn-primary">${editId ? 'Salvar Alterações' : 'Definir Meta'}</button>
-            <button type="button" id="btn-cancelar-meta" class="btn btn-secondary" style="margin-left: 10px; width: auto; display: inline-block;">Cancelar</button>
+            <button type="button" id="btn-cancelar-meta" class="btn btn-secondary">Cancelar</button>
         </form>
     `;
     
@@ -121,15 +110,16 @@ function renderMetaForm(title = 'Definir Nova Meta', data = {}, editId = null, s
         formContainer.style.display = 'none';
     }
 
-    // Event Listeners
+    // [MODIFICADO] Event Listener do Tipo
     document.getElementById('meta-tipo').addEventListener('change', async (e) => {
         const tipo = e.target.value;
         const inicialInput = document.getElementById('meta-inicial');
         const valorLabel = document.getElementById('label-valor-alvo');
         const valorInput = document.getElementById('meta-valor');
 
-        document.getElementById('meta-inicial-group').style.display = (tipo === 'Peso' || tipo === 'Água') ? 'block' : 'none';
-        document.getElementById('meta-periodo-group').style.display = (tipo === 'Treino') ? 'block' : 'none';
+        // Lógica de visibilidade
+        document.getElementById('meta-inicial-group').style.display = (tipo === 'Peso') ? 'block' : 'none';
+        document.getElementById('meta-periodo-group').style.display = (tipo === 'Treino' || tipo === 'Água') ? 'block' : 'none';
         
         if (tipo === 'Treino') {
             valorLabel.textContent = 'Frequência Alvo (vezes):';
@@ -139,14 +129,13 @@ function renderMetaForm(title = 'Definir Nova Meta', data = {}, editId = null, s
             valorLabel.textContent = 'Valor Alvo (Litros/dia):';
             valorInput.placeholder = 'Ex: 3';
             valorInput.step = "0.1";
-            inicialInput.value = ''; // Limpa para água (geralmente começa do 0 ou média)
+            inicialInput.value = ''; // Água não tem valor inicial
         } else if (tipo === 'Peso') {
             valorLabel.textContent = 'Valor Alvo (kg):';
             valorInput.placeholder = 'Ex: 75';
             valorInput.step = "0.1";
             
-            // [NOVO] Busca e preenche o peso atual automaticamente
-            if (!editId) { // Só se for uma nova meta
+            if (!editId) { 
                 inicialInput.placeholder = "Carregando...";
                 const pesoAtual = await fetchCurrentWeight();
                 inicialInput.value = pesoAtual;
@@ -159,7 +148,7 @@ function renderMetaForm(title = 'Definir Nova Meta', data = {}, editId = null, s
     document.getElementById('btn-cancelar-meta').addEventListener('click', loadMetas);
 }
 
-// --- RENDERIZAÇÃO DA LISTA (Não muda) ---
+// --- RENDERIZAÇÃO DA LISTA ---
 async function loadAndRenderList() {
     listContainer.innerHTML = '<p class="info-message">Carregando metas e progresso...</p>';
     const token = localStorage.getItem('jwtToken');
@@ -189,69 +178,70 @@ async function loadAndRenderList() {
     }
 }
 
-// (Não muda)
+// [MODIFICADO] Divide a lógica de renderização
 function renderMetaList(metas, diarios) {
-    listContainer.innerHTML = '<hr style="border: 1px solid #eee; margin: 2rem 0;"><h4>Metas Atuais</h4>'; 
-    
+    listContainer.innerHTML = '<h4>Metas Atuais</h4>'; 
     const hoje = new Date();
     
-    const diasTreinados = new Set(diarios
-        .filter(d => d.treinoRealizado && d.treinoRealizado.trim() !== '')
-        .map(d => new Date(d.data).toISOString().split('T')[0])
-    );
-    
+    // Processa os dados do diário UMA VEZ
+    const diasTreinados = new Set();
+    const diasAguaOk = new Map(); // Map para guardar o dia e a qtd
+    diarios.forEach(d => {
+        const diaStr = new Date(d.data).toISOString().split('T')[0];
+        if (d.treinoRealizado && d.treinoRealizado.trim() !== '') {
+            diasTreinados.add(diaStr);
+        }
+        if (d.aguaLitros > 0) {
+            diasAguaOk.set(diaStr, d.aguaLitros);
+        }
+    });
+
     metas.forEach(meta => {
-        
-        if (meta.tipo === 'Peso' || meta.tipo === 'Água') {
+        if (meta.tipo === 'Peso') {
+            // Lógica do Peso (encontra o registro mais recente)
             let valorAtual = meta.valorInicial;
-            let progresso = 0;
-            const tipoDiario = meta.tipo === 'Peso' ? 'pesoKg' : 'aguaLitros';
-            
             const registrosRelevantes = diarios
-                .filter(d => d[tipoDiario] > 0 && new Date(d.data) >= new Date(meta.dataInicio)) 
+                .filter(d => d.pesoKg > 0 && new Date(d.data) >= new Date(meta.dataInicio)) 
                 .sort((a, b) => new Date(b.data) - new Date(a.data)); 
-                
             if (registrosRelevantes.length > 0) {
-                valorAtual = registrosRelevantes[0][tipoDiario];
+                valorAtual = registrosRelevantes[0].pesoKg;
             }
-
-            const totalAlcancado = valorAtual - meta.valorInicial;
-            const totalMeta = meta.valorAlvo - meta.valorInicial;
-
-            if (totalMeta !== 0) { 
-                progresso = (totalAlcancado / totalMeta) * 100;
-            }
-            if (progresso < 0) progresso = 0;
-            if (progresso > 100) progresso = 100;
             
-            listContainer.innerHTML += renderCardValor(meta, progresso, valorAtual);
+            listContainer.innerHTML += renderCardValor(meta, calcularProgresso(meta.valorInicial, valorAtual, meta.valorAlvo), valorAtual);
 
-        } else if (meta.tipo === 'Treino') {
-            
+        } else if (meta.tipo === 'Água' || meta.tipo === 'Treino') {
+            // Lógica de Hábitos (Água e Treino)
             const inicioPeriodo = meta.periodo === 'Mês' ? getInicioMes(hoje) : getInicioSemana(hoje);
             const fimPeriodo = meta.periodo === 'Mês' 
                 ? new Date(hoje.getFullYear(), hoje.getMonth() + 1, 0) 
                 : new Date(inicioPeriodo.getFullYear(), inicioPeriodo.getMonth(), inicioPeriodo.getDate() + 6); 
 
-            let treinosNoPeriodo = 0;
-            const diasTreinadosNoPeriodo = new Set();
+            let diasCompletos = 0;
+            const diasMarcados = new Set();
             
-            diasTreinados.forEach(diaString => {
-                const dia = new Date(diaString);
-                dia.setUTCHours(4); 
+            const iteradorDias = new Date(inicioPeriodo);
+            while (iteradorDias <= fimPeriodo) {
+                if (iteradorDias > hoje) break; // Não conta dias futuros
                 
-                if (dia >= inicioPeriodo && dia <= fimPeriodo) {
-                    treinosNoPeriodo++;
-                    diasTreinadosNoPeriodo.add(dia.getUTCDate()); 
+                const diaStr = iteradorDias.toISOString().split('T')[0];
+                
+                if (meta.tipo === 'Treino' && diasTreinados.has(diaStr)) {
+                    diasCompletos++;
+                    diasMarcados.add(iteradorDias.getUTCDate());
+                } else if (meta.tipo === 'Água' && (diasAguaOk.get(diaStr) || 0) >= meta.valorAlvo) {
+                    diasCompletos++;
+                    diasMarcados.add(iteradorDias.getUTCDate());
                 }
-            });
+                
+                iteradorDias.setUTCDate(iteradorDias.getUTCDate() + 1);
+            }
             
-            const calendarioHtml = renderCalendario(meta.periodo, diasTreinadosNoPeriodo);
-            
-            listContainer.innerHTML += renderCardTreino(meta, treinosNoPeriodo, calendarioHtml);
+            const calendarioHtml = renderCalendario(meta.periodo, diasMarcados);
+            listContainer.innerHTML += renderCardHabito(meta, diasCompletos, calendarioHtml);
         }
     });
 
+    // Adiciona Listeners
     listContainer.querySelectorAll('.btn-edit-meta').forEach(btn => 
         btn.addEventListener('click', (e) => handleEditClick(e.target.dataset.id))
     );
@@ -260,7 +250,18 @@ function renderMetaList(metas, diarios) {
     );
 }
 
-// (Não muda)
+// --- Funções de Renderização dos Cards ---
+
+function calcularProgresso(inicio, atual, alvo) {
+    const totalAlcancado = atual - inicio;
+    const totalMeta = alvo - inicio;
+    if (totalMeta === 0) return (totalAlcancado > 0 ? 100 : 0); // Evita divisão por zero
+    let progresso = (totalAlcancado / totalMeta) * 100;
+    if (progresso < 0) progresso = 0;
+    if (progresso > 100) progresso = 100;
+    return progresso;
+}
+
 function renderCardValor(meta, progresso, valorAtual) {
     const dataInicioFormatada = new Date(meta.dataInicio).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric', timeZone: 'UTC' });
     let dataFimFormatada = 'Sem prazo';
@@ -271,11 +272,11 @@ function renderCardValor(meta, progresso, valorAtual) {
     return `
         <div class="meta-card">
             <div class="meta-card-header">
-                <strong>${meta.tipo} (Alvo: ${meta.valorAlvo})</strong>
+                <strong>${meta.tipo} (Alvo: ${meta.valorAlvo} kg)</strong>
                 <span class="meta-status status-andamento">${progresso.toFixed(0)}%</span>
             </div>
             <div class="meta-card-body">
-                <p class="meta-card-progress">Início: ${meta.valorInicial} | Atual: ${valorAtual}</p>
+                <p class="meta-card-progress">Início: ${meta.valorInicial} kg | Atual: ${valorAtual} kg</p>
                 <div class="progress-bar-container">
                     <div class="progress-bar-fill" style="width: ${progresso}%;"></div>
                 </div>
@@ -291,8 +292,8 @@ function renderCardValor(meta, progresso, valorAtual) {
     `;
 }
 
-// (Não muda)
-function renderCardTreino(meta, treinosFeitos, calendarioHtml) {
+// [MODIFICADO] Renomeado para Hábito (Treino e Água)
+function renderCardHabito(meta, diasCompletos, calendarioHtml) {
     const hoje = new Date();
     const mes = hoje.toLocaleDateString('pt-BR', { month: 'long' });
     const mesCapitalizado = mes.charAt(0).toUpperCase() + mes.slice(1);
@@ -300,13 +301,18 @@ function renderCardTreino(meta, treinosFeitos, calendarioHtml) {
     const tituloCalendario = meta.periodo === 'Mês' 
         ? `${mesCapitalizado} ${hoje.getFullYear()}`
         : 'Esta Semana';
+    
+    // Define o título do card
+    const tituloMeta = meta.tipo === 'Treino' 
+        ? `Meta de Treino (${meta.periodo})`
+        : `Meta de Água (${meta.valorAlvo}L/${meta.periodo})`;
         
     return `
         <div class="meta-card">
             <div class="meta-card-header">
-                <strong>Meta de Treino (${meta.periodo})</strong>
+                <strong>${tituloMeta}</strong>
                 <span class="meta-status status-andamento">
-                    ${treinosFeitos} de ${meta.valorAlvo}
+                    ${diasCompletos} de ${meta.valorAlvo} ${meta.periodo === 'Mês' ? 'dias' : ''}
                 </span>
             </div>
             <div class="meta-card-body">
@@ -322,7 +328,7 @@ function renderCardTreino(meta, treinosFeitos, calendarioHtml) {
 }
 
 // (Não muda)
-function renderCalendario(periodo, diasTreinados) {
+function renderCalendario(periodo, diasMarcados) {
     const hoje = new Date();
     const diaHoje = hoje.getUTCDate();
     const mesHoje = hoje.getUTCMonth();
@@ -336,16 +342,18 @@ function renderCalendario(periodo, diasTreinados) {
     });
     
     if (periodo === 'Semana') {
-        const inicioSemana = getInicioSemana(hoje); 
+        const inicioSemana = getInicioSemana(hoje); // Começa no Domingo
+        
         for (let i = 0; i < 7; i++) { 
             const diaAtual = new Date(inicioSemana);
             diaAtual.setUTCDate(diaAtual.getUTCDate() + i);
             const diaNum = diaAtual.getUTCDate();
+            
             let classes = 'cal-dia';
             if (diaNum === diaHoje && diaAtual.getUTCMonth() === mesHoje && diaAtual.getUTCFullYear() === anoHoje) {
                 classes += ' cal-hoje'; 
             }
-            if (diasTreinados.has(diaNum)) {
+            if (diasMarcados.has(diaNum)) { // Usa o Set de dias marcados
                 classes += ' cal-treino'; 
             }
             html += `<div class="${classes}">${diaNum}</div>`;
@@ -353,26 +361,29 @@ function renderCalendario(periodo, diasTreinados) {
     } else { 
         const primeiroDia = new Date(anoHoje, mesHoje, 1).getUTCDay(); 
         const diasNoMes = new Date(anoHoje, mesHoje + 1, 0).getUTCDate(); 
+        
         for (let i = 0; i < primeiroDia; i++) {
             html += '<div class="cal-dia cal-vazio"></div>';
         }
         for (let dia = 1; dia <= diasNoMes; dia++) {
             let classes = 'cal-dia';
-            if (dia === diaHoje && mesHoje === hoje.getUTCMonth() && anoHoje === hoje.getUTCFullYear()) {
+            if (dia === diaHoje && mesHoje === hoje.getUTCMonth() && anoHoje === anoHoje) {
                 classes += ' cal-hoje'; 
             }
-            if (diasTreinados.has(dia)) {
+            if (diasMarcados.has(dia)) { // Usa o Set de dias marcados
                 classes += ' cal-treino'; 
             }
             html += `<div class="${classes}">${dia}</div>`;
         }
     }
+    
     html += '</div>';
     return html;
 }
 
 // --- HANDLERS (Ações) ---
-// (Não muda)
+
+// [MODIFICADO] Validação atualizada
 async function handleFormSubmit(e) {
     e.preventDefault();
     const token = localStorage.getItem('jwtToken');
@@ -384,17 +395,28 @@ async function handleFormSubmit(e) {
         dataFim: document.getElementById('meta-fim').value || null,
         periodo: document.getElementById('meta-periodo').value || null
     };
+    
     if (!data.tipo || !data.valorAlvo || !data.dataInicio) {
         alert('Tipo, Valor Alvo e Data de Início são obrigatórios.');
         return;
     }
-    if (data.tipo === 'Treino' && !data.periodo) {
-         alert('Selecione um Período (Semana/Mês) para a meta de Treino.');
-         return;
+    
+    // [NOVA VALIDAÇÃO]
+    if (data.tipo === 'Treino' || data.tipo === 'Água') {
+        if (!data.periodo) {
+             alert('Selecione um Período (Semana/Mês) para esta meta.');
+             return;
+        }
     }
-    if ((data.tipo === 'Peso' || data.tipo === 'Água') && data.valorInicial === 0) {
-         alert('O Valor Inicial é obrigatório para metas de Peso e Água.');
-         return;
+    if (data.tipo === 'Peso') {
+        if (data.valorInicial === 0) {
+             alert('O Valor Inicial é obrigatório para metas de Peso.');
+             return;
+        }
+        if (data.valorInicial === data.valorAlvo) {
+             alert('O Valor Inicial não pode ser igual ao Valor Alvo.');
+             return;
+        }
     }
 
     try {
@@ -455,4 +477,4 @@ async function handleDeleteClick(id) {
         console.error('Erro ao excluir meta:', error);
         alert('Não foi possível excluir a meta.');
     }
-}   
+}

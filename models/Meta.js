@@ -1,24 +1,25 @@
 const mongoose = require('mongoose');
 const Schema = mongoose.Schema;
 
-const MetaSchema = new Schema({
+const MetaSchema = new mongoose.Schema({
     usuario: {
-        type: Schema.Types.ObjectId,
+        type: mongoose.Schema.Types.ObjectId,
         ref: 'Usuario',
         required: true
     },
     tipo: {
         type: String,
         required: true,
-        enum: ['Peso', 'Água', 'Treino'] 
+        enum: ['Peso', 'Água', 'Treino'] // Tipos de meta
     },
     
+    // [MODIFICADO] ValorInicial não é mais obrigatório
     valorInicial: {
         type: Number, 
-        required: false 
+        required: false // Só é usado por 'Peso'
     },
     valorAlvo: {
-        type: Number, 
+        type: Number, // Ex: 75 (kg) ou 3 (Litros) ou 5 (treinos)
         required: [true, 'O Valor Alvo é obrigatório']
     },
     dataInicio: {
@@ -30,6 +31,7 @@ const MetaSchema = new Schema({
         required: false 
     },
     
+    // [MODIFICADO] Agora é usado por Treino E Água
     periodo: {
         type: String,
         enum: ['Semana', 'Mês'],
