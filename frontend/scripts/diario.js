@@ -1,46 +1,44 @@
-import { API_URL } from './auth.js';
+import { API_URL } from './auth.js'; 
+// [NOVO] Importa funções do dashboard para forçar a atualização do perfil
+import { loadDashboardData, renderCrudForms } from './dashboard.js';
 
+// --- Elementos DOM ---
 const formContainer = document.getElementById('diario-form-container');
 const listContainer = document.getElementById('diario-list-container');
 const showCreateFormBtn = document.getElementById('btn-show-create-diario-form');
 
-let currentEditId = null; 
+// --- Variável de Estado ---
+let currentEditId = null; // Guarda o ID do registro sendo editado
 
-
+// --- Helpers de Data ---
 function getHojeFormatado() {
     return new Date().toISOString().split('T')[0];
 }
-
-
 function formatarDataParaInput(dateString) {
     if (!dateString) return getHojeFormatado();
     return new Date(dateString).toISOString().split('T')[0];
 }
 
+// --- FUNÇÃO PRINCIPAL (Chamada pelo index.html) ---
 export async function loadDiario() {
-    
     formContainer.style.display = 'none';
     listContainer.style.display = 'block';
     showCreateFormBtn.style.display = 'block';
-    
-    renderForm('Novo Registro Diário', {}, null, false);
-    
+    renderForm('Novo Registro Diário', {}, null, false); 
     loadAndRenderList();
 }
 
+// --- Funções de Formulário ---
 function showCreateForm() {
     currentEditId = null;
     renderForm('Novo Registro Diário', {}, null, true); 
 }
-
 if (showCreateFormBtn) {
     showCreateFormBtn.addEventListener('click', showCreateForm);
 }
 
-
 function renderForm(title = 'Novo Registro Diário', data = {}, editId = null, show = false) {
     currentEditId = editId; 
-
     const inputDate = data.data ? formatarDataParaInput(data.data) : getHojeFormatado();
 
     formContainer.innerHTML = `
@@ -58,7 +56,7 @@ function renderForm(title = 'Novo Registro Diário', data = {}, editId = null, s
             <textarea id="diario-treino" class="input-field" placeholder="Treino realizado...">${data.treinoRealizado || ''}</textarea>
             
             <button type="submit" class="btn btn-primary">${editId ? 'Salvar Alterações' : 'Salvar Registro'}</button>
-            <button type="button" id="btn-cancelar-diario" class="btn btn-secondary">Cancelar</button>
+            <button type="button" id="btn-cancelar-diario" class="btn btn-secondary" style="margin-left: 10px; width: auto; display: inline-block;">Cancelar</button>
         </form>
     `;
 
@@ -71,15 +69,10 @@ function renderForm(title = 'Novo Registro Diário', data = {}, editId = null, s
     }
 
     document.getElementById('diario-form').addEventListener('submit', handleFormSubmit);
-    
-    const cancelBtn = document.getElementById('btn-cancelar-diario');
-    if (cancelBtn) {
-        cancelBtn.addEventListener('click', () => {
-            loadDiario(); 
-        });
-    }
+    document.getElementById('btn-cancelar-diario').addEventListener('click', loadDiario); 
 }
 
+// --- RENDERIZAÇÃO DA LISTA ---
 async function loadAndRenderList() {
     listContainer.innerHTML = '<p class="info-message">Carregando histórico...</p>';
     const token = localStorage.getItem('jwtToken');
@@ -96,7 +89,6 @@ async function loadAndRenderList() {
             listContainer.innerHTML = '<hr style="border: 1px solid #eee; margin: 2rem 0;"><p class="info-message">Nenhum registro no diário ainda.</p>';
             return;
         }
-
         renderDiarioList(registros);
         
     } catch (error) {
@@ -106,7 +98,7 @@ async function loadAndRenderList() {
 }
 
 function renderDiarioList(registros) {
-    listContainer.innerHTML = '<h4>Histórico de Registros</h4>'; 
+    listContainer.innerHTML = '<hr style="border: 1px solid #eee; margin: 2rem 0;"><h4>Histórico de Registros</h4>'; 
     
     registros.forEach(reg => {
         const dataFormatada = new Date(reg.data).toLocaleDateString('pt-BR', {
@@ -143,10 +135,13 @@ function renderDiarioList(registros) {
     );
 }
 
+// --- HANDLERS (Ações) ---
 
+// [MODIFICADO]
 async function handleFormSubmit(e) {
     e.preventDefault();
     const token = localStorage.getItem('jwtToken');
+    if (!token) return;
 
     const data = {
         data: document.getElementById('diario-data').value,
@@ -156,7 +151,7 @@ async function handleFormSubmit(e) {
         treinoRealizado: document.getElementById('diario-treino').value,
     };
     
-    if (!data.data || !data.pesoKg || !data.aguaLitros || data.pesoKg <= 0 || data.aguaLitros < 0) {
+    if (!data.data || isNaN(data.pesoKg) || isNaN(data.aguaLitros) || data.pesoKg <= 0 || data.aguaLitros < 0) {
         alert('Por favor, insira valores válidos para Data, Peso (kg) e Água (Litros).');
         return;
     }
@@ -184,7 +179,16 @@ async function handleFormSubmit(e) {
             }
         } else {
             alert('Registro salvo com sucesso!');
-            loadDiario(); 
+            
+            // [NOVO] Recarrega os dados do Perfil após salvar o diário
+            // Isso garante que a aba "Perfil" e a aba "Metas" terão o peso mais recente
+            const newProfile = await loadDashboardData(token);
+            if (newProfile) {
+                // Re-renderiza o conteúdo do perfil (que está oculto) com o novo peso
+                renderCrudForms(newProfile);
+            }
+            
+            loadDiario(); // Reseta o form e recarrega a lista do diário
         }
 
     } catch (error) {
@@ -230,7 +234,7 @@ async function handleDeleteClick(id) {
         if (!response.ok) throw new Error('Falha ao excluir.');
         
         alert('Registro excluído com sucesso.');
-        loadAndRenderList(); 
+        loadAndRenderList(); // Apenas recarrega a lista
 
     } catch (error) {
         console.error('Erro ao excluir:', error);

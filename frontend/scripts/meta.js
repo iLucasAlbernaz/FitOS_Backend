@@ -8,9 +8,7 @@ const showCreateFormBtn = document.getElementById('btn-show-create-meta-form');
 // --- Variável de Estado ---
 let currentEditId = null; 
 
-/**
- * Helper: Converte data do banco para 'YYYY-MM-DD' (para o input)
- */
+// --- Helpers de Data ---
 function formatarDataParaInput(dateString) {
     if (!dateString) return '';
     return new Date(dateString).toISOString().split('T')[0];
@@ -18,18 +16,34 @@ function formatarDataParaInput(dateString) {
 function getHojeFormatado() {
     return new Date().toISOString().split('T')[0];
 }
-// [MODIFICADO] getInicioSemana agora começa no DOMINGO (dia 0)
 function getInicioSemana(d) { 
     d = new Date(d);
-    const day = d.getDay(); // 0 = Domingo, 1 = Segunda...
-    const diff = d.getDate() - day; // Volta para o Domingo
+    const day = d.getDay();
+    const diff = d.getDate() - day;
     return new Date(d.setDate(diff));
 }
-function getInicioMes(d) { // d = new Date()
+function getInicioMes(d) { 
     return new Date(d.getFullYear(), d.getMonth(), 1);
 }
 
-// --- FUNÇÃO PRINCIPAL (Não muda) ---
+// --- [NOVO] Helper para buscar o peso atual do perfil ---
+async function fetchCurrentWeight() {
+    const token = localStorage.getItem('jwtToken');
+    try {
+        const response = await fetch(`${API_URL}/usuarios/perfil`, {
+            headers: { 'x-auth-token': token }
+        });
+        if (response.ok) {
+            const perfil = await response.json();
+            return perfil.dados_biometricos.peso_atual_kg;
+        }
+    } catch (error) {
+        console.error("Erro ao buscar peso do perfil:", error);
+    }
+    return ''; // Retorna vazio se falhar
+}
+
+// --- FUNÇÃO PRINCIPAL ---
 export async function loadMetas() {
     formContainer.style.display = 'none';
     listContainer.style.display = 'block';
@@ -39,7 +53,6 @@ export async function loadMetas() {
 }
 
 // --- Funções de Formulário ---
-// (Não muda)
 function showCreateForm() {
     currentEditId = null;
     renderMetaForm('Definir Nova Meta', {}, null, true); 
@@ -48,7 +61,6 @@ if (showCreateFormBtn) {
     showCreateFormBtn.addEventListener('click', showCreateForm);
 }
 
-// (Não muda)
 function renderMetaForm(title = 'Definir Nova Meta', data = {}, editId = null, show = false) {
     currentEditId = editId; 
 
@@ -87,8 +99,8 @@ function renderMetaForm(title = 'Definir Nova Meta', data = {}, editId = null, s
                 <input type="number" step="0.1" id="meta-inicial" class="input-field" placeholder="Ex: 82" value="${data.valorInicial || ''}">
             </div>
             
-            <label for="meta-valor" class="input-label">${valorAlvoLabel}:</label>
-            <input type="number" step="1" id="meta-valor" class="input-field" placeholder="Ex: 75 (kg) ou 5 (treinos)" value="${data.valorAlvo || ''}" required>
+            <label for="meta-valor" class="input-label" id="label-valor-alvo">${valorAlvoLabel}:</label>
+            <input type="number" step="0.1" id="meta-valor" class="input-field" placeholder="Ex: 75" value="${data.valorAlvo || ''}" required>
             
             <label class="input-label" style="margin-top: 10px;">Período da Meta:</label>
             <div class="meta-form-grid">
@@ -97,7 +109,7 @@ function renderMetaForm(title = 'Definir Nova Meta', data = {}, editId = null, s
             </div>
             
             <button type="submit" class="btn btn-primary">${editId ? 'Salvar Alterações' : 'Definir Meta'}</button>
-            <button type="button" id="btn-cancelar-meta" class="btn btn-secondary">Cancelar</button>
+            <button type="button" id="btn-cancelar-meta" class="btn btn-secondary" style="margin-left: 10px; width: auto; display: inline-block;">Cancelar</button>
         </form>
     `;
     
@@ -110,23 +122,44 @@ function renderMetaForm(title = 'Definir Nova Meta', data = {}, editId = null, s
     }
 
     // Event Listeners
-    document.getElementById('meta-tipo').addEventListener('change', (e) => {
+    document.getElementById('meta-tipo').addEventListener('change', async (e) => {
         const tipo = e.target.value;
+        const inicialInput = document.getElementById('meta-inicial');
+        const valorLabel = document.getElementById('label-valor-alvo');
+        const valorInput = document.getElementById('meta-valor');
+
         document.getElementById('meta-inicial-group').style.display = (tipo === 'Peso' || tipo === 'Água') ? 'block' : 'none';
         document.getElementById('meta-periodo-group').style.display = (tipo === 'Treino') ? 'block' : 'none';
         
-        const labelValor = document.querySelector('label[for="meta-valor"]');
-        if (tipo === 'Treino') labelValor.textContent = 'Frequência Alvo (vezes):';
-        else if (tipo === 'Água') labelValor.textContent = 'Valor Alvo (Litros/dia):';
-        else if (tipo === 'Peso') labelValor.textContent = 'Valor Alvo (kg):';
+        if (tipo === 'Treino') {
+            valorLabel.textContent = 'Frequência Alvo (vezes):';
+            valorInput.placeholder = 'Ex: 5';
+            valorInput.step = "1";
+        } else if (tipo === 'Água') {
+            valorLabel.textContent = 'Valor Alvo (Litros/dia):';
+            valorInput.placeholder = 'Ex: 3';
+            valorInput.step = "0.1";
+            inicialInput.value = ''; // Limpa para água (geralmente começa do 0 ou média)
+        } else if (tipo === 'Peso') {
+            valorLabel.textContent = 'Valor Alvo (kg):';
+            valorInput.placeholder = 'Ex: 75';
+            valorInput.step = "0.1";
+            
+            // [NOVO] Busca e preenche o peso atual automaticamente
+            if (!editId) { // Só se for uma nova meta
+                inicialInput.placeholder = "Carregando...";
+                const pesoAtual = await fetchCurrentWeight();
+                inicialInput.value = pesoAtual;
+                inicialInput.placeholder = "Ex: 82";
+            }
+        }
     });
     
     document.getElementById('meta-form').addEventListener('submit', handleFormSubmit);
     document.getElementById('btn-cancelar-meta').addEventListener('click', loadMetas);
 }
 
-// --- RENDERIZAÇÃO DA LISTA ---
-// (Não muda)
+// --- RENDERIZAÇÃO DA LISTA (Não muda) ---
 async function loadAndRenderList() {
     listContainer.innerHTML = '<p class="info-message">Carregando metas e progresso...</p>';
     const token = localStorage.getItem('jwtToken');
@@ -158,7 +191,7 @@ async function loadAndRenderList() {
 
 // (Não muda)
 function renderMetaList(metas, diarios) {
-    listContainer.innerHTML = '<h4>Metas Atuais</h4>'; 
+    listContainer.innerHTML = '<hr style="border: 1px solid #eee; margin: 2rem 0;"><h4>Metas Atuais</h4>'; 
     
     const hoje = new Date();
     
@@ -227,7 +260,6 @@ function renderMetaList(metas, diarios) {
     );
 }
 
-// --- Funções de Renderização dos Cards ---
 // (Não muda)
 function renderCardValor(meta, progresso, valorAtual) {
     const dataInicioFormatada = new Date(meta.dataInicio).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric', timeZone: 'UTC' });
@@ -304,14 +336,11 @@ function renderCalendario(periodo, diasTreinados) {
     });
     
     if (periodo === 'Semana') {
-        const inicioSemana = getInicioSemana(hoje); // Começa no Domingo
-        
+        const inicioSemana = getInicioSemana(hoje); 
         for (let i = 0; i < 7; i++) { 
             const diaAtual = new Date(inicioSemana);
             diaAtual.setUTCDate(diaAtual.getUTCDate() + i);
-            
             const diaNum = diaAtual.getUTCDate();
-            
             let classes = 'cal-dia';
             if (diaNum === diaHoje && diaAtual.getUTCMonth() === mesHoje && diaAtual.getUTCFullYear() === anoHoje) {
                 classes += ' cal-hoje'; 
@@ -319,18 +348,14 @@ function renderCalendario(periodo, diasTreinados) {
             if (diasTreinados.has(diaNum)) {
                 classes += ' cal-treino'; 
             }
-            
             html += `<div class="${classes}">${diaNum}</div>`;
         }
-        
     } else { 
-        const primeiroDia = new Date(anoHoje, mesHoje, 1).getUTCDay(); // 0=Domingo
+        const primeiroDia = new Date(anoHoje, mesHoje, 1).getUTCDay(); 
         const diasNoMes = new Date(anoHoje, mesHoje + 1, 0).getUTCDate(); 
-        
         for (let i = 0; i < primeiroDia; i++) {
             html += '<div class="cal-dia cal-vazio"></div>';
         }
-        
         for (let dia = 1; dia <= diasNoMes; dia++) {
             let classes = 'cal-dia';
             if (dia === diaHoje && mesHoje === hoje.getUTCMonth() && anoHoje === hoje.getUTCFullYear()) {
@@ -339,23 +364,18 @@ function renderCalendario(periodo, diasTreinados) {
             if (diasTreinados.has(dia)) {
                 classes += ' cal-treino'; 
             }
-            
             html += `<div class="${classes}">${dia}</div>`;
         }
     }
-    
     html += '</div>';
     return html;
 }
 
-
 // --- HANDLERS (Ações) ---
-
 // (Não muda)
 async function handleFormSubmit(e) {
     e.preventDefault();
     const token = localStorage.getItem('jwtToken');
-
     const data = {
         tipo: document.getElementById('meta-tipo').value,
         valorInicial: parseFloat(document.getElementById('meta-inicial').value) || 0,
@@ -364,12 +384,10 @@ async function handleFormSubmit(e) {
         dataFim: document.getElementById('meta-fim').value || null,
         periodo: document.getElementById('meta-periodo').value || null
     };
-    
     if (!data.tipo || !data.valorAlvo || !data.dataInicio) {
         alert('Tipo, Valor Alvo e Data de Início são obrigatórios.');
         return;
     }
-    
     if (data.tipo === 'Treino' && !data.periodo) {
          alert('Selecione um Período (Semana/Mês) para a meta de Treino.');
          return;
@@ -382,26 +400,20 @@ async function handleFormSubmit(e) {
     try {
         const url = currentEditId ? `${API_URL}/metas/${currentEditId}` : `${API_URL}/metas`;
         const method = currentEditId ? 'PUT' : 'POST';
-
         const response = await fetch(url, {
             method: method,
             headers: { 'Content-Type': 'application/json', 'x-auth-token': token },
             body: JSON.stringify(data)
         });
-
         if (!response.ok) {
             const err = await response.json();
             throw new Error(err.msg || 'Falha ao salvar a meta.');
         } 
-        
         alert('Meta salva com sucesso!');
         loadMetas(); 
-        
-        // [GATILHO DE NOTIFICAÇÃO] Recarrega as notificações após o sucesso
         if(window.loadNotificacoes) {
             window.loadNotificacoes();
         }
-
     } catch (error) {
         console.error('Erro ao salvar meta:', error);
         alert(error.message || 'Erro ao salvar. Verifique o console.');
@@ -416,12 +428,9 @@ async function handleEditClick(id) {
             headers: { 'x-auth-token': token }
         });
         if (!res.ok) throw new Error('Falha ao buscar meta');
-        
         const meta = await res.json();
-        
-        renderMetaForm('Editar Meta', meta, id, true); // true = mostrar
+        renderMetaForm('Editar Meta', meta, id, true); 
         window.scrollTo(0, 0); 
-
     } catch (error) {
         console.error('Erro:', error);
         alert('Não foi possível carregar a meta para edição.');
@@ -446,4 +455,4 @@ async function handleDeleteClick(id) {
         console.error('Erro ao excluir meta:', error);
         alert('Não foi possível excluir a meta.');
     }
-}
+}   

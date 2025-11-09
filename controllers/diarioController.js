@@ -1,18 +1,27 @@
 const Diario = require('../models/Diario');
+const Usuario = require('../models/Usuario'); // [NOVO] Importa o modelo de Usuário
 
+/**
+ * Helper para pegar o início (meia-noite) de uma data em UTC
+ */
 function getInicioDoDia(dataString) {
     const [year, month, day] = dataString.split('-').map(Number);
     return new Date(Date.UTC(year, month - 1, day, 0, 0, 0));
 }
 
+/**
+ * Helper para pegar o fim (23:59) de uma data em UTC
+ */
 function getFimDoDia(dataString) {
     const [year, month, day] = dataString.split('-').map(Number);
     return new Date(Date.UTC(year, month - 1, day, 23, 59, 59));
 }
 
+// --- Funções CRUD ---
+
+// 1. CADASTRAR REGISTRO DIÁRIO (MODIFICADO)
 exports.createRegistro = async (req, res) => {
     const { data, alimentosConsumidos, treinoRealizado } = req.body;
-    
     const pesoKg = parseFloat(req.body.pesoKg);
     const aguaLitros = parseFloat(req.body.aguaLitros);
     
@@ -27,7 +36,6 @@ exports.createRegistro = async (req, res) => {
     }
 
     try {
-   
         const dataInicio = getInicioDoDia(data);
         const dataFim = getFimDoDia(data);
 
@@ -50,6 +58,14 @@ exports.createRegistro = async (req, res) => {
         });
 
         await registro.save();
+
+        // [NOVO] Sincroniza o peso com o Perfil do Usuário
+        if (pesoKg > 0) {
+            await Usuario.findByIdAndUpdate(req.usuario.id, {
+                $set: { 'dados_biometricos.peso_atual_kg': pesoKg }
+            });
+        }
+
         res.status(201).json(registro);
 
     } catch (err) {
@@ -58,6 +74,7 @@ exports.createRegistro = async (req, res) => {
     }
 };
 
+// 2. VISUALIZAR REGISTROS (Não muda)
 exports.getRegistros = async (req, res) => {
     try {
         const registros = await Diario.find({ usuario: req.usuario.id }).sort({ data: -1 });
@@ -68,6 +85,7 @@ exports.getRegistros = async (req, res) => {
     }
 };
 
+// 3. VISUALIZAR UM (Não muda)
 exports.getRegistroById = async (req, res) => {
     try {
         const registro = await Diario.findById(req.params.id);
@@ -82,9 +100,9 @@ exports.getRegistroById = async (req, res) => {
     }
 };
 
+// 4. EDITAR REGISTRO (MODIFICADO)
 exports.updateRegistro = async (req, res) => {
     const { data } = req.body;
-    
     const pesoKg = parseFloat(req.body.pesoKg);
     const aguaLitros = parseFloat(req.body.aguaLitros);
     
@@ -119,14 +137,22 @@ exports.updateRegistro = async (req, res) => {
             { $set: dadosAtualizados },
             { new: true }
         );
+
+        // [NOVO] Sincroniza o peso com o Perfil do Usuário ao editar também
+        if (pesoKg > 0) {
+            await Usuario.findByIdAndUpdate(req.usuario.id, {
+                $set: { 'dados_biometricos.peso_atual_kg': pesoKg }
+            });
+        }
+
         res.json(registro);
-    } catch (err)
-{
+    } catch (err) {
         console.error("Erro ao atualizar diário:", err.message);
         res.status(500).send('Erro no Servidor ao atualizar.');
     }
 };
 
+// 5. EXCLUIR REGISTRO (Não muda)
 exports.deleteRegistro = async (req, res) => {
     try {
         let registro = await Diario.findById(req.params.id);
