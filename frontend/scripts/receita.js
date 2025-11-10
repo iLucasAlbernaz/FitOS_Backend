@@ -76,7 +76,7 @@ async function handleSugerirReceitas() {
     const token = localStorage.getItem('jwtToken');
     sugeridasContainer.style.display = 'block';
     sugeridasContainer.innerHTML = '<p class="info-message">A IA (Gemini) está pensando... Isso pode levar alguns segundos.</p>';
-    sugerirReceitasBtn.style.display = 'none'; // Esconde o botão
+    sugerirReceitasBtn.style.display = 'none'; 
 
     try {
         const response = await fetch(`${API_URL}/receitas/sugeridas`, {
@@ -91,7 +91,6 @@ async function handleSugerirReceitas() {
         const data = await response.json();
         
         cacheReceitasSugeridas = data.receitas; 
-        
         renderSugeridas(data.perfilUsado, data.receitas);
 
     } catch (error) {
@@ -127,7 +126,8 @@ function renderReceitaCard(receita, isSugestao, index = 0) {
             Gord: ${receita.macros.gorduras}g
         </small>
     `;
-    const ingredientesHtml = receita.ingredientes.map(ing => `<li>${ing.nome} (${ing.quantidade})</li>`).join('');
+    // [MODIFICADO] Lê a nova estrutura de ingredientes
+    const ingredientesHtml = receita.ingredientes.map(ing => `<li>${ing.quantidade} ${ing.unidade} ${ing.nome}</li>`).join('');
 
     let actionButtons = '';
     if (isSugestao) {
@@ -247,11 +247,20 @@ function renderForm(title, data = {}, show = false) {
             
             <hr class="form-divider">
             <label class="input-label">Ingredientes:</label>
-            <div class="ingrediente-item">
-                <input type="text" id="ing-nome" class="input-field" placeholder="Nome do Ingrediente (Ex: Ovo)">
-                <input type="text" id="ing-qtd" class="input-field" placeholder="Quantidade (Ex: 2 unidades)">
+            
+            <div class="ingrediente-item-grid">
+                <input type="number" id="ing-qtd" class="input-field" placeholder="Qtd" step="0.1">
+                <select id="ing-unidade" class="input-field">
+                    <option value="g">g</option>
+                    <option value="ml">ml</option>
+                    <option value="unidade(s)">unidade(s)</option>
+                    <option value="xícara(s)">xícara(s)</option>
+                    <option value="colher(es) de sopa">colher(es) de sopa</option>
+                </select>
+                <input type="text" id="ing-nome" class="input-field" placeholder="Nome do Ingrediente (Ex: Peito de frango)">
                 <button type="button" id="btn-add-ingrediente" class="btn btn-secondary">+</button>
             </div>
+            
             <div id="ingredientes-list-form" class="exercicios-list-form">
                 </div>
             
@@ -275,14 +284,13 @@ function renderForm(title, data = {}, show = false) {
 
     renderIngredientesFormList(); 
 
-    // [NOVO] Listener para o botão Edamam
     document.getElementById('btn-calcular-macros').addEventListener('click', handleCalcularMacros);
-    
     document.getElementById('btn-add-ingrediente').addEventListener('click', handleAddIngrediente);
     document.getElementById('receita-form').addEventListener('submit', handleFormSubmit);
     document.getElementById('btn-cancelar-receita').addEventListener('click', loadReceitas);
 }
 
+// [MODIFICADO] Renderiza a lista com a nova estrutura de 3 colunas
 function renderIngredientesFormList() {
     const listEl = document.getElementById('ingredientes-list-form');
     if (!listEl) return;
@@ -293,7 +301,7 @@ function renderIngredientesFormList() {
     }
     listEl.innerHTML = `<ul>${currentIngredientes.map((ing, index) => `
         <li>
-            <span><strong>${ing.nome}</strong> (${ing.quantidade})</span>
+            <span><strong>${ing.quantidade} ${ing.unidade}</strong> - ${ing.nome}</span>
             <button type="button" class="btn btn-danger btn-remove-ex" data-index="${index}">&times;</button>
         </li>
     `).join('')}</ul>`;
@@ -305,16 +313,26 @@ function renderIngredientesFormList() {
 
 // --- HANDLERS (Ações) ---
 
+// [MODIFICADO] Coleta os 3 campos
 function handleAddIngrediente() {
     const nome = document.getElementById('ing-nome').value;
-    const quantidade = document.getElementById('ing-qtd').value;
-    if (!nome || !quantidade) {
-        alert('Preencha o Nome e a Quantidade do ingrediente.');
+    const quantidade = parseFloat(document.getElementById('ing-qtd').value);
+    const unidade = document.getElementById('ing-unidade').value;
+
+    if (!nome || !quantidade || !unidade) {
+        alert('Preencha a Quantidade, a Unidade e o Nome do ingrediente.');
         return;
     }
-    currentIngredientes.push({ nome, quantidade });
+    if (quantidade <= 0) {
+        alert('A quantidade deve ser um número positivo.');
+        return;
+    }
+
+    currentIngredientes.push({ nome, quantidade, unidade });
+    
     document.getElementById('ing-nome').value = '';
     document.getElementById('ing-qtd').value = '';
+    
     renderIngredientesFormList();
 }
 
@@ -323,19 +341,17 @@ function handleRemoveIngrediente(index) {
     renderIngredientesFormList();
 }
 
-// [NOVA FUNÇÃO] Handler para o Edamam
+// [MODIFICADO] Envia os 3 campos para o Edamam
 async function handleCalcularMacros() {
     if (currentIngredientes.length === 0) {
         alert('Adicione pelo menos um ingrediente para calcular os macros.');
         return;
     }
     
-    // Formata os ingredientes para a API (ex: "2 unidades Ovo")
-    const ingredientesFormatados = currentIngredientes.map(ing => `${ing.quantidade} ${ing.nome}`);
-    
+    // [MODIFICADO] Envia o array de OBJETOS, não a string
     const btn = document.getElementById('btn-calcular-macros');
     btn.disabled = true;
-    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Calculando...'; // Animação
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Calculando...';
 
     try {
         const token = localStorage.getItem('jwtToken');
@@ -345,7 +361,7 @@ async function handleCalcularMacros() {
                 'Content-Type': 'application/json',
                 'x-auth-token': token
             },
-            body: JSON.stringify({ ingredientes: ingredientesFormatados })
+            body: JSON.stringify({ ingredientes: currentIngredientes }) // Envia o array de objetos
         });
         
         if (!response.ok) {
@@ -355,7 +371,6 @@ async function handleCalcularMacros() {
         
         const macros = await response.json();
         
-        // Preenche os campos do formulário
         document.getElementById('macro-calorias').value = macros.calorias;
         document.getElementById('macro-proteinas').value = macros.proteinas;
         document.getElementById('macro-carboidratos').value = macros.carboidratos;
@@ -384,7 +399,7 @@ async function handleFormSubmit(e) {
             carboidratos: parseFloat(document.getElementById('macro-carboidratos').value) || 0,
             gorduras: parseFloat(document.getElementById('macro-gorduras').value) || 0,
         },
-        ingredientes: currentIngredientes 
+        ingredientes: currentIngredientes // [MODIFICADO] Envia o array de objetos
     };
 
     if (!data.nome || currentIngredientes.length === 0) {

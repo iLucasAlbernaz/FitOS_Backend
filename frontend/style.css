@@ -1190,6 +1190,28 @@ body.dashboard-view #profile-menu {
     margin-top: 0;
     line-height: 1;
 }
+.ingrediente-item-grid {
+    display: grid;
+    grid-template-columns: 0.5fr 1fr 2fr auto; /* Qtd, Unidade, Nome, Botão */
+    gap: 10px;
+    align-items: center;
+    margin-bottom: 10px;
+}
+.ingrediente-item-grid input,
+.ingrediente-item-grid select {
+    margin-bottom: 0; /* Remove a margem interna */
+}
+.ingrediente-item-grid button {
+    width: auto;
+    padding: 8px 12px;
+    margin-top: 0;
+    line-height: 1;
+}
+
+/* Esconde o .ingrediente-item antigo (caso ainda exista) */
+.ingrediente-item {
+    display: none;
+}
 /* ====================================================== */
 /* 16. NOTIFICAÇÕES (UC010) */
 /* ====================================================== */

@@ -1,7 +1,7 @@
 const mongoose = require('mongoose');
 const Schema = mongoose.Schema;
 
-
+// Sub-documento para Macros
 const MacrosSchema = new Schema({
     calorias: { type: Number, required: true, default: 0 },
     proteinas: { type: Number, required: true, default: 0 },
@@ -9,14 +9,14 @@ const MacrosSchema = new Schema({
     gorduras: { type: Number, required: true, default: 0 }
 }, { _id: false });
 
-
+// [MODIFICADO] Sub-documento para Ingredientes (agora com 3 campos)
 const IngredienteSchema = new Schema({
     nome: { type: String, required: true },
-    quantidade: { type: String, required: true } 
+    quantidade: { type: Number, required: true },
+    unidade: { type: String, required: true } // ex: "g", "ml", "unidade", "xícara"
 }, { _id: false });
 
 const ReceitaSchema = new Schema({
-    
     usuario: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'Usuario',
@@ -27,20 +27,19 @@ const ReceitaSchema = new Schema({
         required: [true, 'O Nome é obrigatório'],
         trim: true
     },
-    
     descricao: {
         type: String,
-        required: [true, 'A Descrição é obrigatória']
+        required: false 
     },
-    
     modoPreparo: {
-        type: String
+        type: String,
+        required: false 
     },
-    
     macros: {
         type: MacrosSchema,
         required: true
     },
+    // Usa o novo IngredienteSchema
     ingredientes: {
         type: [IngredienteSchema],
         required: true

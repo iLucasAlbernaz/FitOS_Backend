@@ -162,16 +162,22 @@ exports.sugerirReceitas = async (req, res) => {
 
 // 7. [MODIFICADO] CALCULAR MACROS (Edamam)
 exports.calcularMacros = async (req, res) => {
+    // [MODIFICADO] Agora esperamos o array de objetos: [{ qtd: 100, unidade: 'g', nome: 'frango' }]
     const { ingredientes } = req.body; 
 
     if (!ingredientes || ingredientes.length === 0) {
         return res.status(400).json({ msg: "A lista de ingredientes não pode estar vazia." });
     }
 
+    // [MODIFICADO] Constrói a string correta
+    const ingredientesFormatados = ingredientes.map(ing => {
+        return `${ing.quantidade} ${ing.unidade} ${ing.nome}`;
+    });
+
     try {
         const response = await axios.post(
             `https://api.edamam.com/api/nutrition-details?app_id=${process.env.EDAMAM_APP_ID}&app_key=${process.env.EDAMAM_APP_KEY}`,
-            { ingr: ingredientes } 
+            { ingr: ingredientesFormatados } 
         );
 
         const data = response.data;
