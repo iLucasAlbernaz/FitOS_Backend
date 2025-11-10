@@ -1,7 +1,7 @@
 const Receita = require('../models/Receita');
 const Usuario = require('../models/Usuario'); 
 const { GoogleGenAI } = require('@google/genai'); 
-const axios = require('axios'); 
+// const axios = require('axios'); // [REMOVIDO] Não precisamos mais do Edamam
 
 const genAI = new GoogleGenAI(process.env.GEMINI_API_KEY);
 
@@ -103,7 +103,7 @@ exports.deleteReceita = async (req, res) => {
 
 
 // 6. [EXISTENTE] SUGERIR RECEITAS (Gemini)
-// Usa a sintaxe 100% correta do seu chatController
+// (Usando a sintaxe que funciona)
 exports.sugerirReceitas = async (req, res) => {
     try {
         const usuario = await Usuario.findById(req.usuario.id);
@@ -140,7 +140,7 @@ exports.sugerirReceitas = async (req, res) => {
         `;
         
         const response = await genAI.models.generateContent({
-            model: "gemini-2.5-flash", 
+            model: "gemini-2.5-flash", // O modelo que você especificou
             contents: [{ role: "user", parts: [{ text: prompt }] }],
         });
 
@@ -160,7 +160,7 @@ exports.sugerirReceitas = async (req, res) => {
     }
 };
 
-// 7. [MODIFICADO] CALCULAR MACROS (Bypass do Gemini)
+// 7. [MODIFICADO] CALCULAR MACROS (Usando APENAS Gemini)
 exports.calcularMacros = async (req, res) => {
     const { ingredientes } = req.body; 
 
@@ -169,55 +169,40 @@ exports.calcularMacros = async (req, res) => {
     }
 
     try {
-        // --- ETAPA 1: Traduzir os ingredientes com o Gemini (IGNORADA PARA O TESTE) ---
-        
-        // const nomesIngredientes = ingredientes.map(ing => ing.nome).join(', ');
-        // const promptTraducao = `...`;
-        // const geminiResponse = await genAI.models.generateContent({ ... });
-        // const nomesEmInglesTexto = geminiResponse.text;
-        // const nomesEmIngles = nomesEmInglesTexto.split(',').map(item => item.trim());
-        // if (nomesEmIngles.length !== ingredientes.length) {
-        //     throw new Error('Falha na tradução dos ingredientes pela IA.');
-        // }
-
-        // --- ETAPA 2: Formatar para o Edamam ---
-        // [MODIFICADO] Usa o 'ing.nome' (que o usuário digitou) diretamente
-        const ingredientesFormatados = ingredientes.map((ing, index) => {
+        // --- ETAPA 1: Formatar os ingredientes ---
+        const ingredientesFormatados = ingredientes.map(ing => {
             return `${ing.quantidade} ${ing.unidade} ${ing.nome}`;
+        }).join(', '); // Ex: "100 g Peito de Frango, 2 unidade(s) Ovo"
+
+        // --- ETAPA 2: Chamar o Gemini para calcular ---
+        const promptCalculo = `
+            Calcule os macronutrientes totais (calorias, proteinas, carboidratos, gorduras) para a seguinte lista de ingredientes:
+            ${ingredientesFormatados}
+            
+            Retorne APENAS um objeto JSON, sem nenhum outro texto, markdown ou formatação.
+            O JSON deve seguir exatamente esta estrutura:
+            {
+              "calorias": 0,
+              "proteinas": 0,
+              "carboidratos": 0,
+              "gorduras": 0
+            }
+            (Use números inteiros ou com uma casa decimal para os valores)
+        `;
+        
+        const geminiResponse = await genAI.models.generateContent({
+            model: "gemini-2.5-flash", 
+            contents: [{ role: "user", parts: [{ text: promptCalculo }] }],
         });
-
-        // --- ETAPA 3: Chamar o Edamam ---
-        const edamamResponse = await axios.post(
-            `https://api.edamam.com/api/nutrition-details?app_id=${process.env.EDAMAM_APP_ID}&app_key=${process.env.EDAMAM_APP_KEY}`,
-            { ingr: ingredientesFormatados } 
-        );
-
-        const data = edamamResponse.data;
         
-        const nutrients = data.totalNutrients; 
-        
-        if (data.error === 'low_quality' || !nutrients) {
-             return res.status(400).json({ msg: "Cálculo falhou. Verifique os ingredientes (ex: '100g frango' ou '2 ovos grandes')." });
-        }
-
-        const macros = {
-            calorias: data.calories || 0,
-            proteinas: nutrients.PROCNT ? nutrients.PROCNT.quantity.toFixed(1) : 0,
-            carboidratos: nutrients.CHOCDF ? nutrients.CHOCDF.quantity.toFixed(1) : 0,
-            gorduras: nutrients.FAT ? nutrients.FAT.quantity.toFixed(1) : 0
-        };
-
-        if (macros.calorias === 0 && macros.proteinas === 0) {
-            return res.status(400).json({ msg: "Cálculo falhou. A API não conseguiu analisar esses ingredientes." });
-        }
+        const text = geminiResponse.text;
+        const cleanedText = text.replace(/```json\n|```/g, '').trim();
+        const macros = JSON.parse(cleanedText);
 
         res.json(macros);
 
     } catch (error) {
-        console.error("Erro na API do Edamam/Gemini:", error.response ? error.response.data : error.message);
-        if(error.response && (error.response.status === 555 || error.response.status === 400)) {
-            return res.status(400).json({ msg: "Não foi possível calcular. Verifique os ingredientes." });
-        }
-        res.status(503).json({ msg: "O serviço de cálculo de macros está indisponível." });
+        console.error("Erro na API do Gemini ao calcular macros:", error.response ? error.response.data : error.message);
+        res.status(503).json({ msg: "O serviço de cálculo de macros (IA) está indisponível." });
     }
 };
