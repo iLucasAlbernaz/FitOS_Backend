@@ -23,7 +23,6 @@ const templatePerdaPeso = {
     },
     totais: { calorias: 620, proteinas: 79, carboidratos: 16, gorduras: 25 }
 };
-
 const templateGanhoMassa = {
     nome: "Ganho de Massa (Padrão)",
     cafeDaManha: {
@@ -146,7 +145,7 @@ exports.gerarPlanoSpoonacular = async (req, res) => {
 
     } catch (error) {
         console.error("Erro na API do Spoonacular:", error.response ? error.response.data : error.message);
-        res.status(503).json({ msg: 'O serviço de planos de dieta está indisponível. Tente novamente mais tarde.' });
+        res.status(503).json({ msg: 'O serviço de planos de dieta (Spoonacular) está indisponível. Tente novamente mais tarde.' });
     }
 };
 

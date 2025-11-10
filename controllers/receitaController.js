@@ -1,6 +1,6 @@
 const Receita = require('../models/Receita');
 const Usuario = require('../models/Usuario'); 
-const { GoogleGenAI } = require('@google/genai'); 
+const { GoogleGenAI } = require('@google/genai'); // Usa a biblioteca correta
 const axios = require('axios'); // Para Edamam
 
 const genAI = new GoogleGenAI(process.env.GEMINI_API_KEY);
@@ -102,7 +102,7 @@ exports.deleteReceita = async (req, res) => {
 };
 
 
-// 6. [EXISTENTE] SUGERIR RECEITAS (Gemini)
+// 6. [MODIFICADO] SUGERIR RECEITAS (Gemini)
 exports.sugerirReceitas = async (req, res) => {
     try {
         const usuario = await Usuario.findById(req.usuario.id);
@@ -138,7 +138,7 @@ exports.sugerirReceitas = async (req, res) => {
             ]
         `;
         
-        // [CORRIGIDO] Usa a sintaxe correta do Gemini
+        // [CORRIGIDO] Usa a sintaxe do seu chatController (que funciona)
         const response = await genAI.models.generateContent({
             model: "gemini-2.5-flash", 
             contents: [{ role: "user", parts: [{ text: prompt }] }],
@@ -160,7 +160,7 @@ exports.sugerirReceitas = async (req, res) => {
     }
 };
 
-// 7. [NOVO] CALCULAR MACROS (Edamam)
+// 7. [MODIFICADO] CALCULAR MACROS (Edamam)
 exports.calcularMacros = async (req, res) => {
     const { ingredientes } = req.body; 
 
@@ -176,6 +176,11 @@ exports.calcularMacros = async (req, res) => {
 
         const data = response.data;
         
+        // [CORREÇÃO] A API Edamam retorna 200 OK mas com um erro 'low_quality'
+        if (data.error === 'low_quality' || (data.totalNutrients && data.totalNutrients.ENERC_KCAL === null)) {
+             return res.status(400).json({ msg: "Não foi possível calcular. Use ingredientes mais específicos (ex: '100g frango' ou '2 ovos grandes')." });
+        }
+        
         const macros = {
             calorias: data.calories || 0,
             proteinas: data.totalNutrients.PROCNT ? data.totalNutrients.PROCNT.quantity.toFixed(1) : 0,
@@ -187,7 +192,7 @@ exports.calcularMacros = async (req, res) => {
 
     } catch (error) {
         console.error("Erro na API do Edamam:", error.response ? error.response.data : error.message);
-        if(error.response && error.response.status === 555) {
+        if(error.response && (error.response.status === 555 || error.response.status === 400)) {
             return res.status(400).json({ msg: "Não foi possível calcular. Verifique os ingredientes (ex: '100g frango')." });
         }
         res.status(503).json({ msg: "O serviço de cálculo de macros (Edamam) está indisponível." });
