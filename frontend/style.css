@@ -1438,3 +1438,65 @@ body.dashboard-view #notificacao-menu {
     border-bottom: 1px solid #eee;
     padding-bottom: 10px;
 }
+.sugestao-card .action-buttons .btn-primary {
+    width: auto; /* Tamanho automático */
+    padding: 5px 15px; /* Mais padding lateral */
+    font-weight: bold; /* Destacar */
+    font-size: 0.9em;
+    margin-top: 0;
+}
+.sugestao-card .action-buttons .btn-primary i {
+    margin-right: 5px;
+}
+
+/* ========================================= */
+/* 18. ESTILOS DAS NOVAS APIs (Spoon/Edamam) */
+/* ========================================= */
+
+/* Botão Spoonacular */
+#btn-gerar-spoonacular {
+    width: 100%;
+    font-weight: bold;
+}
+#btn-gerar-spoonacular i {
+    margin-right: 8px;
+}
+
+/* Título do Plano de Dieta */
+.plano-dieta-titulo {
+    font-size: 1.1em;
+    color: #555;
+    background-color: #f9f9f9;
+    padding: 10px;
+    border-radius: 4px;
+    border: 1px solid #eee;
+    text-align: center;
+}
+
+/* Botão Calcular Macros (Edamam) */
+#btn-calcular-macros {
+    width: 100%;
+    margin-top: 0;
+    margin-bottom: 10px;
+    background-color: #f0f7f7;
+    color: var(--primary-color);
+    font-weight: bold;
+    border: 1px solid var(--primary-light);
+}
+#btn-calcular-macros:disabled {
+    background-color: #eee;
+    color: #999;
+    cursor: not-allowed;
+}
+#btn-calcular-macros i {
+    margin-right: 8px;
+}
+
+/* Animação de spinner (para o botão) */
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+#btn-calcular-macros .fa-spinner {
+    animation: spin 1s linear infinite;
+}

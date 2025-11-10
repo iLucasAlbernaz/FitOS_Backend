@@ -1,6 +1,8 @@
 const Dieta = require('../models/Dieta');
 const Usuario = require('../models/Usuario');
+const axios = require('axios'); // [NOVO]
 
+// [PRESERVADO] A função antiga do Gemini (agora chamada de 'padrão')
 const templatePerdaPeso = {
     cafeDaManha: {
         alimentos: [
@@ -25,9 +27,8 @@ const templatePerdaPeso = {
         totais: { calorias: 255, proteinas: 26, carboidratos: 11, gorduras: 13 }
     }
 };
-
 const templateGanhoMassa = {
-    cafeDaManha: {
+     cafeDaManha: {
         alimentos: [
             { nome: 'Ovos Mexidos', porcao: '4 unidades', calorias: 280, proteinas: 24, carboidratos: 2, gorduras: 20 },
             { nome: 'Batata Doce Cozida', porcao: '150g', calorias: 130, proteinas: 2, carboidratos: 30, gorduras: 0 },
@@ -52,59 +53,120 @@ const templateGanhoMassa = {
     }
 };
 
+exports.gerarMeuPlano = async (req, res) => {
+    const { tipoPlano } = req.body; 
+    const usuarioId = req.usuario.id;
+    let templateEscolhido;
+    if (tipoPlano === 'perda-peso') templateEscolhido = templatePerdaPeso;
+    else if (tipoPlano === 'ganho-massa') templateEscolhido = templateGanhoMassa;
+    else return res.status(400).json({ msg: 'Tipo de plano inválido.' });
+    try {
+        await Dieta.findOneAndDelete({ usuario: usuarioId });
+        const novoPlano = new Dieta({
+            usuario: usuarioId,
+            nomePlano: tipoPlano === 'perda-peso' ? 'Perda de Peso (Padrão)' : 'Ganho de Massa (Padrão)',
+            cafeDaManha: templateEscolhido.cafeDaManha,
+            almoco: templateEscolhido.almoco,
+            jantar: templateEscolhido.jantar,
+            lanches: templateEscolhido.lanches
+        });
+        await novoPlano.save();
+        res.status(201).json(novoPlano);
+    } catch (err) {
+        console.error(err.message);
+        res.status(500).send('Erro interno do servidor ao gerar plano.');
+    }
+};
+
+// --- (Função 'getMeuPlano' não muda) ---
 exports.getMeuPlano = async (req, res) => {
     try {
         const dieta = await Dieta.findOne({ usuario: req.usuario.id });
-
         if (!dieta) {
             return res.status(404).json({ msg: 'Nenhum plano alimentar disponível no momento.' });
         }
         res.json(dieta);
-
     } catch (err) {
         console.error(err.message);
-        res.status(500).send('Erro ao carregar o plano de dieta. Tente novamente mais tarde.');
+        res.status(500).send('Erro ao carregar o plano de dieta.');
     }
 };
 
-
-// @route   POST /api/dieta/gerar
-// @desc    Gera (cria) um novo plano de dieta para o usuário
-// @access  Privado
-exports.gerarMeuPlano = async (req, res) => {
-    const { tipoPlano } = req.body; 
+// --- [NOVO] GERAR PLANO COM SPOONACULAR ---
+exports.gerarPlanoSpoonacular = async (req, res) => {
     const usuarioId = req.usuario.id;
 
-    let templateEscolhido;
-    let nomePlanoParaSalvar;
-
-    if (tipoPlano === 'perda-peso') {
-        templateEscolhido = templatePerdaPeso;
-        nomePlanoParaSalvar = 'Perda de Peso';
-    } else if (tipoPlano === 'ganho-massa') {
-        templateEscolhido = templateGanhoMassa;
-        nomePlanoParaSalvar = 'Ganho de Massa';
-    } else {
-        return res.status(400).json({ msg: 'Tipo de plano inválido.' });
-    }
-
     try {
-        await Dieta.findOneAndDelete({ usuario: usuarioId });
+        // 1. Buscar o perfil do usuário
+        const usuario = await Usuario.findById(usuarioId);
+        if (!usuario) {
+            return res.status(404).json({ msg: 'Usuário não encontrado.' });
+        }
+        
+        const { principal } = usuario.objetivos;
+        
+        // 2. Definir parâmetros para o Spoonacular
+        let diet = ''; 
+        let targetCalories = 2000; 
+        
+        if (principal === 'Perda de Peso') {
+            targetCalories = 1800;
+        } else if (principal === 'Ganho de Massa') {
+            targetCalories = 2800;
+        }
 
+        // 3. Chamar a API do Spoonacular
+        const response = await axios.get('https://api.spoonacular.com/mealplanner/generate', {
+            params: {
+                apiKey: process.env.SPOONACULAR_API_KEY,
+                timeFrame: 'day',
+                targetCalories: targetCalories,
+                diet: diet
+            }
+        });
+
+        const mealPlan = response.data;
+        
+        // 4. Mapear a resposta para o nosso modelo de Dieta
+        const [cafe, almoco, jantar] = mealPlan.meals;
+        const { calories, protein, fat, carbohydrates } = mealPlan.nutrients;
+        
+        const formatarRefeicao = (meal) => ({
+            alimentos: [
+                {
+                    nome: meal.title,
+                    porcao: `Pronto em ${meal.readyInMinutes} min`,
+                    calorias: 0, proteinas: 0, carboidratos: 0, gorduras: 0 
+                }
+            ],
+            totais: { calorias: 0, proteinas: 0, carboidratos: 0, gorduras: 0 }
+        });
+
+        // 5. Salvar o novo plano
+        await Dieta.findOneAndDelete({ usuario: usuarioId });
+        
         const novoPlano = new Dieta({
             usuario: usuarioId,
-            nomePlano: nomePlanoParaSalvar,
-            cafeDaManha: templateEscolhido.cafeDaManha,
-            almoco: templateEscolhido.almoco,
-            jantar: templateEscolhido.jantar,
-            lanches: templateEscolhido.lanches 
+            nomePlano: `Spoonacular (${principal})`,
+            cafeDaManha: formatarRefeicao(cafe),
+            almoco: formatarRefeicao(almoco),
+            jantar: formatarRefeicao(jantar),
+            lanches: {
+                alimentos: [{ nome: "Totais do Dia (Estimado)", porcao: "1 dia", calorias: 0, proteinas: 0, carboidratos: 0, gorduras: 0 }],
+                totais: {
+                    calorias: calories,
+                    proteinas: protein,
+                    carboidratos: carbohydrates,
+                    gorduras: fat
+                }
+            }
         });
 
         await novoPlano.save();
         res.status(201).json(novoPlano);
 
-    } catch (err) {
-        console.error('Erro ao salvar no banco:', err.message);
-        res.status(500).send('Erro interno do servidor ao gerar plano.');
+    } catch (error) {
+        console.error("Erro na API do Spoonacular:", error.response ? error.response.data : error.message);
+        res.status(503).json({ msg: 'O serviço de planos de dieta está indisponível. Tente novamente mais tarde.' });
     }
 };

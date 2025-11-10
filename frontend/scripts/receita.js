@@ -10,6 +10,7 @@ const sugeridasContainer = document.getElementById('receitas-sugeridas-container
 // --- Variáveis de Estado ---
 let currentEditId = null;  
 let currentIngredientes = []; 
+let cacheReceitasSugeridas = []; 
 
 // --- FUNÇÃO PRINCIPAL ---
 export async function loadReceitas() {
@@ -23,6 +24,7 @@ export async function loadReceitas() {
     
     currentEditId = null;
     currentIngredientes = [];
+    cacheReceitasSugeridas = []; 
     
     renderForm('Criar Nova Receita'); 
     loadAndRenderList();
@@ -66,16 +68,14 @@ function renderReceitaList(receitas) {
     );
 }
 
-// --- [MODIFICADO] LÓGICA DE SUGESTÕES DA IA ---
-
+// --- LÓGICA DE SUGESTÕES DA IA (Gemini - Preservado) ---
 if (sugerirReceitasBtn) {
     sugerirReceitasBtn.addEventListener('click', handleSugerirReceitas);
 }
-
 async function handleSugerirReceitas() {
     const token = localStorage.getItem('jwtToken');
     sugeridasContainer.style.display = 'block';
-    sugeridasContainer.innerHTML = '<p class="info-message">A IA está pensando... Isso pode levar alguns segundos.</p>';
+    sugeridasContainer.innerHTML = '<p class="info-message">A IA (Gemini) está pensando... Isso pode levar alguns segundos.</p>';
     sugerirReceitasBtn.style.display = 'none'; // Esconde o botão
 
     try {
@@ -88,8 +88,10 @@ async function handleSugerirReceitas() {
             throw new Error(err.msg || 'Falha ao buscar sugestões.');
         }
         
-        // [MODIFICADO] Lê a nova estrutura
         const data = await response.json();
+        
+        cacheReceitasSugeridas = data.receitas; 
+        
         renderSugeridas(data.perfilUsado, data.receitas);
 
     } catch (error) {
@@ -98,20 +100,25 @@ async function handleSugerirReceitas() {
     }
 }
 
-// [MODIFICADO] Renderiza o título e os cards
 function renderSugeridas(perfilUsado, receitas) {
     sugeridasContainer.innerHTML = `
-        <h4>Sugestões da IA</h4>
+        <h4>Sugestões da IA (Gemini)</h4>
         <p class="sugestao-subtitulo">${perfilUsado}</p>
     `; 
-    receitas.forEach(receita => {
-        // true = É uma sugestão (não mostra botões de Editar/Excluir)
-        sugeridasContainer.innerHTML += renderReceitaCard(receita, true); 
+    receitas.forEach((receita, index) => {
+        sugeridasContainer.innerHTML += renderReceitaCard(receita, true, index); 
+    });
+    
+    sugeridasContainer.querySelectorAll('.btn-save-sugestao').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            const index = e.currentTarget.dataset.id;
+            handleSaveSuggestion(cacheReceitasSugeridas[index]);
+        });
     });
 }
 
-// --- Helper de Card (Não muda) ---
-function renderReceitaCard(receita, isSugestao) {
+// --- Helper de Card (para Lista e Sugestões) ---
+function renderReceitaCard(receita, isSugestao, index = 0) {
     const macrosHtml = `
         <small>
             Cals: ${receita.macros.calorias} | 
@@ -122,12 +129,23 @@ function renderReceitaCard(receita, isSugestao) {
     `;
     const ingredientesHtml = receita.ingredientes.map(ing => `<li>${ing.nome} (${ing.quantidade})</li>`).join('');
 
-    const actionButtons = isSugestao ? '' : `
-        <div class="action-buttons">
-            <button class="btn btn-secondary btn-edit-receita" data-id="${receita._id}">Editar</button>
-            <button class="btn btn-danger btn-delete-receita" data-id="${receita._id}">Excluir</button>
-        </div>
-    `;
+    let actionButtons = '';
+    if (isSugestao) {
+        actionButtons = `
+            <div class="action-buttons">
+                <button class="btn btn-primary btn-save-sugestao" data-id="${index}">
+                    <i class="fas fa-plus"></i> Salvar nos Meus
+                </button>
+            </div>
+        `;
+    } else {
+        actionButtons = `
+            <div class="action-buttons">
+                <button class="btn btn-secondary btn-edit-receita" data-id="${receita._id}">Editar</button>
+                <button class="btn btn-danger btn-delete-receita" data-id="${receita._id}">Excluir</button>
+            </div>
+        `;
+    }
     
     const cardClass = isSugestao ? 'receita-card sugestao-card' : 'receita-card';
 
@@ -150,6 +168,31 @@ function renderReceitaCard(receita, isSugestao) {
     `;
 }
 
+// --- Lógica de Salvar Sugestão (Gemini -> Meus) ---
+async function handleSaveSuggestion(receitaData) {
+    const token = localStorage.getItem('jwtToken');
+    try {
+        const response = await fetch(`${API_URL}/receitas`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'x-auth-token': token
+            },
+            body: JSON.stringify(receitaData) 
+        });
+        if (!response.ok) {
+            if(response.status === 400) {
+                alert('Erro ao salvar: Verifique se uma receita com este nome já existe.');
+            }
+            throw new Error('Falha ao salvar a receita.');
+        }
+        alert(`A receita "${receitaData.nome}" foi salva em "Minhas Receitas"!`);
+        loadAndRenderList(); 
+    } catch (error) {
+        console.error('Erro ao salvar sugestão:', error);
+        alert('Erro ao salvar a sugestão.');
+    }
+}
 
 // --- RENDERIZAÇÃO DO FORMULÁRIO (Criar/Editar) ---
 function showCreateForm() {
@@ -172,22 +215,20 @@ async function handleEditClick(id) {
         const receita = await res.json();
         currentEditId = id;
         currentIngredientes = receita.ingredientes; 
-        
         renderForm('Editar Receita', receita, true); 
-        
     } catch (error) {
         console.error('Erro:', error);
         alert('Não foi possível carregar a receita para edição.');
     }
 }
 
+// [MODIFICADO] Adiciona o botão "Calcular Macros (Edamam)"
 function renderForm(title, data = {}, show = false) {
     listContainer.style.display = show ? 'none' : 'block';
     showCreateFormBtn.style.display = show ? 'none' : 'block';
     formContainer.style.display = show ? 'block' : 'none';
-    
     sugerirReceitasBtn.style.display = show ? 'none' : 'block';
-    sugeridasContainer.style.display = 'none'; // Sempre esconde sugestões ao abrir form
+    sugeridasContainer.style.display = 'none'; 
     
     const macros = data.macros || {};
 
@@ -205,24 +246,26 @@ function renderForm(title, data = {}, show = false) {
             <textarea id="receita-preparo" class="input-field" placeholder="1. Misture os ovos...">${data.modoPreparo || ''}</textarea>
             
             <hr class="form-divider">
-            <label class="input-label">Macros Estimados:</label>
-            <div class="macros-grid">
-                <input type="number" id="macro-calorias" class="input-field" placeholder="Calorias" value="${macros.calorias || ''}" required>
-                <input type="number" id="macro-proteinas" class="input-field" placeholder="Proteínas (g)" value="${macros.proteinas || ''}" required>
-                <input type="number" id="macro-carboidratos" class="input-field" placeholder="Carboidratos (g)" value="${macros.carboidratos || ''}" required>
-                <input type="number" id="macro-gorduras" class="input-field" placeholder="Gorduras (g)" value="${macros.gorduras || ''}" required>
-            </div>
-            
-            <hr class="form-divider">
             <label class="input-label">Ingredientes:</label>
             <div class="ingrediente-item">
                 <input type="text" id="ing-nome" class="input-field" placeholder="Nome do Ingrediente (Ex: Ovo)">
                 <input type="text" id="ing-qtd" class="input-field" placeholder="Quantidade (Ex: 2 unidades)">
                 <button type="button" id="btn-add-ingrediente" class="btn btn-secondary">+</button>
             </div>
-            
             <div id="ingredientes-list-form" class="exercicios-list-form">
                 </div>
+            
+            <hr class="form-divider">
+            <label class="input-label">Macros Estimados:</label>
+            <button type="button" id="btn-calcular-macros" class="btn btn-secondary" style="margin-bottom: 10px;">
+                <i class="fas fa-calculator"></i> Calcular Macros (IA)
+            </button>
+            <div class="macros-grid">
+                <input type="number" step="0.1" id="macro-calorias" class="input-field" placeholder="Calorias" value="${macros.calorias || ''}" required>
+                <input type="number" step="0.1" id="macro-proteinas" class="input-field" placeholder="Proteínas (g)" value="${macros.proteinas || ''}" required>
+                <input type="number" step="0.1" id="macro-carboidratos" class="input-field" placeholder="Carboidratos (g)" value="${macros.carboidratos || ''}" required>
+                <input type="number" step="0.1" id="macro-gorduras" class="input-field" placeholder="Gorduras (g)" value="${macros.gorduras || ''}" required>
+            </div>
             
             <hr class="form-divider">
             <button type="submit" class="btn btn-primary">Salvar Receita</button>
@@ -232,6 +275,9 @@ function renderForm(title, data = {}, show = false) {
 
     renderIngredientesFormList(); 
 
+    // [NOVO] Listener para o botão Edamam
+    document.getElementById('btn-calcular-macros').addEventListener('click', handleCalcularMacros);
+    
     document.getElementById('btn-add-ingrediente').addEventListener('click', handleAddIngrediente);
     document.getElementById('receita-form').addEventListener('submit', handleFormSubmit);
     document.getElementById('btn-cancelar-receita').addEventListener('click', loadReceitas);
@@ -276,6 +322,54 @@ function handleRemoveIngrediente(index) {
     currentIngredientes.splice(index, 1); 
     renderIngredientesFormList();
 }
+
+// [NOVA FUNÇÃO] Handler para o Edamam
+async function handleCalcularMacros() {
+    if (currentIngredientes.length === 0) {
+        alert('Adicione pelo menos um ingrediente para calcular os macros.');
+        return;
+    }
+    
+    // Formata os ingredientes para a API (ex: "2 unidades Ovo")
+    const ingredientesFormatados = currentIngredientes.map(ing => `${ing.quantidade} ${ing.nome}`);
+    
+    const btn = document.getElementById('btn-calcular-macros');
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Calculando...'; // Animação
+
+    try {
+        const token = localStorage.getItem('jwtToken');
+        const response = await fetch(`${API_URL}/receitas/calcular-macros`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'x-auth-token': token
+            },
+            body: JSON.stringify({ ingredientes: ingredientesFormatados })
+        });
+        
+        if (!response.ok) {
+            const err = await response.json();
+            throw new Error(err.msg || 'Falha ao calcular macros.');
+        }
+        
+        const macros = await response.json();
+        
+        // Preenche os campos do formulário
+        document.getElementById('macro-calorias').value = macros.calorias;
+        document.getElementById('macro-proteinas').value = macros.proteinas;
+        document.getElementById('macro-carboidratos').value = macros.carboidratos;
+        document.getElementById('macro-gorduras').value = macros.gorduras;
+
+    } catch (error) {
+        console.error('Erro ao calcular macros:', error);
+        alert(error.message);
+    } finally {
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fas fa-calculator"></i> Calcular Macros (IA)';
+    }
+}
+
 
 async function handleFormSubmit(e) {
     e.preventDefault();
