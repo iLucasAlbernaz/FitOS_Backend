@@ -11,15 +11,18 @@ function renderMeal(title, meal) {
         <li>
             <strong>${alimento.nome}</strong> (${alimento.porcao})
             <br>
+            ${alimento.calorias > 0 ? `
             <small>
                 ${alimento.calorias} kcal | 
                 Prot: ${alimento.proteinas}g | 
                 Carb: ${alimento.carboidratos}g | 
                 Gord: ${alimento.gorduras}g
             </small>
+            ` : ''}
         </li>
     `).join('');
 
+    // [MODIFICADO] Só mostra totais da REFEIÇÃO se for maior que 0
     const totaisRefeicaoHTML = meal.totais.calorias > 0 ? `
         <div class="meal-totals">
             <strong>Totais da Refeição:</strong><br>
@@ -43,7 +46,7 @@ function renderMeal(title, meal) {
     `;
 }
 
-// [NOVO] Card separado para os Totais do Dia
+// Card separado para os Totais do Dia
 function renderTotais(totais) {
     if (!totais || totais.calorias === 0) return '';
     return `
@@ -160,21 +163,28 @@ export async function loadDietPlan() {
         if (plan && plan.cafeDaManha) { 
             container.innerHTML = ''; 
             
-            // [MODIFICADO] Mostra o nome do plano (ex: "IA: Ganho de Massa")
             container.innerHTML += `<h4 class="plano-dieta-titulo">Plano Ativo: ${plan.nomePlano}</h4>`;
             
             container.innerHTML += renderMeal('Café da Manhã', plan.cafeDaManha);
             container.innerHTML += renderMeal('Almoço', plan.almoco);
             
-            // [MODIFICADO] Renderiza Lanches (se existir)
             if (plan.lanche) { 
                 container.innerHTML += renderMeal('Lanche', plan.lanche);
             }
             
             container.innerHTML += renderMeal('Jantar', plan.jantar);
-            
-            // [MODIFICADO] Renderiza os Totais
             container.innerHTML += renderTotais(plan.totais);
+            
+            // [NOVO] Adiciona o botão para gerar outro plano
+            container.innerHTML += `
+                <div class="change-plan-section">
+                    <hr>
+                    <h4>Gerar um novo plano?</h4>
+                    <p>Ao gerar um novo plano, o plano atual (IA Profissional ou Padrão) será substituído.</p>
+                    <button id="btn-show-plan-selector" class="btn btn-secondary">Ver Opções de Plano</button>
+                </div>
+            `;
+            document.getElementById('btn-show-plan-selector').addEventListener('click', renderPlanSelector);
 
         } else {
             renderPlanSelector();

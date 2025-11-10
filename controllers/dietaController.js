@@ -2,7 +2,7 @@ const Dieta = require('../models/Dieta');
 const Usuario = require('../models/Usuario');
 const axios = require('axios'); 
 
-// --- [PRESERVADO] TEMPLATES PADRÃO (Plano B) ---
+// --- TEMPLATES PADRÃO (Plano B) ---
 const templatePerdaPeso = {
     nome: "Perda de Peso (Padrão)",
     cafeDaManha: {
@@ -131,7 +131,7 @@ exports.gerarPlanoSpoonacular = async (req, res) => {
             cafeDaManha: formatarRefeicao(cafe),
             almoco: formatarRefeicao(almoco),
             jantar: formatarRefeicao(jantar),
-            lanche: null, // A API 'generate' não retorna lanches, então deixamos nulo
+            lanche: null, 
             totais: { 
                 calorias: calories,
                 proteinas: protein,
