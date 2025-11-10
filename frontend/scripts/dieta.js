@@ -1,8 +1,8 @@
 import { API_URL } from './auth.js';
 
 const container = document.getElementById('dieta-container');
-let isPlanLoaded = false; 
 
+// [MODIFICADO] Renderiza os macros de cada alimento
 function renderMeal(title, meal) {
     if (!meal || !meal.alimentos || meal.alimentos.length === 0) {
         return '';
@@ -11,14 +11,29 @@ function renderMeal(title, meal) {
         <li>
             <strong>${alimento.nome}</strong> (${alimento.porcao})
             <br>
+            ${alimento.calorias > 0 ? `
             <small>
                 ${alimento.calorias} kcal | 
-                Proteínas: ${alimento.proteinas}g | 
-                Carbs: ${alimento.carboidratos}g | 
-                Gorduras: ${alimento.gorduras}g
+                Prot: ${alimento.proteinas}g | 
+                Carb: ${alimento.carboidratos}g | 
+                Gord: ${alimento.gorduras}g
             </small>
+            ` : ''}
         </li>
     `).join('');
+
+    // Mostra os totais da REFEIÇÃO (se existirem)
+    const totaisRefeicaoHTML = meal.totais.calorias > 0 ? `
+        <div class="meal-totals">
+            <strong>Totais da Refeição:</strong><br>
+            <small>
+                ${meal.totais.calorias} kcal | 
+                Prot: ${meal.totais.proteinas}g | 
+                Carb: ${meal.totais.carboidratos}g | 
+                Gord: ${meal.totais.gorduras}g
+            </small>
+        </div>
+    ` : '';
 
     return `
         <div class="meal-card">
@@ -26,19 +41,30 @@ function renderMeal(title, meal) {
             <ul>
                 ${alimentosHTML}
             </ul>
+            ${totaisRefeicaoHTML}
+        </div>
+    `;
+}
+
+// [NOVO] Card separado para os Totais do Dia
+function renderTotais(totais) {
+    if (!totais || totais.calorias === 0) return '';
+    return `
+        <div class="meal-card totais-card">
+            <h3>Totais do Dia (Estimado)</h3>
             <div class="meal-totals">
-                <strong>Totais da Refeição:</strong><br>
                 <small>
-                    ${meal.totais.calorias} kcal | 
-                    Proteínas: ${meal.totais.proteinas}g | 
-                    Carbs: ${meal.totais.carboidratos}g | 
-                    Gorduras: ${meal.totais.gorduras}g
+                    Calorias: ${totais.calorias} kcal <br>
+                    Proteínas: ${totais.proteinas}g <br>
+                    Carboidratos: ${totais.carboidratos}g <br>
+                    Gorduras: ${totais.gorduras}g
                 </small>
             </div>
         </div>
     `;
 }
 
+// (Não muda)
 function renderPlanSelector() {
     container.innerHTML = `
         <p class="info-message">Você ainda não possui um plano de dieta ativo.</p>
@@ -48,7 +74,6 @@ function renderPlanSelector() {
             <button id="btn-gerar-spoonacular" class="btn btn-primary">
                 <i class="fas fa-magic"></i> Gerar Plano (IA Profissional)
             </button>
-
             <p style="text-align: center; margin-top: 15px; color: #555;">- Ou use nossos modelos padrão -</p>
             <button id="btn-gerar-perda" class="btn btn-secondary">
                 Plano Padrão (Perda de Peso)
@@ -58,39 +83,30 @@ function renderPlanSelector() {
             </button>
         </div>
     `;
-
-    // Listeners dos botões padrão (Gemini)
     document.getElementById('btn-gerar-perda').addEventListener('click', () => {
         handleGeneratePlan('perda-peso');
     });
     document.getElementById('btn-gerar-ganho').addEventListener('click', () => {
         handleGeneratePlan('ganho-massa');
     });
-    
-    // [NOVO] Listener do botão Spoonacular
     document.getElementById('btn-gerar-spoonacular').addEventListener('click', handleGerarPlanoIA);
 }
 
-// [NOVO] Handler para o Spoonacular
+// (Não muda)
 async function handleGerarPlanoIA() {
     const token = localStorage.getItem('jwtToken');
     container.innerHTML = `<p class="info-message">Aguarde... Estamos consultando nosso nutricionista IA (Spoonacular) para criar um plano baseado no seu perfil.</p>`;
-
     try {
         const response = await fetch(`${API_URL}/dieta/gerar-plano-ia`, {
             method: 'POST',
             headers: { 'x-auth-token': token }
         });
-
         if (!response.ok) {
             const err = await response.json();
             throw new Error(err.msg || 'Falha ao gerar o plano.');
         }
-
         alert('Plano da IA gerado com sucesso!');
-        isPlanLoaded = false; 
         loadDietPlan(); 
-
     } catch (error) {
         console.error('Erro ao gerar plano IA:', error);
         container.innerHTML = `<p class="error-message">${error.message}</p>`;
@@ -99,8 +115,7 @@ async function handleGerarPlanoIA() {
     }
 }
 
-
-// (Handler antigo do Gemini, não muda)
+// (Não muda)
 async function handleGeneratePlan(tipoPlano) {
     const token = localStorage.getItem('jwtToken');
     container.innerHTML = `<p class="info-message">Gerando seu plano padrão... Aguarde.</p>`;
@@ -115,7 +130,6 @@ async function handleGeneratePlan(tipoPlano) {
         });
         if (!response.ok) throw new Error('Falha ao gerar o plano.');
         alert('Plano padrão gerado com sucesso!');
-        isPlanLoaded = false; 
         loadDietPlan(); 
     } catch (error) {
         console.error('Erro ao gerar plano:', error);
@@ -123,12 +137,9 @@ async function handleGeneratePlan(tipoPlano) {
     }
 }
 
-// [MODIFICADO] loadDietPlan agora também renderiza o card de "Totais"
+// [MODIFICADO] Função principal de carregamento
 export async function loadDietPlan() {
-    // [MODIFICADO] Reseta o 'isPlanLoaded' para sempre buscar
-    isPlanLoaded = false; 
     if (!container) return;
-
     container.innerHTML = '<p class="info-message">Carregando plano de dieta...</p>';
     const token = localStorage.getItem('jwtToken');
     if (!token) {
@@ -161,11 +172,14 @@ export async function loadDietPlan() {
             container.innerHTML += renderMeal('Almoço', plan.almoco);
             container.innerHTML += renderMeal('Jantar', plan.jantar);
             
+            // [MODIFICADO] Renderiza Lanches (se existir)
             if (plan.lanches) {
-                container.innerHTML += renderMeal('Totais do Dia (Estimado)', plan.lanches);
+                container.innerHTML += renderMeal('Lanches', plan.lanches);
             }
+            
+            // [MODIFICADO] Renderiza os Totais (sempre)
+            container.innerHTML += renderTotais(plan.totais);
 
-            isPlanLoaded = true;
         } else {
             renderPlanSelector();
         }

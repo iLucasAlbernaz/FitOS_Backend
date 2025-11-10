@@ -1452,11 +1452,14 @@ body.dashboard-view #notificacao-menu {
 /* ========================================= */
 /* 18. ESTILOS DAS NOVAS APIs (Spoon/Edamam) */
 /* ========================================= */
-
 /* Botão Spoonacular */
 #btn-gerar-spoonacular {
     width: 100%;
     font-weight: bold;
+    background-color: #00695c; /* Um verde mais escuro para destacar */
+}
+#btn-gerar-spoonacular:hover {
+    background-color: #004d40;
 }
 #btn-gerar-spoonacular i {
     margin-right: 8px;
@@ -1472,6 +1475,24 @@ body.dashboard-view #notificacao-menu {
     border: 1px solid #eee;
     text-align: center;
 }
+
+/* Card de Totais do Dia */
+.totais-card {
+    border-left-color: var(--secondary-color); /* Ciano */
+    background-color: #f8fdfd;
+}
+.totais-card h3 {
+    color: var(--secondary-color);
+}
+.totais-card .meal-totals {
+    border-top: 1px dashed var(--secondary-color);
+    background-color: transparent;
+}
+.totais-card .meal-totals small {
+    font-size: 1em;
+    line-height: 1.6;
+}
+
 
 /* Botão Calcular Macros (Edamam) */
 #btn-calcular-macros {
