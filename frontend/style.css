@@ -1049,8 +1049,38 @@ body.dashboard-view #profile-menu {
     margin-top: 0;
 }
 /* ========================================= */
-/* 15. ESTILOS DAS RECEITAS (UC007 - NOVO) */
+/* 15. ESTILOS DAS RECEITAS (UC007 - ATUALIZADO) */
 /* ========================================= */
+
+/* [NOVO] Botão de Sugestão */
+.sugestoes-container {
+    margin-bottom: 2rem;
+}
+#btn-sugerir-receitas {
+    width: 100%;
+    background-color: #f0f7f7;
+    color: var(--primary-color);
+    font-weight: bold;
+    border: 1px solid var(--primary-light);
+}
+#btn-sugerir-receitas i {
+    margin-right: 8px;
+}
+#btn-sugerir-receitas:hover {
+    background-color: #e0f0f0;
+}
+
+/* [NOVO] Container das Sugestões */
+#receitas-sugeridas-container {
+    margin-top: 1.5rem;
+}
+#receitas-sugeridas-container h4 {
+    color: var(--primary-color);
+    border-bottom: 1px dashed var(--primary-light);
+    padding-bottom: 5px;
+}
+
+/* Card de Receita (Salva pelo usuário) */
 .receita-card {
     background: #fdfdfd;
     border: 1px solid #e0e0e0;
@@ -1059,10 +1089,19 @@ body.dashboard-view #profile-menu {
     padding: var(--spacing-unit);
     margin-bottom: var(--spacing-unit);
 }
+/* [NOVO] Card de Receita (Sugerido pela IA) */
+.sugestao-card {
+    border-left-color: var(--secondary-color); /* Cor Ciano */
+}
+
 .receita-card h4 {
     margin: 0 0 5px 0;
     color: var(--primary-color);
 }
+.sugestao-card h4 {
+    color: var(--secondary-color);
+}
+
 .receita-descricao {
     font-style: italic;
     color: #555;
@@ -1092,7 +1131,7 @@ body.dashboard-view #profile-menu {
     padding-left: 20px;
 }
 .receita-details p {
-    white-space: pre-wrap; /* Preserva quebras de linha no modo preparo */
+    white-space: pre-wrap; 
     margin-top: 5px;
 }
 .receita-card .action-buttons {
@@ -1137,7 +1176,7 @@ body.dashboard-view #profile-menu {
 /* Input de ingredientes (similar ao de Treinos) */
 .ingrediente-item {
     display: grid;
-    grid-template-columns: 1.5fr 1fr auto; /* Nome, Qtd, Botão */
+    grid-template-columns: 1.5fr 1fr auto; 
     gap: 10px;
     align-items: center;
     margin-bottom: 10px;
@@ -1151,13 +1190,6 @@ body.dashboard-view #profile-menu {
     margin-top: 0;
     line-height: 1;
 }
-
-/* Reutiliza o estilo do form de treinos para a lista de ingredientes */
-.exercicios-list-form { }
-.exercicios-list-form ul { }
-.exercicios-list-form li { }
-.exercicios-list-form li span { }
-.exercicios-list-form li button { }
 /* ====================================================== */
 /* 16. NOTIFICAÇÕES (UC010) */
 /* ====================================================== */

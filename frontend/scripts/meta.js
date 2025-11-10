@@ -27,6 +27,23 @@ function getInicioMes(d) {
     return new Date(d.getFullYear(), d.getMonth(), 1);
 }
 
+// --- [NOVO] Helper para buscar o peso atual do perfil ---
+async function fetchCurrentWeight() {
+    const token = localStorage.getItem('jwtToken');
+    try {
+        const response = await fetch(`${API_URL}/usuarios/perfil`, {
+            headers: { 'x-auth-token': token }
+        });
+        if (response.ok) {
+            const perfil = await response.json();
+            return perfil.dados_biometricos.peso_atual_kg;
+        }
+    } catch (error) {
+        console.error("Erro ao buscar peso do perfil:", error);
+    }
+    return ''; // Retorna vazio se falhar
+}
+
 // --- FUNÇÃO PRINCIPAL (Não muda) ---
 export async function loadMetas() {
     formContainer.style.display = 'none';
@@ -54,7 +71,7 @@ function renderMetaForm(title = 'Definir Nova Meta', data = {}, editId = null, s
     
     // [MODIFICADO] Lógica de visibilidade
     let valorInicialDisplay = (data.tipo === 'Peso') ? 'block' : 'none';
-    let periodoDisplay = (data.tipo === 'Treino') ? 'block' : 'none';
+    let periodoDisplay = (data.tipo === 'Treino' || data.tipo === 'Água') ? 'block' : 'none';
     
     let valorAlvoLabel = 'Valor Alvo';
     if (data.tipo === 'Treino') valorAlvoLabel = 'Frequência Alvo (vezes)';
@@ -96,7 +113,7 @@ function renderMetaForm(title = 'Definir Nova Meta', data = {}, editId = null, s
             </div>
             
             <button type="submit" class="btn btn-primary">${editId ? 'Salvar Alterações' : 'Definir Meta'}</button>
-            <button type="button" id="btn-cancelar-meta" class="btn btn-secondary" style="margin-left: 10px; width: auto; display: inline-block;">Cancelar</button>
+            <button type="button" id="btn-cancelar-meta" class="btn btn-secondary">Cancelar</button>
         </form>
     `;
     
@@ -117,7 +134,7 @@ function renderMetaForm(title = 'Definir Nova Meta', data = {}, editId = null, s
 
         // Lógica de visibilidade
         document.getElementById('meta-inicial-group').style.display = (tipo === 'Peso') ? 'block' : 'none';
-        document.getElementById('meta-periodo-group').style.display = (tipo === 'Treino') ? 'block' : 'none';
+        document.getElementById('meta-periodo-group').style.display = (tipo === 'Treino' || tipo === 'Água') ? 'block' : 'none';
         
         if (tipo === 'Treino') {
             valorLabel.textContent = 'Frequência Alvo (vezes):';
@@ -178,14 +195,14 @@ async function loadAndRenderList() {
 
 // [MODIFICADO] Divide a lógica de renderização em 3 tipos
 function renderMetaList(metas, diarios) {
-    listContainer.innerHTML = '<hr style="border: 1px solid #eee; margin: 2rem 0;"><h4>Metas Atuais</h4>'; 
+    listContainer.innerHTML = '<h4>Metas Atuais</h4>'; 
     
     const hoje = new Date();
     const hojeStr = hoje.toISOString().split('T')[0];
     
     // Processa os dados do diário UMA VEZ
     const diasTreinados = new Set();
-    let aguaHoje = 0;
+    const diasAgua = new Map(); // Map para guardar o dia e a qtd
     
     diarios.forEach(d => {
         const diaStr = new Date(d.data).toISOString().split('T')[0];
@@ -193,8 +210,8 @@ function renderMetaList(metas, diarios) {
         if (d.treinoRealizado && d.treinoRealizado.trim() !== '') {
             diasTreinados.add(diaStr);
         }
-        if (diaStr === hojeStr) {
-            aguaHoje = d.aguaLitros || 0;
+        if (d.aguaLitros > 0) {
+            diasAgua.set(diaStr, d.aguaLitros);
         }
     });
 
@@ -213,6 +230,7 @@ function renderMetaList(metas, diarios) {
         
         // --- TIPO 2: ÁGUA (Hábito Diário) ---
         } else if (meta.tipo === 'Água') {
+            const aguaHoje = diasAgua.get(hojeStr) || 0;
             const progressoAgua = calcularProgresso(0, aguaHoje, meta.valorAlvo);
             listContainer.innerHTML += renderCardAgua(meta, progressoAgua, aguaHoje);
             
@@ -412,9 +430,9 @@ async function handleFormSubmit(e) {
     }
     
     // [NOVA VALIDAÇÃO]
-    if (data.tipo === 'Treino') {
+    if (data.tipo === 'Treino' || data.tipo === 'Água') {
         if (!data.periodo) {
-             alert('Selecione um Período (Semana/Mês) para a meta de Treino.');
+             alert('Selecione um Período (Semana/Mês) para esta meta.');
              return;
         }
     }
