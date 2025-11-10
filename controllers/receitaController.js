@@ -1,8 +1,9 @@
 const Receita = require('../models/Receita');
-const Usuario = require('../models/Usuario'); // [NOVO] Precisamos do perfil
-const { GoogleGenAI } = require('@google/genai'); // [NOVO] Importa a IA
+const Usuario = require('../models/Usuario'); 
+// [CORREÇÃO 1] Importa a biblioteca correta
+const { GoogleGenAI } = require('@google/genai'); 
 
-// [NOVO] Inicializa o GenAI (igual ao seu chatController)
+// [CORREÇÃO 2] Usa o construtor correto
 const genAI = new GoogleGenAI(process.env.GEMINI_API_KEY);
 
 // 1. VISUALIZAR RECEITAS (GET /api/receitas)
@@ -63,8 +64,6 @@ exports.createReceita = async (req, res) => {
 
 // 4. EDITAR RECEITA (PUT /api/receitas/:id)
 exports.updateReceita = async (req, res) => {
-    // ... (Validação de macros) ...
-    
     try {
         let receita = await Receita.findById(req.params.id);
         if (!receita) return res.status(404).json({ msg: 'Receita não encontrada' });
@@ -104,7 +103,7 @@ exports.deleteReceita = async (req, res) => {
 };
 
 
-// 6. [NOVO] SUGERIR RECEITAS (IA)
+// 6. [MODIFICADO] SUGERIR RECEITAS (IA)
 // GET /api/receitas/sugeridas
 exports.sugerirReceitas = async (req, res) => {
     try {
@@ -157,17 +156,15 @@ exports.sugerirReceitas = async (req, res) => {
             ]
         `;
 
-        // 3. Chamar a API do Gemini
-        const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+        // 3. [CORREÇÃO] Chamar a API do Gemini com a SINTAXE NOVA
         const response = await genAI.models.generateContent({
-            model: "gemini-1.5-flash", 
+            model: "gemini-1.5-flash-latest", 
             contents: [{ role: "user", parts: [{ text: prompt }] }],
         });
 
-        const text = response.text;
+        const text = response.text; // [CORREÇÃO] .text (propriedade)
         
         // 4. Limpar e enviar a resposta JSON
-        // A IA às vezes retorna ```json ... ```. Vamos limpar isso.
         const cleanedText = text.replace(/```json\n|```/g, '').trim();
         
         const receitasSugeridas = JSON.parse(cleanedText);
