@@ -1,7 +1,7 @@
 const Receita = require('../models/Receita');
 const Usuario = require('../models/Usuario'); 
-const { GoogleGenAI } = require('@google/genai'); // Usa a biblioteca correta
-const axios = require('axios'); // Para Edamam
+const { GoogleGenAI } = require('@google/genai'); 
+const axios = require('axios'); 
 
 const genAI = new GoogleGenAI(process.env.GEMINI_API_KEY);
 
@@ -102,7 +102,7 @@ exports.deleteReceita = async (req, res) => {
 };
 
 
-// 6. [MODIFICADO] SUGERIR RECEITAS (Gemini)
+// 6. [EXISTENTE] SUGERIR RECEITAS (Gemini)
 exports.sugerirReceitas = async (req, res) => {
     try {
         const usuario = await Usuario.findById(req.usuario.id);
@@ -128,7 +128,7 @@ exports.sugerirReceitas = async (req, res) => {
               {
                 "nome": "Café da Manhã: Nome da Receita",
                 "descricao": "Uma descrição curta e atrativa.",
-                "ingredientes": [{"nome": "Ingrediente 1", "quantidade": "Ex: 100g"}],
+                "ingredientes": [{"nome": "Ingrediente 1", "quantidade": "100", "unidade": "g"}],
                 "modoPreparo": "1. Faça isso. 2. Faça aquilo.",
                 "macros": {"calorias": 0, "proteinas": 0, "carboidratos": 0, "gorduras": 0}
               },
@@ -138,9 +138,8 @@ exports.sugerirReceitas = async (req, res) => {
             ]
         `;
         
-        // [CORRIGIDO] Usa a sintaxe do seu chatController (que funciona)
         const response = await genAI.models.generateContent({
-            model: "gemini-2.5-flash", 
+            model: "gemini-1.5-flash", 
             contents: [{ role: "user", parts: [{ text: prompt }] }],
         });
 
@@ -160,47 +159,77 @@ exports.sugerirReceitas = async (req, res) => {
     }
 };
 
-// 7. [MODIFICADO] CALCULAR MACROS (Edamam)
+// 7. [MODIFICADO] CALCULAR MACROS (Gemini + Edamam)
 exports.calcularMacros = async (req, res) => {
-    // [MODIFICADO] Agora esperamos o array de objetos: [{ qtd: 100, unidade: 'g', nome: 'frango' }]
+    // Recebe: [{ qtd: 100, unidade: 'g', nome: 'peito de frango' }]
     const { ingredientes } = req.body; 
 
     if (!ingredientes || ingredientes.length === 0) {
         return res.status(400).json({ msg: "A lista de ingredientes não pode estar vazia." });
     }
 
-    // [MODIFICADO] Constrói a string correta
-    const ingredientesFormatados = ingredientes.map(ing => {
-        return `${ing.quantidade} ${ing.unidade} ${ing.nome}`;
-    });
-
     try {
-        const response = await axios.post(
+        // --- ETAPA 1: Traduzir os ingredientes com o Gemini ---
+        const nomesIngredientes = ingredientes.map(ing => ing.nome).join(', '); // "peito de frango, ovo"
+        
+        const promptTraducao = `
+            Traduza a seguinte lista de ingredientes para o inglês. 
+            Retorne APENAS os nomes em inglês, separados por vírgula, sem formatação.
+            Lista: "${nomesIngredientes}"
+        `;
+        
+        const geminiResponse = await genAI.models.generateContent({
+            model: "gemini-1.5-flash", 
+            contents: [{ role: "user", parts: [{ text: promptTraducao }] }],
+        });
+        
+        const nomesEmIngles = geminiResponse.response.text().split(',').map(item => item.trim());
+
+        // Verifica se a tradução funcionou
+        if (nomesEmIngles.length !== ingredientes.length) {
+            throw new Error('Falha na tradução dos ingredientes pela IA.');
+        }
+
+        // --- ETAPA 2: Formatar para o Edamam ---
+        const ingredientesFormatados = ingredientes.map((ing, index) => {
+            return `${ing.quantidade} ${ing.unidade} ${nomesEmIngles[index]}`;
+        });
+        // Resultado: ["100 g chicken breast", "2 unit large egg"]
+
+        // --- ETAPA 3: Chamar o Edamam ---
+        const edamamResponse = await axios.post(
             `https://api.edamam.com/api/nutrition-details?app_id=${process.env.EDAMAM_APP_ID}&app_key=${process.env.EDAMAM_APP_KEY}`,
             { ingr: ingredientesFormatados } 
         );
 
-        const data = response.data;
+        const data = edamamResponse.data;
         
-        // [CORREÇÃO] A API Edamam retorna 200 OK mas com um erro 'low_quality'
-        if (data.error === 'low_quality' || (data.totalNutrients && data.totalNutrients.ENERC_KCAL === null)) {
-             return res.status(400).json({ msg: "Não foi possível calcular. Use ingredientes mais específicos (ex: '100g frango' ou '2 ovos grandes')." });
+        if (data.error === 'low_quality' || !data.totalNutrients) {
+             return res.status(400).json({ msg: "Cálculo falhou. Verifique os ingredientes (ex: '100g frango' ou '2 ovos grandes')." });
         }
         
+        // [CORREÇÃO] Verifica se 'totalNutrients' existe antes de acessá-lo
+        const nutrients = data.totalNutrients || {}; 
+
         const macros = {
             calorias: data.calories || 0,
-            proteinas: data.totalNutrients.PROCNT ? data.totalNutrients.PROCNT.quantity.toFixed(1) : 0,
-            carboidratos: data.totalNutrients.CHOCDF ? data.totalNutrients.CHOCDF.quantity.toFixed(1) : 0,
-            gorduras: data.totalNutrients.FAT ? data.totalNutrients.FAT.quantity.toFixed(1) : 0
+            proteinas: nutrients.PROCNT ? nutrients.PROCNT.quantity.toFixed(1) : 0,
+            carboidratos: nutrients.CHOCDF ? nutrients.CHOCDF.quantity.toFixed(1) : 0,
+            gorduras: nutrients.FAT ? nutrients.FAT.quantity.toFixed(1) : 0
         };
+
+        // [CORREÇÃO] Se Edamam entendeu, mas não calculou (ex: "água"), retorna erro
+        if (macros.calorias === 0 && macros.proteinas === 0 && macros.carboidratos === 0) {
+            return res.status(400).json({ msg: "Cálculo falhou. A API não conseguiu analisar esses ingredientes." });
+        }
 
         res.json(macros);
 
     } catch (error) {
-        console.error("Erro na API do Edamam:", error.response ? error.response.data : error.message);
+        console.error("Erro na API do Edamam/Gemini:", error.response ? error.response.data : error.message);
         if(error.response && (error.response.status === 555 || error.response.status === 400)) {
-            return res.status(400).json({ msg: "Não foi possível calcular. Verifique os ingredientes (ex: '100g frango')." });
+            return res.status(400).json({ msg: "Não foi possível calcular. Verifique os ingredientes." });
         }
-        res.status(503).json({ msg: "O serviço de cálculo de macros (Edamam) está indisponível." });
+        res.status(503).json({ msg: "O serviço de cálculo de macros está indisponível." });
     }
 };
