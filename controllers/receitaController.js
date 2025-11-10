@@ -1,9 +1,8 @@
 const Receita = require('../models/Receita');
 const Usuario = require('../models/Usuario'); 
-const axios = require('axios'); // Para Edamam
-
-// [NOVO] Importa a sintaxe do Gemini que funciona
 const { GoogleGenAI } = require('@google/genai'); 
+const axios = require('axios'); 
+
 const genAI = new GoogleGenAI(process.env.GEMINI_API_KEY);
 
 // 1. VISUALIZAR RECEITAS (GET /api/receitas)
@@ -103,8 +102,7 @@ exports.deleteReceita = async (req, res) => {
 };
 
 
-// 6. [MODIFICADO] SUGERIR RECEITAS (Gemini)
-// Usa a sintaxe do seu chatController.js
+// 6. [EXISTENTE] SUGERIR RECEITAS (Gemini)
 exports.sugerirReceitas = async (req, res) => {
     try {
         const usuario = await Usuario.findById(req.usuario.id);
@@ -125,7 +123,7 @@ exports.sugerirReceitas = async (req, res) => {
             - Sexo: ${sexoTexto}
             Gere OBRIGATORIAMENTE 4 receitas: Café da Manhã, Almoço, Lanche da Tarde, Jantar.
             Sua resposta deve ser APENAS um array JSON, sem nenhum outro texto, markdown ou formatação.
-            O JSON deve seguir exatamente esta estrutura (certifique-se de incluir 4 itens):
+            O JSON deve seguir exatamente esta estrutura (certifique-se de incluir 4 itens e que a 'quantidade' seja um NÚMERO):
             [
               {
                 "nome": "Café da Manhã: Nome da Receita",
@@ -140,14 +138,14 @@ exports.sugerirReceitas = async (req, res) => {
             ]
         `;
         
-        // [CORREÇÃO] Usa a sintaxe do seu chatController (que funciona)
-        const response = await genAI.models.generateContent({
-            model: "gemini-2.5-flash", // Nome do modelo que você enviou
+        const result = await genAI.models.generateContent({
+            model: "gemini-1.5-flash", 
             contents: [{ role: "user", parts: [{ text: prompt }] }],
         });
 
-        // [CORREÇÃO] Usa a sintaxe do seu chatController (que funciona)
-        const text = response.text;
+        // [CORRIGIDO] Usa a sintaxe que funciona no seu chat
+        const response = result.response;
+        const text = response.text();
         
         const cleanedText = text.replace(/```json\n|```/g, '').trim();
         const receitasSugeridas = JSON.parse(cleanedText);
@@ -163,7 +161,8 @@ exports.sugerirReceitas = async (req, res) => {
     }
 };
 
-// 7. [MODIFICADO] CALCULAR MACROS (Edamam + Gemini para Tradução)
+
+// 7. [MODIFICADO] CALCULAR MACROS (Gemini + Edamam)
 exports.calcularMacros = async (req, res) => {
     // Recebe: [{ qtd: 100, unidade: 'g', nome: 'peito de frango' }]
     const { ingredientes } = req.body; 
@@ -182,14 +181,14 @@ exports.calcularMacros = async (req, res) => {
             Lista: "${nomesIngredientes}"
         `;
         
-        // [CORREÇÃO] Usa a sintaxe do seu chatController (que funciona)
-        const geminiResponse = await genAI.models.generateContent({
-            model: "gemini-2.5-flash", 
+        // [CORRIGIDO] Usa a sintaxe que funciona no seu chat
+        const geminiResult = await genAI.models.generateContent({
+            model: "gemini-1.5-flash", 
             contents: [{ role: "user", parts: [{ text: promptTraducao }] }],
         });
         
-        // [CORREÇÃO] Usa a sintaxe do seu chatController (que funciona)
-        const nomesEmInglesTexto = geminiResponse.text;
+        const geminiResponse = geminiResult.response;
+        const nomesEmInglesTexto = geminiResponse.text();
         const nomesEmIngles = nomesEmInglesTexto.split(',').map(item => item.trim());
 
         if (nomesEmIngles.length !== ingredientes.length) {
@@ -209,11 +208,12 @@ exports.calcularMacros = async (req, res) => {
 
         const data = edamamResponse.data;
         
-        if (data.error === 'low_quality' || !data.totalNutrients) {
+        // [CORREÇÃO] Verifica se 'totalNutrients' existe antes de acessá-lo
+        const nutrients = data.totalNutrients; 
+        
+        if (data.error === 'low_quality' || !nutrients) {
              return res.status(400).json({ msg: "Cálculo falhou. Verifique os ingredientes (ex: '100g frango' ou '2 ovos grandes')." });
         }
-        
-        const nutrients = data.totalNutrients || {}; 
 
         const macros = {
             calorias: data.calories || 0,
@@ -222,7 +222,7 @@ exports.calcularMacros = async (req, res) => {
             gorduras: nutrients.FAT ? nutrients.FAT.quantity.toFixed(1) : 0
         };
 
-        if (macros.calorias === 0 && macros.proteinas === 0 && macros.carboidratos === 0) {
+        if (macros.calorias === 0 && macros.proteinas === 0) {
             return res.status(400).json({ msg: "Cálculo falhou. A API não conseguiu analisar esses ingredientes." });
         }
 
