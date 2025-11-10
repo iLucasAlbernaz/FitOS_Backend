@@ -139,11 +139,11 @@ exports.sugerirReceitas = async (req, res) => {
         `;
         
         const response = await genAI.models.generateContent({
-            model: "gemini-1.5-flash", 
+            model: "gemini-2.5-flash", 
             contents: [{ role: "user", parts: [{ text: prompt }] }],
         });
 
-        const text = response.response.text();
+        const text = response.text;
         
         const cleanedText = text.replace(/```json\n|```/g, '').trim();
         const receitasSugeridas = JSON.parse(cleanedText);
@@ -179,7 +179,7 @@ exports.calcularMacros = async (req, res) => {
         `;
         
         const geminiResponse = await genAI.models.generateContent({
-            model: "gemini-1.5-flash", 
+            model: "gemini-2.5-flash", 
             contents: [{ role: "user", parts: [{ text: promptTraducao }] }],
         });
         
