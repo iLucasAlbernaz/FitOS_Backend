@@ -1,9 +1,7 @@
 const Receita = require('../models/Receita');
 const Usuario = require('../models/Usuario'); 
-// [CORREÇÃO 1] Importa a biblioteca correta
 const { GoogleGenAI } = require('@google/genai'); 
 
-// [CORREÇÃO 2] Usa o construtor correto
 const genAI = new GoogleGenAI(process.env.GEMINI_API_KEY);
 
 // 1. VISUALIZAR RECEITAS (GET /api/receitas)
@@ -104,10 +102,8 @@ exports.deleteReceita = async (req, res) => {
 
 
 // 6. [MODIFICADO] SUGERIR RECEITAS (IA)
-// GET /api/receitas/sugeridas
 exports.sugerirReceitas = async (req, res) => {
     try {
-        // 1. Buscar o perfil do usuário
         const usuario = await Usuario.findById(req.usuario.id);
         if (!usuario) {
             return res.status(404).json({ msg: 'Usuário não encontrado.' });
@@ -116,16 +112,13 @@ exports.sugerirReceitas = async (req, res) => {
         const { principal } = usuario.objetivos;
         const { idade, sexo } = usuario.dados_biometricos;
 
-        // 2. Criar o prompt para a IA
         const prompt = `
             Por favor, aja como um nutricionista do app FitOS.
             Eu preciso que você gere 3 sugestões de receitas para um usuário com o seguinte perfil:
             - Objetivo Principal: ${principal}
             - Idade: ${idade}
             - Sexo: ${sexo === 'M' ? 'Masculino' : 'Feminino'}
-
             As receitas devem ser saudáveis e alinhadas com o objetivo.
-
             Sua resposta deve ser APENAS um array JSON, sem nenhum outro texto, markdown ou formatação.
             O JSON deve seguir exatamente esta estrutura:
             [
@@ -145,26 +138,19 @@ exports.sugerirReceitas = async (req, res) => {
                 "ingredientes": [...],
                 "modoPreparo": "...",
                 "macros": {...}
-              },
-              {
-                "nome": "Nome da Receita 3",
-                "descricao": "...",
-                "ingredientes": [...],
-                "modoPreparo": "...",
-                "macros": {...}
               }
             ]
         `;
 
-        // 3. [CORREÇÃO] Chamar a API do Gemini com a SINTAXE NOVA
+        // [CORREÇÃO] Usa a sintaxe correta e o modelo correto
         const response = await genAI.models.generateContent({
-            model: "gemini-1.5-flash-latest", 
+            model: "gemini-2.5-flash", 
             contents: [{ role: "user", parts: [{ text: prompt }] }],
         });
 
-        const text = response.text; // [CORREÇÃO] .text (propriedade)
+        // [CORREÇÃO] A resposta é .text (propriedade)
+        const text = response.text;
         
-        // 4. Limpar e enviar a resposta JSON
         const cleanedText = text.replace(/```json\n|```/g, '').trim();
         
         const receitasSugeridas = JSON.parse(cleanedText);
