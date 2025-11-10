@@ -5,6 +5,8 @@ const axios = require('axios');
 
 const genAI = new GoogleGenAI(process.env.GEMINI_API_KEY);
 
+// --- (As funções 1 a 5: getReceitas, getReceitaById, createReceita, updateReceita, deleteReceita NÃO MUDAM) ---
+// (Você pode manter as suas, elas estão corretas)
 // 1. VISUALIZAR RECEITAS (GET /api/receitas)
 exports.getReceitas = async (req, res) => {
     try {
@@ -102,7 +104,8 @@ exports.deleteReceita = async (req, res) => {
 };
 
 
-// 6. [EXISTENTE] SUGERIR RECEITAS (Gemini)
+// 6. [MODIFICADO] SUGERIR RECEITAS (Gemini)
+// Usa a sintaxe 100% correta do seu chatController
 exports.sugerirReceitas = async (req, res) => {
     try {
         const usuario = await Usuario.findById(req.usuario.id);
@@ -138,14 +141,14 @@ exports.sugerirReceitas = async (req, res) => {
             ]
         `;
         
-        const result = await genAI.models.generateContent({
-            model: "gemini-1.5-flash", 
+        // [CORREÇÃO] Usa a sintaxe do seu chatController (que funciona)
+        const response = await genAI.models.generateContent({
+            model: "gemini-2.5-flash", // Nome do modelo que você enviou
             contents: [{ role: "user", parts: [{ text: prompt }] }],
         });
 
-        // [CORRIGIDO] Usa a sintaxe que funciona no seu chat
-        const response = result.response;
-        const text = response.text();
+        // [CORREÇÃO] Usa a sintaxe do seu chatController (que funciona)
+        const text = response.text;
         
         const cleanedText = text.replace(/```json\n|```/g, '').trim();
         const receitasSugeridas = JSON.parse(cleanedText);
@@ -161,10 +164,8 @@ exports.sugerirReceitas = async (req, res) => {
     }
 };
 
-
 // 7. [MODIFICADO] CALCULAR MACROS (Gemini + Edamam)
 exports.calcularMacros = async (req, res) => {
-    // Recebe: [{ qtd: 100, unidade: 'g', nome: 'peito de frango' }]
     const { ingredientes } = req.body; 
 
     if (!ingredientes || ingredientes.length === 0) {
@@ -173,7 +174,7 @@ exports.calcularMacros = async (req, res) => {
 
     try {
         // --- ETAPA 1: Traduzir os ingredientes com o Gemini ---
-        const nomesIngredientes = ingredientes.map(ing => ing.nome).join(', '); // "peito de frango, ovo"
+        const nomesIngredientes = ingredientes.map(ing => ing.nome).join(', '); 
         
         const promptTraducao = `
             Traduza a seguinte lista de ingredientes para o inglês. 
@@ -181,14 +182,14 @@ exports.calcularMacros = async (req, res) => {
             Lista: "${nomesIngredientes}"
         `;
         
-        // [CORRIGIDO] Usa a sintaxe que funciona no seu chat
-        const geminiResult = await genAI.models.generateContent({
-            model: "gemini-1.5-flash", 
+        // [CORREÇÃO] Usa a sintaxe do seu chatController (que funciona)
+        const geminiResponse = await genAI.models.generateContent({
+            model: "gemini-2.5-flash", 
             contents: [{ role: "user", parts: [{ text: promptTraducao }] }],
         });
         
-        const geminiResponse = geminiResult.response;
-        const nomesEmInglesTexto = geminiResponse.text();
+        // [CORREÇÃO] Usa a sintaxe do seu chatController (que funciona)
+        const nomesEmInglesTexto = geminiResponse.text;
         const nomesEmIngles = nomesEmInglesTexto.split(',').map(item => item.trim());
 
         if (nomesEmIngles.length !== ingredientes.length) {
@@ -208,7 +209,6 @@ exports.calcularMacros = async (req, res) => {
 
         const data = edamamResponse.data;
         
-        // [CORREÇÃO] Verifica se 'totalNutrients' existe antes de acessá-lo
         const nutrients = data.totalNutrients; 
         
         if (data.error === 'low_quality' || !nutrients) {
