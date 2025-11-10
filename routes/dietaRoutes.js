@@ -7,7 +7,7 @@ const dietaController = require('../controllers/dietaController');
 // GET /api/dieta/meu-plano
 router.get('/meu-plano', auth, dietaController.getMeuPlano);
 
-// Rota para CRIAR/ESCOLHER um plano (Gemini - Padrão)
+// Rota para CRIAR/ESCOLHER um plano (Padrão)
 // POST /api/dieta/gerar
 router.post('/gerar', auth, dietaController.gerarMeuPlano);
 

@@ -11,18 +11,15 @@ function renderMeal(title, meal) {
         <li>
             <strong>${alimento.nome}</strong> (${alimento.porcao})
             <br>
-            ${alimento.calorias > 0 ? `
             <small>
                 ${alimento.calorias} kcal | 
                 Prot: ${alimento.proteinas}g | 
                 Carb: ${alimento.carboidratos}g | 
                 Gord: ${alimento.gorduras}g
             </small>
-            ` : ''}
         </li>
     `).join('');
 
-    // Mostra os totais da REFEIÇÃO (se existirem)
     const totaisRefeicaoHTML = meal.totais.calorias > 0 ? `
         <div class="meal-totals">
             <strong>Totais da Refeição:</strong><br>
@@ -51,20 +48,17 @@ function renderTotais(totais) {
     if (!totais || totais.calorias === 0) return '';
     return `
         <div class="meal-card totais-card">
-            <h3>Totais do Dia (Estimado)</h3>
-            <div class="meal-totals">
-                <small>
-                    Calorias: ${totais.calorias} kcal <br>
-                    Proteínas: ${totais.proteinas}g <br>
-                    Carboidratos: ${totais.carboidratos}g <br>
-                    Gorduras: ${totais.gorduras}g
-                </small>
+            <h3>Totais do Dia (Estimado pela IA)</h3>
+            <div class="meal-totals" style="text-align: center;">
+                <p><strong>Calorias:</strong> ${totais.calorias} kcal</p>
+                <p><strong>Proteínas:</strong> ${totais.proteinas} g</p>
+                <p><strong>Carboidratos:</strong> ${totais.carboidratos} g</p>
+                <p><strong>Gorduras:</strong> ${totais.gorduras} g</p>
             </div>
         </div>
     `;
 }
 
-// (Não muda)
 function renderPlanSelector() {
     container.innerHTML = `
         <p class="info-message">Você ainda não possui um plano de dieta ativo.</p>
@@ -92,7 +86,7 @@ function renderPlanSelector() {
     document.getElementById('btn-gerar-spoonacular').addEventListener('click', handleGerarPlanoIA);
 }
 
-// (Não muda)
+// Handler para o Spoonacular
 async function handleGerarPlanoIA() {
     const token = localStorage.getItem('jwtToken');
     container.innerHTML = `<p class="info-message">Aguarde... Estamos consultando nosso nutricionista IA (Spoonacular) para criar um plano baseado no seu perfil.</p>`;
@@ -115,7 +109,7 @@ async function handleGerarPlanoIA() {
     }
 }
 
-// (Não muda)
+// Handler antigo (Padrão)
 async function handleGeneratePlan(tipoPlano) {
     const token = localStorage.getItem('jwtToken');
     container.innerHTML = `<p class="info-message">Gerando seu plano padrão... Aguarde.</p>`;
@@ -166,18 +160,20 @@ export async function loadDietPlan() {
         if (plan && plan.cafeDaManha) { 
             container.innerHTML = ''; 
             
-            container.innerHTML += `<h4 class="plano-dieta-titulo">Plano Ativo: ${plan.nomePlano || 'Personalizado'}</h4>`;
+            // [MODIFICADO] Mostra o nome do plano (ex: "IA: Ganho de Massa")
+            container.innerHTML += `<h4 class="plano-dieta-titulo">Plano Ativo: ${plan.nomePlano}</h4>`;
             
             container.innerHTML += renderMeal('Café da Manhã', plan.cafeDaManha);
             container.innerHTML += renderMeal('Almoço', plan.almoco);
-            container.innerHTML += renderMeal('Jantar', plan.jantar);
             
             // [MODIFICADO] Renderiza Lanches (se existir)
-            if (plan.lanches) {
-                container.innerHTML += renderMeal('Lanches', plan.lanches);
+            if (plan.lanche) { 
+                container.innerHTML += renderMeal('Lanche', plan.lanche);
             }
             
-            // [MODIFICADO] Renderiza os Totais (sempre)
+            container.innerHTML += renderMeal('Jantar', plan.jantar);
+            
+            // [MODIFICADO] Renderiza os Totais
             container.innerHTML += renderTotais(plan.totais);
 
         } else {

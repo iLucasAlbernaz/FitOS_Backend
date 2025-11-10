@@ -2,7 +2,7 @@ const Dieta = require('../models/Dieta');
 const Usuario = require('../models/Usuario');
 const axios = require('axios'); 
 
-// --- TEMPLATES PADRÃO (com Lanches e Totais) ---
+// --- [PRESERVADO] TEMPLATES PADRÃO (Plano B) ---
 const templatePerdaPeso = {
     nome: "Perda de Peso (Padrão)",
     cafeDaManha: {
@@ -17,7 +17,7 @@ const templatePerdaPeso = {
         alimentos: [{ nome: 'Salmão Grelhado', porcao: '100g', calorias: 200, proteinas: 22, carboidratos: 0, gorduras: 12 }],
         totais: { calorias: 200, proteinas: 22, carboidratos: 0, gorduras: 12 }
     },
-    lanches: {
+    lanche: {
         alimentos: [{ nome: 'Iogurte Natural', porcao: '1 pote', calorias: 100, proteinas: 10, carboidratos: 15, gorduras: 0 }],
         totais: { calorias: 100, proteinas: 10, carboidratos: 15, gorduras: 0 }
     },
@@ -37,14 +37,14 @@ const templateGanhoMassa = {
         alimentos: [{ nome: 'Filé de Tilápia', porcao: '150g', calorias: 200, proteinas: 40, carboidratos: 0, gorduras: 3 }],
         totais: { calorias: 200, proteinas: 40, carboidratos: 0, gorduras: 3 }
     },
-    lanches: {
+    lanche: {
         alimentos: [{ nome: 'Shake de Whey', porcao: '1 scoop', calorias: 120, proteinas: 25, carboidratos: 3, gorduras: 1 }],
         totais: { calorias: 120, proteinas: 25, carboidratos: 3, gorduras: 1 }
     },
     totais: { calorias: 850, proteinas: 127, carboidratos: 5, gorduras: 34 }
 };
 
-// ROTA: Gerar Plano Padrão (Gemini/Templates)
+// ROTA: Gerar Plano Padrão (Templates)
 exports.gerarMeuPlano = async (req, res) => {
     const { tipoPlano } = req.body; 
     const usuarioId = req.usuario.id;
@@ -62,7 +62,7 @@ exports.gerarMeuPlano = async (req, res) => {
             cafeDaManha: templateEscolhido.cafeDaManha,
             almoco: templateEscolhido.almoco,
             jantar: templateEscolhido.jantar,
-            lanches: templateEscolhido.lanches, 
+            lanche: templateEscolhido.lanches, 
             totais: templateEscolhido.totais    
         });
         
@@ -79,7 +79,7 @@ exports.gerarPlanoSpoonacular = async (req, res) => {
     const usuarioId = req.usuario.id;
 
     try {
-        // 1. [Request 1] Buscar o perfil do usuário
+        // 1. Buscar o perfil do usuário para ler o objetivo
         const usuario = await Usuario.findById(usuarioId);
         if (!usuario) {
             return res.status(404).json({ msg: 'Usuário não encontrado.' });
@@ -87,7 +87,7 @@ exports.gerarPlanoSpoonacular = async (req, res) => {
         
         const { principal } = usuario.objetivos;
         
-        // 2. Definir parâmetros para o Spoonacular
+        // 2. Definir calorias com base no objetivo
         let targetCalories = 2200; // Padrão (Manutenção)
         
         if (principal === 'Perda de Peso') {
@@ -127,11 +127,11 @@ exports.gerarPlanoSpoonacular = async (req, res) => {
         
         const novoPlano = new Dieta({
             usuario: usuarioId,
-            nomePlano: `IA Profissional (${principal})`, // [Request 2] Envia o nome do plano
+            nomePlano: `IA Profissional (${principal})`, // Envia o nome do plano correto
             cafeDaManha: formatarRefeicao(cafe),
             almoco: formatarRefeicao(almoco),
             jantar: formatarRefeicao(jantar),
-            lanches: null, 
+            lanche: null, // A API 'generate' não retorna lanches, então deixamos nulo
             totais: { 
                 calorias: calories,
                 proteinas: protein,
