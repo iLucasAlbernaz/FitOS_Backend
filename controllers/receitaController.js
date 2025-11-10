@@ -1,8 +1,9 @@
 const Receita = require('../models/Receita');
 const Usuario = require('../models/Usuario'); 
-const { GoogleGenAI } = require('@google/genai'); 
-const axios = require('axios'); 
+const axios = require('axios'); // Para Edamam
 
+// [NOVO] Importa a sintaxe do Gemini que funciona
+const { GoogleGenAI } = require('@google/genai'); 
 const genAI = new GoogleGenAI(process.env.GEMINI_API_KEY);
 
 // 1. VISUALIZAR RECEITAS (GET /api/receitas)
@@ -102,7 +103,8 @@ exports.deleteReceita = async (req, res) => {
 };
 
 
-// 6. [EXISTENTE] SUGERIR RECEITAS (Gemini)
+// 6. [MODIFICADO] SUGERIR RECEITAS (Gemini)
+// Usa a sintaxe do seu chatController.js
 exports.sugerirReceitas = async (req, res) => {
     try {
         const usuario = await Usuario.findById(req.usuario.id);
@@ -128,7 +130,7 @@ exports.sugerirReceitas = async (req, res) => {
               {
                 "nome": "Café da Manhã: Nome da Receita",
                 "descricao": "Uma descrição curta e atrativa.",
-                "ingredientes": [{"nome": "Ingrediente 1", "quantidade": "100", "unidade": "g"}],
+                "ingredientes": [{"nome": "Ingrediente 1", "quantidade": 100, "unidade": "g"}],
                 "modoPreparo": "1. Faça isso. 2. Faça aquilo.",
                 "macros": {"calorias": 0, "proteinas": 0, "carboidratos": 0, "gorduras": 0}
               },
@@ -138,11 +140,13 @@ exports.sugerirReceitas = async (req, res) => {
             ]
         `;
         
+        // [CORREÇÃO] Usa a sintaxe do seu chatController (que funciona)
         const response = await genAI.models.generateContent({
-            model: "gemini-2.5-flash", 
+            model: "gemini-2.5-flash", // Nome do modelo que você enviou
             contents: [{ role: "user", parts: [{ text: prompt }] }],
         });
 
+        // [CORREÇÃO] Usa a sintaxe do seu chatController (que funciona)
         const text = response.text;
         
         const cleanedText = text.replace(/```json\n|```/g, '').trim();
@@ -159,7 +163,7 @@ exports.sugerirReceitas = async (req, res) => {
     }
 };
 
-// 7. [MODIFICADO] CALCULAR MACROS (Gemini + Edamam)
+// 7. [MODIFICADO] CALCULAR MACROS (Edamam + Gemini para Tradução)
 exports.calcularMacros = async (req, res) => {
     // Recebe: [{ qtd: 100, unidade: 'g', nome: 'peito de frango' }]
     const { ingredientes } = req.body; 
@@ -178,14 +182,16 @@ exports.calcularMacros = async (req, res) => {
             Lista: "${nomesIngredientes}"
         `;
         
+        // [CORREÇÃO] Usa a sintaxe do seu chatController (que funciona)
         const geminiResponse = await genAI.models.generateContent({
             model: "gemini-2.5-flash", 
             contents: [{ role: "user", parts: [{ text: promptTraducao }] }],
         });
         
-        const nomesEmIngles = geminiResponse.response.text().split(',').map(item => item.trim());
+        // [CORREÇÃO] Usa a sintaxe do seu chatController (que funciona)
+        const nomesEmInglesTexto = geminiResponse.text;
+        const nomesEmIngles = nomesEmInglesTexto.split(',').map(item => item.trim());
 
-        // Verifica se a tradução funcionou
         if (nomesEmIngles.length !== ingredientes.length) {
             throw new Error('Falha na tradução dos ingredientes pela IA.');
         }
@@ -194,7 +200,6 @@ exports.calcularMacros = async (req, res) => {
         const ingredientesFormatados = ingredientes.map((ing, index) => {
             return `${ing.quantidade} ${ing.unidade} ${nomesEmIngles[index]}`;
         });
-        // Resultado: ["100 g chicken breast", "2 unit large egg"]
 
         // --- ETAPA 3: Chamar o Edamam ---
         const edamamResponse = await axios.post(
@@ -208,7 +213,6 @@ exports.calcularMacros = async (req, res) => {
              return res.status(400).json({ msg: "Cálculo falhou. Verifique os ingredientes (ex: '100g frango' ou '2 ovos grandes')." });
         }
         
-        // [CORREÇÃO] Verifica se 'totalNutrients' existe antes de acessá-lo
         const nutrients = data.totalNutrients || {}; 
 
         const macros = {
@@ -218,7 +222,6 @@ exports.calcularMacros = async (req, res) => {
             gorduras: nutrients.FAT ? nutrients.FAT.quantity.toFixed(1) : 0
         };
 
-        // [CORREÇÃO] Se Edamam entendeu, mas não calculou (ex: "água"), retorna erro
         if (macros.calorias === 0 && macros.proteinas === 0 && macros.carboidratos === 0) {
             return res.status(400).json({ msg: "Cálculo falhou. A API não conseguiu analisar esses ingredientes." });
         }
