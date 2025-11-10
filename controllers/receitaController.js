@@ -5,8 +5,6 @@ const axios = require('axios');
 
 const genAI = new GoogleGenAI(process.env.GEMINI_API_KEY);
 
-// --- (As funções 1 a 5: getReceitas, getReceitaById, createReceita, updateReceita, deleteReceita NÃO MUDAM) ---
-// (Você pode manter as suas, elas estão corretas)
 // 1. VISUALIZAR RECEITAS (GET /api/receitas)
 exports.getReceitas = async (req, res) => {
     try {
@@ -174,7 +172,7 @@ exports.calcularMacros = async (req, res) => {
 
     try {
         // --- ETAPA 1: Traduzir os ingredientes com o Gemini ---
-        const nomesIngredientes = ingredientes.map(ing => ing.nome).join(', '); 
+        const nomesIngredientes = ingredientes.map(ing => ing.nome).join(', '); // "peito de frango, ovo"
         
         const promptTraducao = `
             Traduza a seguinte lista de ingredientes para o inglês. 

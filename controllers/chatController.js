@@ -22,8 +22,7 @@ exports.handleChat = async (req, res) => {
         });
         await perguntaUsuario.save();
 
-        // 2. Prepara e envia o prompt para a IA (usando a NOVA SINTAXE)
-        
+        // 2. Prepara e envia o prompt para a IA
         const prompt = `
             Você é o assistente de IA do app "FitOS".
             Sua especialidade é nutrição, fitness e saúde.
@@ -33,12 +32,15 @@ exports.handleChat = async (req, res) => {
             Pergunta do usuário: "${pergunta}"
         `;
         
+        // 3. Usa a sintaxe que funciona
         const response = await genAI.models.generateContent({
-            model: "gemini-2.5-flash", // O modelo da sua imagem
+            model: "gemini-2.5-flash", // O modelo que você especificou
             contents: [{ role: "user", parts: [{ text: prompt }] }],
         });
 
+        // 4. Usa a sintaxe que funciona
         const text = response.text;
+
         const respostaIA = new Chat({
             usuario: req.usuario.id,
             role: 'model',
@@ -49,7 +51,6 @@ exports.handleChat = async (req, res) => {
         res.json({ resposta: text });
 
     } catch (error) {
-
         console.error("Erro na API do Gemini:", error);
         res.status(503).json({ mensagem: "O chatbot está temporariamente fora do ar. Tente novamente mais tarde." });
     }
