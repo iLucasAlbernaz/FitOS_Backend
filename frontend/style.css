@@ -1430,3 +1430,11 @@ body.dashboard-view #notificacao-menu {
 .meta-card-agua .meta-status {
     background-color: #007bff; /* Badge azul */
 }
+.sugestao-subtitulo {
+    font-style: italic;
+    color: #555;
+    margin: -10px 0 15px 0;
+    font-size: 0.9em;
+    border-bottom: 1px solid #eee;
+    padding-bottom: 10px;
+}

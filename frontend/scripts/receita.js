@@ -4,7 +4,6 @@ import { API_URL } from './auth.js';
 const listContainer = document.getElementById('receitas-list-container');
 const formContainer = document.getElementById('receitas-form-container');
 const showCreateFormBtn = document.getElementById('btn-show-create-receita-form');
-// [NOVO] Elementos de Sugestão
 const sugerirReceitasBtn = document.getElementById('btn-sugerir-receitas');
 const sugeridasContainer = document.getElementById('receitas-sugeridas-container');
 
@@ -18,7 +17,6 @@ export async function loadReceitas() {
     listContainer.style.display = 'block';
     showCreateFormBtn.style.display = 'block';
     
-    // [NOVO] Mostra o botão de sugestão e esconde o resultado
     sugerirReceitasBtn.style.display = 'block';
     sugeridasContainer.style.display = 'none';
     sugeridasContainer.innerHTML = '';
@@ -68,9 +66,8 @@ function renderReceitaList(receitas) {
     );
 }
 
-// --- [NOVO] LÓGICA DE SUGESTÕES DA IA ---
+// --- [MODIFICADO] LÓGICA DE SUGESTÕES DA IA ---
 
-// Listener do botão "Buscar Sugestões"
 if (sugerirReceitasBtn) {
     sugerirReceitasBtn.addEventListener('click', handleSugerirReceitas);
 }
@@ -91,8 +88,9 @@ async function handleSugerirReceitas() {
             throw new Error(err.msg || 'Falha ao buscar sugestões.');
         }
         
-        const receitasSugeridas = await response.json();
-        renderSugeridas(receitasSugeridas);
+        // [MODIFICADO] Lê a nova estrutura
+        const data = await response.json();
+        renderSugeridas(data.perfilUsado, data.receitas);
 
     } catch (error) {
         console.error('Erro ao buscar sugestões:', error);
@@ -100,16 +98,19 @@ async function handleSugerirReceitas() {
     }
 }
 
-// Renderiza os cards de sugestão da IA
-function renderSugeridas(receitas) {
-    sugeridasContainer.innerHTML = '<h4>Sugestões da IA para você</h4>'; 
+// [MODIFICADO] Renderiza o título e os cards
+function renderSugeridas(perfilUsado, receitas) {
+    sugeridasContainer.innerHTML = `
+        <h4>Sugestões da IA</h4>
+        <p class="sugestao-subtitulo">${perfilUsado}</p>
+    `; 
     receitas.forEach(receita => {
         // true = É uma sugestão (não mostra botões de Editar/Excluir)
         sugeridasContainer.innerHTML += renderReceitaCard(receita, true); 
     });
 }
 
-// --- [MODIFICADO] Helper de Card (para Lista e Sugestões) ---
+// --- Helper de Card (Não muda) ---
 function renderReceitaCard(receita, isSugestao) {
     const macrosHtml = `
         <small>
@@ -121,7 +122,6 @@ function renderReceitaCard(receita, isSugestao) {
     `;
     const ingredientesHtml = receita.ingredientes.map(ing => `<li>${ing.nome} (${ing.quantidade})</li>`).join('');
 
-    // Botões de Ação (só aparecem se NÃO for sugestão)
     const actionButtons = isSugestao ? '' : `
         <div class="action-buttons">
             <button class="btn btn-secondary btn-edit-receita" data-id="${receita._id}">Editar</button>
@@ -129,7 +129,6 @@ function renderReceitaCard(receita, isSugestao) {
         </div>
     `;
     
-    // Classe CSS diferente para sugestões
     const cardClass = isSugestao ? 'receita-card sugestao-card' : 'receita-card';
 
     return `
@@ -187,9 +186,8 @@ function renderForm(title, data = {}, show = false) {
     showCreateFormBtn.style.display = show ? 'none' : 'block';
     formContainer.style.display = show ? 'block' : 'none';
     
-    // [NOVO] Esconde o botão de sugestão quando o form está aberto
     sugerirReceitasBtn.style.display = show ? 'none' : 'block';
-    sugeridasContainer.style.display = show ? 'none' : 'none';
+    sugeridasContainer.style.display = 'none'; // Sempre esconde sugestões ao abrir form
     
     const macros = data.macros || {};
 

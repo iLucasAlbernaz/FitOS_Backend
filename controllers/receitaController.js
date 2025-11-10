@@ -4,6 +4,8 @@ const { GoogleGenAI } = require('@google/genai');
 
 const genAI = new GoogleGenAI(process.env.GEMINI_API_KEY);
 
+// --- (Funções getReceitas, getReceitaById, createReceita, updateReceita, deleteReceita não mudam) ---
+// ... (Copie e cole as 5 funções anteriores daqui) ...
 // 1. VISUALIZAR RECEITAS (GET /api/receitas)
 exports.getReceitas = async (req, res) => {
     try {
@@ -14,7 +16,6 @@ exports.getReceitas = async (req, res) => {
         res.status(500).send('Erro no Servidor');
     }
 };
-
 // 2. VISUALIZAR UMA (GET /api/receitas/:id)
 exports.getReceitaById = async (req, res) => {
     try {
@@ -30,7 +31,6 @@ exports.getReceitaById = async (req, res) => {
         res.status(500).send('Erro no Servidor');
     }
 };
-
 // 3. CRIAR RECEITA (POST /api/receitas)
 exports.createReceita = async (req, res) => {
     const { nome, descricao, ingredientes, modoPreparo, macros } = req.body;
@@ -59,7 +59,6 @@ exports.createReceita = async (req, res) => {
         res.status(500).send('Erro no Servidor');
     }
 };
-
 // 4. EDITAR RECEITA (PUT /api/receitas/:id)
 exports.updateReceita = async (req, res) => {
     try {
@@ -81,7 +80,6 @@ exports.updateReceita = async (req, res) => {
         res.status(500).send('Erro no Servidor');
     }
 };
-
 // 5. EXCLUIR RECEITA (DELETE /api/receitas/:id)
 exports.deleteReceita = async (req, res) => {
     try {
@@ -104,6 +102,7 @@ exports.deleteReceita = async (req, res) => {
 // 6. [MODIFICADO] SUGERIR RECEITAS (IA)
 exports.sugerirReceitas = async (req, res) => {
     try {
+        // 1. Buscar o perfil do usuário
         const usuario = await Usuario.findById(req.usuario.id);
         if (!usuario) {
             return res.status(404).json({ msg: 'Usuário não encontrado.' });
@@ -111,19 +110,31 @@ exports.sugerirReceitas = async (req, res) => {
 
         const { principal } = usuario.objetivos;
         const { idade, sexo } = usuario.dados_biometricos;
+        const sexoTexto = sexo === 'M' ? 'Masculino' : 'Feminino';
 
+        // [NOVO] Cria a string de perfil para enviar ao frontend
+        const perfilUsado = `Sugestões para (Objetivo: ${principal} | Idade: ${idade} | Sexo: ${sexoTexto})`;
+
+        // 2. [PROMPT MODIFICADO]
         const prompt = `
             Por favor, aja como um nutricionista do app FitOS.
-            Eu preciso que você gere 3 sugestões de receitas para um usuário com o seguinte perfil:
+            Eu preciso que você gere 4 sugestões de receitas para um usuário com o seguinte perfil:
             - Objetivo Principal: ${principal}
             - Idade: ${idade}
-            - Sexo: ${sexo === 'M' ? 'Masculino' : 'Feminino'}
+            - Sexo: ${sexoTexto}
+
             As receitas devem ser saudáveis e alinhadas com o objetivo.
+            Eu preciso OBRIGATORIAMENTE de 4 receitas, nesta ordem:
+            1. Uma receita para "Café da Manhã"
+            2. Uma receita para "Almoço"
+            3. Uma receita para "Lanche da Tarde"
+            4. Uma receita para "Jantar"
+
             Sua resposta deve ser APENAS um array JSON, sem nenhum outro texto, markdown ou formatação.
-            O JSON deve seguir exatamente esta estrutura:
+            O JSON deve seguir exatamente esta estrutura (certifique-se de incluir 4 itens):
             [
               {
-                "nome": "Nome da Receita 1",
+                "nome": "Café da Manhã: Nome da Receita 1",
                 "descricao": "Uma descrição curta e atrativa.",
                 "ingredientes": [
                   {"nome": "Ingrediente 1", "quantidade": "Ex: 100g"},
@@ -133,7 +144,21 @@ exports.sugerirReceitas = async (req, res) => {
                 "macros": {"calorias": 0, "proteinas": 0, "carboidratos": 0, "gorduras": 0}
               },
               {
-                "nome": "Nome da Receita 2",
+                "nome": "Almoço: Nome da Receita 2",
+                "descricao": "...",
+                "ingredientes": [...],
+                "modoPreparo": "...",
+                "macros": {...}
+              },
+              {
+                "nome": "Lanche da Tarde: Nome da Receita 3",
+                "descricao": "...",
+                "ingredientes": [...],
+                "modoPreparo": "...",
+                "macros": {...}
+              },
+              {
+                "nome": "Jantar: Nome da Receita 4",
                 "descricao": "...",
                 "ingredientes": [...],
                 "modoPreparo": "...",
@@ -142,19 +167,23 @@ exports.sugerirReceitas = async (req, res) => {
             ]
         `;
 
-        // [CORREÇÃO] Usa a sintaxe correta e o modelo correto
+        // 3. Chamar a API do Gemini
         const response = await genAI.models.generateContent({
             model: "gemini-2.5-flash", 
             contents: [{ role: "user", parts: [{ text: prompt }] }],
         });
 
-        // [CORREÇÃO] A resposta é .text (propriedade)
         const text = response.text;
         
+        // 4. Limpar e enviar a resposta JSON
         const cleanedText = text.replace(/```json\n|```/g, '').trim();
-        
         const receitasSugeridas = JSON.parse(cleanedText);
-        res.json(receitasSugeridas);
+        
+        // 5. [MODIFICADO] Envia o objeto com o perfil e as receitas
+        res.json({
+            perfilUsado: perfilUsado,
+            receitas: receitasSugeridas
+        });
 
     } catch (error) {
         console.error("Erro na API do Gemini ao sugerir receitas:", error);
