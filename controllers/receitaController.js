@@ -102,7 +102,7 @@ exports.deleteReceita = async (req, res) => {
 };
 
 
-// 6. [MODIFICADO] SUGERIR RECEITAS (Gemini)
+// 6. [EXISTENTE] SUGERIR RECEITAS (Gemini)
 // Usa a sintaxe 100% correta do seu chatController
 exports.sugerirReceitas = async (req, res) => {
     try {
@@ -139,13 +139,11 @@ exports.sugerirReceitas = async (req, res) => {
             ]
         `;
         
-        // [CORREÇÃO] Usa a sintaxe do seu chatController (que funciona)
         const response = await genAI.models.generateContent({
-            model: "gemini-2.5-flash", // Nome do modelo que você enviou
+            model: "gemini-2.5-flash", 
             contents: [{ role: "user", parts: [{ text: prompt }] }],
         });
 
-        // [CORREÇÃO] Usa a sintaxe do seu chatController (que funciona)
         const text = response.text;
         
         const cleanedText = text.replace(/```json\n|```/g, '').trim();
@@ -162,7 +160,7 @@ exports.sugerirReceitas = async (req, res) => {
     }
 };
 
-// 7. [MODIFICADO] CALCULAR MACROS (Gemini + Edamam)
+// 7. [MODIFICADO] CALCULAR MACROS (Bypass do Gemini)
 exports.calcularMacros = async (req, res) => {
     const { ingredientes } = req.body; 
 
@@ -171,32 +169,21 @@ exports.calcularMacros = async (req, res) => {
     }
 
     try {
-        // --- ETAPA 1: Traduzir os ingredientes com o Gemini ---
-        const nomesIngredientes = ingredientes.map(ing => ing.nome).join(', '); // "peito de frango, ovo"
+        // --- ETAPA 1: Traduzir os ingredientes com o Gemini (IGNORADA PARA O TESTE) ---
         
-        const promptTraducao = `
-            Traduza a seguinte lista de ingredientes para o inglês. 
-            Retorne APENAS os nomes em inglês, separados por vírgula, sem formatação.
-            Lista: "${nomesIngredientes}"
-        `;
-        
-        // [CORREÇÃO] Usa a sintaxe do seu chatController (que funciona)
-        const geminiResponse = await genAI.models.generateContent({
-            model: "gemini-2.5-flash", 
-            contents: [{ role: "user", parts: [{ text: promptTraducao }] }],
-        });
-        
-        // [CORREÇÃO] Usa a sintaxe do seu chatController (que funciona)
-        const nomesEmInglesTexto = geminiResponse.text;
-        const nomesEmIngles = nomesEmInglesTexto.split(',').map(item => item.trim());
-
-        if (nomesEmIngles.length !== ingredientes.length) {
-            throw new Error('Falha na tradução dos ingredientes pela IA.');
-        }
+        // const nomesIngredientes = ingredientes.map(ing => ing.nome).join(', ');
+        // const promptTraducao = `...`;
+        // const geminiResponse = await genAI.models.generateContent({ ... });
+        // const nomesEmInglesTexto = geminiResponse.text;
+        // const nomesEmIngles = nomesEmInglesTexto.split(',').map(item => item.trim());
+        // if (nomesEmIngles.length !== ingredientes.length) {
+        //     throw new Error('Falha na tradução dos ingredientes pela IA.');
+        // }
 
         // --- ETAPA 2: Formatar para o Edamam ---
+        // [MODIFICADO] Usa o 'ing.nome' (que o usuário digitou) diretamente
         const ingredientesFormatados = ingredientes.map((ing, index) => {
-            return `${ing.quantidade} ${ing.unidade} ${nomesEmIngles[index]}`;
+            return `${ing.quantidade} ${ing.unidade} ${ing.nome}`;
         });
 
         // --- ETAPA 3: Chamar o Edamam ---
