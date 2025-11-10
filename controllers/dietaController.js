@@ -2,7 +2,7 @@ const Dieta = require('../models/Dieta');
 const Usuario = require('../models/Usuario');
 const axios = require('axios'); 
 
-// --- [ATUALIZADO] TEMPLATES PADRÃO (com Lanches e Totais) ---
+// --- TEMPLATES PADRÃO (com Lanches e Totais) ---
 const templatePerdaPeso = {
     nome: "Perda de Peso (Padrão)",
     cafeDaManha: {
@@ -45,7 +45,7 @@ const templateGanhoMassa = {
     totais: { calorias: 850, proteinas: 127, carboidratos: 5, gorduras: 34 }
 };
 
-// --- ROTA: Gerar Plano Padrão (Gemini/Templates) ---
+// ROTA: Gerar Plano Padrão (Gemini/Templates)
 exports.gerarMeuPlano = async (req, res) => {
     const { tipoPlano } = req.body; 
     const usuarioId = req.usuario.id;
@@ -63,8 +63,8 @@ exports.gerarMeuPlano = async (req, res) => {
             cafeDaManha: templateEscolhido.cafeDaManha,
             almoco: templateEscolhido.almoco,
             jantar: templateEscolhido.jantar,
-            lanches: templateEscolhido.lanches, // Salva os lanches
-            totais: templateEscolhido.totais    // Salva os totais
+            lanches: templateEscolhido.lanches, 
+            totais: templateEscolhido.totais    
         });
         
         await novoPlano.save();
@@ -75,7 +75,7 @@ exports.gerarMeuPlano = async (req, res) => {
     }
 };
 
-// --- ROTA: Gerar Plano (IA Profissional Spoonacular) ---
+// ROTA: Gerar Plano (IA Profissional Spoonacular)
 exports.gerarPlanoSpoonacular = async (req, res) => {
     const usuarioId = req.usuario.id;
 
@@ -89,14 +89,13 @@ exports.gerarPlanoSpoonacular = async (req, res) => {
         const { principal } = usuario.objetivos;
         
         // 2. Definir parâmetros para o Spoonacular
-        let targetCalories = 2200; // Padrão
+        let targetCalories = 2200; // Padrão (Manutenção)
         
         if (principal === 'Perda de Peso') {
             targetCalories = 1800;
         } else if (principal === 'Ganho de Massa') {
             targetCalories = 2800;
         }
-        // (Se for 'Manutenção', usa o padrão 2200)
 
         // 3. Chamar a API do Spoonacular
         const response = await axios.get('https://api.spoonacular.com/mealplanner/generate', {
@@ -113,7 +112,6 @@ exports.gerarPlanoSpoonacular = async (req, res) => {
         const [cafe, almoco, jantar] = mealPlan.meals;
         const { calories, protein, fat, carbohydrates } = mealPlan.nutrients;
         
-        // Função auxiliar para formatar
         const formatarRefeicao = (meal) => ({
             alimentos: [
                 {
@@ -122,7 +120,6 @@ exports.gerarPlanoSpoonacular = async (req, res) => {
                     calorias: 0, proteinas: 0, carboidratos: 0, gorduras: 0 
                 }
             ],
-            // Totais por refeição (Spoonacular não fornece isso no plano diário)
             totais: { calorias: 0, proteinas: 0, carboidratos: 0, gorduras: 0 } 
         });
 
@@ -131,12 +128,12 @@ exports.gerarPlanoSpoonacular = async (req, res) => {
         
         const novoPlano = new Dieta({
             usuario: usuarioId,
-            nomePlano: `IA Profissional (${principal})`,
+            nomePlano: `IA Profissional (${principal})`, // [Request 2] Envia o nome do plano
             cafeDaManha: formatarRefeicao(cafe),
             almoco: formatarRefeicao(almoco),
             jantar: formatarRefeicao(jantar),
-            lanches: null, // A API 'generate' não retorna lanches, então deixamos nulo
-            totais: { // Salva os totais do dia no campo 'totais'
+            lanches: null, 
+            totais: { 
                 calorias: calories,
                 proteinas: protein,
                 carboidratos: carbohydrates,
@@ -153,7 +150,7 @@ exports.gerarPlanoSpoonacular = async (req, res) => {
     }
 };
 
-// --- ROTA: Buscar Plano Atual ---
+// ROTA: Buscar Plano Atual
 exports.getMeuPlano = async (req, res) => {
     try {
         const dieta = await Dieta.findOne({ usuario: req.usuario.id });

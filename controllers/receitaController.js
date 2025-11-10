@@ -132,18 +132,19 @@ exports.sugerirReceitas = async (req, res) => {
                 "modoPreparo": "1. Faça isso. 2. Faça aquilo.",
                 "macros": {"calorias": 0, "proteinas": 0, "carboidratos": 0, "gorduras": 0}
               },
-              { "nome": "Almoço: ...", ... },
-              { "nome": "Lanche da Tarde: ...", ... },
-              { "nome": "Jantar: ...", ... }
+              { "nome": "Almoço: ...", "descricao": "...", "ingredientes": [], "modoPreparo": "...", "macros": {} },
+              { "nome": "Lanche da Tarde: ...", "descricao": "...", "ingredientes": [], "modoPreparo": "...", "macros": {} },
+              { "nome": "Jantar: ...", "descricao": "...", "ingredientes": [], "modoPreparo": "...", "macros": {} }
             ]
         `;
-
+        
+        // [CORRIGIDO] Usa a sintaxe correta do Gemini
         const response = await genAI.models.generateContent({
             model: "gemini-2.5-flash", 
             contents: [{ role: "user", parts: [{ text: prompt }] }],
         });
 
-        const text = response.text;
+        const text = response.response.text();
         
         const cleanedText = text.replace(/```json\n|```/g, '').trim();
         const receitasSugeridas = JSON.parse(cleanedText);
@@ -155,14 +156,13 @@ exports.sugerirReceitas = async (req, res) => {
 
     } catch (error) {
         console.error("Erro na API do Gemini ao sugerir receitas:", error);
-        res.status(503).json({ msg: "O assistente de IA está temporariamente fora do ar." });
+        res.status(503).json({ msg: "O assistente de IA (Gemini) está temporariamente fora do ar." });
     }
 };
 
 // 7. [NOVO] CALCULAR MACROS (Edamam)
-// POST /api/receitas/calcular-macros
 exports.calcularMacros = async (req, res) => {
-    const { ingredientes } = req.body; // Espera um array de strings, ex: ["2 ovos", "1 banana"]
+    const { ingredientes } = req.body; 
 
     if (!ingredientes || ingredientes.length === 0) {
         return res.status(400).json({ msg: "A lista de ingredientes não pode estar vazia." });
@@ -190,6 +190,6 @@ exports.calcularMacros = async (req, res) => {
         if(error.response && error.response.status === 555) {
             return res.status(400).json({ msg: "Não foi possível calcular. Verifique os ingredientes (ex: '100g frango')." });
         }
-        res.status(503).json({ msg: "O serviço de cálculo de macros está indisponível." });
+        res.status(503).json({ msg: "O serviço de cálculo de macros (Edamam) está indisponível." });
     }
 };
