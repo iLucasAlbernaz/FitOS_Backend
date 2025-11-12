@@ -2,6 +2,9 @@ import { API_URL } from './auth.js';
 
 const container = document.getElementById('dieta-container');
 
+// [NOVO] Variável para guardar o plano sugerido pela IA antes de salvar
+let planoSugerido = null;
+
 // --- 1. RENDERIZAÇÃO PRINCIPAL ---
 
 // Renderiza a refeição (Café, Almoço, etc.)
@@ -10,7 +13,6 @@ function renderMeal(title, meal) {
         return '';
     }
     
-    // Lista de Alimentos
     const alimentosHTML = meal.alimentos.map(alimento => `
         <li>
             <strong>${alimento.nome}</strong> (${alimento.porcao})
@@ -24,7 +26,6 @@ function renderMeal(title, meal) {
         </li>
     `).join('');
 
-    // Modo de Preparo (se existir)
     const preparoHTML = meal.modoPreparo ? `
         <details class="modo-preparo-details">
             <summary>Modo de Preparo</summary>
@@ -32,7 +33,6 @@ function renderMeal(title, meal) {
         </details>
     ` : '';
 
-    // Totais da Refeição
     const totaisRefeicaoHTML = `
         <div class="meal-totals">
             <strong>Totais da Refeição:</strong><br>
@@ -55,7 +55,7 @@ function renderMeal(title, meal) {
     `;
 }
 
-// Renderiza a "Explicação da IA" (Request 2)
+// Renderiza a "Explicação da IA"
 function renderExplicacao(explicacao) {
     if (!explicacao) return '';
     return `
@@ -82,7 +82,7 @@ function renderTotais(totais) {
     `;
 }
 
-// Renderiza a lista de "Planos Salvos" (Request 4)
+// Renderiza a lista de "Planos Salvos"
 function renderPlanosSalvos(planos) {
     if (!planos || planos.length === 0) {
         return '<h4><i class="fas fa-save"></i> Planos Salvos</h4><p class="info-message">Você ainda não tem planos salvos.</p>';
@@ -122,12 +122,40 @@ function renderPlanSelector() {
     document.getElementById('btn-gerar-plano-ia').addEventListener('click', handleGerarPlanoIA);
 }
 
+// [NOVO] Renderiza a tela de PREVIEW (plano gerado mas não salvo)
+function renderPlanoPreview(plan) {
+    container.innerHTML = ''; 
+    container.innerHTML += `<h4 class="plano-dieta-titulo">Sugestão da IA: ${plan.nomePlano}</h4>`;
+    container.innerHTML += `<p class="info-message">Este é um plano sugerido. Revise abaixo e clique em "Salvar" para ativá-lo.</p>`;
+    
+    container.innerHTML += renderExplicacao(plan.explicacao);
+    container.innerHTML += renderMeal('Café da Manhã', plan.cafeDaManha);
+    container.innerHTML += renderMeal('Almoço', plan.almoco);
+    if (plan.lanche) { 
+        container.innerHTML += renderMeal('Lanche', plan.lanche);
+    }
+    container.innerHTML += renderMeal('Jantar', plan.jantar);
+    container.innerHTML += renderTotais(plan.totais);
+    
+    // Botões de Ação do Preview
+    container.innerHTML += `
+        <div class="preview-actions">
+            <hr>
+            <button id="btn-salvar-plano" class="btn btn-primary">Salvar e Ativar Plano</button>
+            <button id="btn-cancelar-plano" class="btn btn-secondary">Cancelar</button>
+        </div>
+    `;
+    document.getElementById('btn-salvar-plano').addEventListener('click', handleSalvarPlanoGerado);
+    document.getElementById('btn-cancelar-plano').addEventListener('click', loadDietPlan); // Volta ao estado anterior
+}
+
+
 // --- 2. LÓGICA DE CARREGAMENTO (EVENT HANDLERS) ---
 
-// Chama a API para gerar um novo plano
+// [MODIFICADO] Apenas GERA a sugestão, não salva
 async function handleGerarPlanoIA() {
     const token = localStorage.getItem('jwtToken');
-    container.innerHTML = `<p class="info-message">Aguarde... Estamos consultando o Gemini para criar um plano de dieta personalizado baseado no seu perfil...<br>(Isso pode levar até 30 segundos)</p>`;
+    container.innerHTML = `<p class="info-message">Aguarde... Estamos consultando o Gemini para criar um plano de dieta personalizado...<br>(Isso pode levar até 30 segundos)</p>`;
     try {
         const response = await fetch(`${API_URL}/dieta/gerar-plano-ia`, {
             method: 'POST',
@@ -137,8 +165,11 @@ async function handleGerarPlanoIA() {
             const err = await response.json();
             throw new Error(err.msg || 'Falha ao gerar o plano.');
         }
-        alert('Novo plano da IA gerado e ativado!');
-        loadDietPlan(); // Recarrega tudo
+        
+        const planoJSON = await response.json();
+        planoSugerido = planoJSON; // Salva o JSON na variável global
+        renderPlanoPreview(planoJSON); // Renderiza a tela de preview
+
     } catch (error) {
         console.error('Erro ao gerar plano IA:', error);
         container.innerHTML = `<p class="error-message">${error.message}</p>`;
@@ -147,7 +178,44 @@ async function handleGerarPlanoIA() {
     }
 }
 
-// [NOVO] Chama a API para ativar um plano salvo (Request 4)
+// [NOVO] Chama a API para SALVAR o plano que está na variável 'planoSugerido'
+async function handleSalvarPlanoGerado() {
+    if (!planoSugerido) {
+        alert('Erro: Nenhum plano sugerido para salvar.');
+        return;
+    }
+    
+    const token = localStorage.getItem('jwtToken');
+    container.innerHTML = '<p class="info-message">Salvando seu novo plano...</p>';
+
+    try {
+        const response = await fetch(`${API_URL}/dieta/salvar-plano-gerado`, {
+            method: 'POST',
+            headers: { 
+                'x-auth-token': token,
+                'Content-Type': 'application/json' 
+            },
+            body: JSON.stringify(planoSugerido) // Envia o JSON da IA no body
+        });
+
+        if (!response.ok) {
+            const err = await response.json();
+            throw new Error(err.msg || 'Falha ao salvar o plano.');
+        }
+
+        alert('Novo plano da IA salvo e ativado!');
+        planoSugerido = null; // Limpa a variável
+        loadDietPlan(); // Recarrega tudo (agora o GET /meu-plano vai funcionar)
+
+    } catch (error) {
+        console.error('Erro ao salvar plano:', error);
+        alert(error.message);
+        renderPlanoPreview(planoSugerido); // Volta para a tela de preview se der erro
+    }
+}
+
+
+// Chama a API para ativar um plano salvo (antigo)
 async function handleSetPlanoAtivo(planoId) {
     const token = localStorage.getItem('jwtToken');
     container.innerHTML = '<p class="info-message">Ativando plano...</p>';
@@ -178,9 +246,12 @@ export async function loadDietPlan() {
         container.innerHTML = '<p class="error-message">Você precisa estar logado para ver o plano.</p>';
         return;
     }
+    
+    // Limpa o plano sugerido (se houver) ao carregar a página
+    planoSugerido = null; 
 
     try {
-        // [MODIFICADO] Busca o plano ATIVO e os SALVOS em paralelo
+        // Busca o plano ATIVO e os SALVOS em paralelo
         const [planoAtivoRes, planosSalvosRes] = await Promise.all([
             fetch(`${API_URL}/dieta/meu-plano`, { headers: { 'x-auth-token': token } }),
             fetch(`${API_URL}/dieta/planos-salvos`, { headers: { 'x-auth-token': token } })
@@ -189,20 +260,19 @@ export async function loadDietPlan() {
         // --- Processa o Plano Ativo ---
         if (!planoAtivoRes.ok) {
             if (planoAtivoRes.status === 404) {
-                renderPlanSelector(); // Mostra o botão "Gerar Plano"
+                // [COMPORTAMENTO ESPERADO] 
+                // Se não tem plano ativo, mostra o botão "Gerar Plano"
+                renderPlanSelector(); 
             } else {
                 throw new Error('Falha ao buscar o plano');
             }
         } else {
+            // Se achou um plano ativo, renderiza
             const plan = await planoAtivoRes.json();
             if (plan && plan.cafeDaManha) { 
                 container.innerHTML = ''; 
-                
                 container.innerHTML += `<h4 class="plano-dieta-titulo">Plano Ativo: ${plan.nomePlano}</h4>`;
-                
-                // [NOVO] Renderiza a Explicação (Request 3)
                 container.innerHTML += renderExplicacao(plan.explicacao);
-                
                 container.innerHTML += renderMeal('Café da Manhã', plan.cafeDaManha);
                 container.innerHTML += renderMeal('Almoço', plan.almoco);
                 if (plan.lanche) { 
@@ -226,7 +296,7 @@ export async function loadDietPlan() {
             }
         }
 
-        // --- Processa os Planos Salvos (Request 4) ---
+        // --- Processa os Planos Salvos ---
         if (planosSalvosRes.ok) {
             const planosSalvos = await planosSalvosRes.json();
             container.innerHTML += `<hr class="section-divider">`;
