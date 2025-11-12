@@ -1,9 +1,11 @@
 const Receita = require('../models/Receita');
-const Usuario = require('../models/Usuario'); 
-const { GoogleGenAI } = require('@google/genai'); 
-// const axios = require('axios'); // [REMOVIDO] Não precisamos mais do Edamam
+const Usuario = require('../models/Usuario');
+const { GoogleGenAI } = require('@google/genai'); // Usando o SDK do seu modelo
 
-const genAI = new GoogleGenAI(process.env.GEMINI_API_KEY);
+// [REMOVIDO] O axios para o Edamam não é mais necessário
+// const axios = require('axios'); 
+
+const genAI = new GoogleGenAI(process.env.GEMINI_API_KEY); // Usando a sintaxe do seu modelo
 
 // 1. VISUALIZAR RECEITAS (GET /api/receitas)
 exports.getReceitas = async (req, res) => {
@@ -63,6 +65,19 @@ exports.createReceita = async (req, res) => {
 
 // 4. EDITAR RECEITA (PUT /api/receitas/:id)
 exports.updateReceita = async (req, res) => {
+    // [MELHORIA] Adicionando validação também no update
+    const { nome, ingredientes, macros } = req.body;
+    
+    if (nome !== undefined && nome.trim() === '') {
+         return res.status(400).json({ msg: 'Nome não pode ser vazio.' });
+    }
+    if (ingredientes !== undefined && ingredientes.length === 0) {
+         return res.status(400).json({ msg: 'A lista de ingredientes não pode estar vazia.' });
+    }
+    if (macros && (macros.calorias < 0 || macros.proteinas < 0 || macros.carboidratos < 0 || macros.gorduras < 0)) {
+         return res.status(400).json({ msg: 'Valores nutricionais não podem ser negativos.' });
+    }
+    
     try {
         let receita = await Receita.findById(req.params.id);
         if (!receita) return res.status(404).json({ msg: 'Receita não encontrada' });
@@ -73,8 +88,8 @@ exports.updateReceita = async (req, res) => {
 
         receita = await Receita.findByIdAndUpdate(
             req.params.id,
-            { $set: req.body }, 
-            { new: true }       
+            { $set: req.body },  
+            { new: true }        
         );
         res.json(receita);
     } catch (err) {
@@ -102,8 +117,8 @@ exports.deleteReceita = async (req, res) => {
 };
 
 
-// 6. [EXISTENTE] SUGERIR RECEITAS (Gemini)
-// (Usando a sintaxe que funciona)
+// 6. [MODELADO] SUGERIR RECEITAS (Gemini)
+// (Usando a sintaxe do chatAI.js)
 exports.sugerirReceitas = async (req, res) => {
     try {
         const usuario = await Usuario.findById(req.usuario.id);
@@ -139,11 +154,13 @@ exports.sugerirReceitas = async (req, res) => {
             ]
         `;
         
+        // Sintaxe do chatAI.js
         const response = await genAI.models.generateContent({
             model: "gemini-2.5-flash", // O modelo que você especificou
             contents: [{ role: "user", parts: [{ text: prompt }] }],
         });
 
+        // Sintaxe do chatAI.js
         const text = response.text;
         
         const cleanedText = text.replace(/```json\n|```/g, '').trim();
@@ -160,7 +177,8 @@ exports.sugerirReceitas = async (req, res) => {
     }
 };
 
-// 7. [MODIFICADO] CALCULAR MACROS (Usando APENAS Gemini)
+// 7. [MODELADO] CALCULAR MACROS (Usando APENAS Gemini)
+// (Usando a sintaxe do chatAI.js)
 exports.calcularMacros = async (req, res) => {
     const { ingredientes } = req.body; 
 
@@ -169,12 +187,10 @@ exports.calcularMacros = async (req, res) => {
     }
 
     try {
-        // --- ETAPA 1: Formatar os ingredientes ---
         const ingredientesFormatados = ingredientes.map(ing => {
             return `${ing.quantidade} ${ing.unidade} ${ing.nome}`;
-        }).join(', '); // Ex: "100 g Peito de Frango, 2 unidade(s) Ovo"
+        }).join(', ');
 
-        // --- ETAPA 2: Chamar o Gemini para calcular ---
         const promptCalculo = `
             Calcule os macronutrientes totais (calorias, proteinas, carboidratos, gorduras) para a seguinte lista de ingredientes:
             ${ingredientesFormatados}
@@ -190,18 +206,21 @@ exports.calcularMacros = async (req, res) => {
             (Use números inteiros ou com uma casa decimal para os valores)
         `;
         
+        // Sintaxe do chatAI.js
         const geminiResponse = await genAI.models.generateContent({
             model: "gemini-2.5-flash", 
             contents: [{ role: "user", parts: [{ text: promptCalculo }] }],
         });
         
+        // Sintaxe do chatAI.js
         const text = geminiResponse.text;
         const cleanedText = text.replace(/```json\n|```/g, '').trim();
         const macros = JSON.parse(cleanedText);
 
         res.json(macros);
 
-    } catch (error) {
+    } catch (error)
+    {
         console.error("Erro na API do Gemini ao calcular macros:", error.response ? error.response.data : error.message);
         res.status(503).json({ msg: "O serviço de cálculo de macros (IA) está indisponível." });
     }
