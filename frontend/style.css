@@ -982,32 +982,6 @@ body.dashboard-view #profile-menu {
     margin-right: 10px;
 }
 
-/* --- [BLOCO REMOVIDO] --- */
-/* O estilo para #btn-show-create-form foi removido 
-   para permitir que as classes .btn e .btn-primary funcionem. */
-
-/* --- Mensagens --- */
-.info-message, .error-message {
-    text-align: center;
-    padding: 15px;
-    border-radius: 5px;
-    margin-bottom: var(--spacing-unit);
-    font-size: 1.05em;
-}
-
-.info-message {
-    background-color: #eef7f7;
-    border-left: 4px solid var(--primary-light);
-    color: #333;
-}
-
-.error-message {
-    background-color: #ffe0e0;
-    border-left: 4px solid var(--danger-color, #e74c3c);
-    color: #cc0000;
-}
-
-
 /* --- Divisores --- */
 .section-divider {
     border: 0;
