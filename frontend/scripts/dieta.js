@@ -2,7 +2,7 @@ import { API_URL } from './auth.js';
 
 const container = document.getElementById('dieta-container');
 
-// [NOVO] Variável para guardar o plano sugerido pela IA antes de salvar
+// Variável para guardar o plano sugerido pela IA antes de salvar
 let planoSugerido = null;
 
 // --- 1. RENDERIZAÇÃO PRINCIPAL ---
@@ -119,6 +119,7 @@ function renderPlanSelector() {
             </button>
         </div>
     `;
+    // Adiciona o listener
     document.getElementById('btn-gerar-plano-ia').addEventListener('click', handleGerarPlanoIA);
 }
 
@@ -145,6 +146,7 @@ function renderPlanoPreview(plan) {
             <button id="btn-cancelar-plano" class="btn btn-secondary">Cancelar</button>
         </div>
     `;
+    // Adiciona os listeners
     document.getElementById('btn-salvar-plano').addEventListener('click', handleSalvarPlanoGerado);
     document.getElementById('btn-cancelar-plano').addEventListener('click', loadDietPlan); // Volta ao estado anterior
 }
