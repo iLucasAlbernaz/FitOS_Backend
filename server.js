@@ -18,7 +18,14 @@ const statsRoutes = require('./routes/statsRoutes');
 const app = express();
 
 // Middlewares
-app.use(cors());
+
+// [CORREÇÃO] Configurar o CORS para aceitar seu header 'x-auth-token'
+app.use(cors({
+    origin: '*', // (Idealmente, troque '*' pelo seu domínio do frontend no futuro)
+    methods: 'GET,POST,PUT,DELETE',
+    allowedHeaders: ['Content-Type', 'x-auth-token'] // <-- ESSA É A LINHA IMPORTANTE
+}));
+
 app.use(express.json());
 
 const PORT = process.env.PORT || 3000;
