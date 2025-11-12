@@ -75,7 +75,7 @@ if (sugerirReceitasBtn) {
 async function handleSugerirReceitas() {
     const token = localStorage.getItem('jwtToken');
     sugeridasContainer.style.display = 'block';
-    sugeridasContainer.innerHTML = '<p class="info-message">A IA (Gemini) está pensando... Isso pode levar alguns segundos.</p>';
+    sugeridasContainer.innerHTML = '<p class="info-message">Isso pode levar alguns segundos.</p>';
     sugerirReceitasBtn.style.display = 'none'; 
 
     try {
@@ -101,7 +101,7 @@ async function handleSugerirReceitas() {
 
 function renderSugeridas(perfilUsado, receitas) {
     sugeridasContainer.innerHTML = `
-        <h4>Sugestões da IA (Gemini)</h4>
+        <h4>Sugestões</h4>
         <p class="sugestao-subtitulo">${perfilUsado}</p>
     `; 
     receitas.forEach((receita, index) => {

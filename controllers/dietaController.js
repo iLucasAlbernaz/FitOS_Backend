@@ -6,13 +6,11 @@ const genAI = new GoogleGenAI(process.env.GEMINI_API_KEY);
 
 /**
  * ROTA: Gerar SUGESTÃO de Plano (IA Profissional Gemini)
- * Esta rota NÃO salva no banco. Ela apenas retorna o JSON da IA.
  */
 exports.gerarPlanoDietaIA = async (req, res) => {
     const usuarioId = req.usuario.id;
 
     try {
-        // 1. Buscar o perfil do usuário (necessário para o prompt)
         const usuario = await Usuario.findById(usuarioId);
         if (!usuario) {
             return res.status(404).json({ msg: 'Usuário não encontrado.' });
@@ -22,7 +20,6 @@ exports.gerarPlanoDietaIA = async (req, res) => {
         const { idade, sexo, altura_cm, peso_atual_kg } = usuario.dados_biometricos;
         const sexoTexto = sexo === 'M' ? 'Masculino' : 'Feminino';
 
-        // 2. Criar o prompt para a IA (Mantido)
         const prompt = `
             Por favor, aja como um nutricionista sênior do app FitOS.
             Eu preciso que você gere um plano alimentar completo EM PORTUGUÊS para um usuário com o seguinte perfil:
@@ -49,33 +46,32 @@ exports.gerarPlanoDietaIA = async (req, res) => {
             }
         `;
         
-        // 3. Chamar a API do Gemini
         const response = await genAI.models.generateContent({
             model: "gemini-2.5-flash", 
             contents: [{ role: "user", parts: [{ text: prompt }] }],
         });
 
-        // 4. [CORREÇÃO] Ler a resposta (Regex mais robusta)
         const text = response.text;
-
-        // Regex para extrair o primeiro objeto JSON ({...}) da resposta da IA
         const jsonMatch = text.match(/{[\s\S]*?}/);
 
         if (!jsonMatch) {
             console.error("Resposta da IA não formatada como JSON:", text);
-            // Lança um erro que será pego pelo catch
             throw new Error("Resposta da IA não contém um JSON válido.");
         }
 
-        const cleanedText = jsonMatch[0]; // Pega o JSON capturado
-        const planoJSON = JSON.parse(cleanedText);
+        let cleanedText = jsonMatch[0]; 
 
-        // 5. Apenas retornar o JSON para o frontend.
+        // [NOVA CORREÇÃO] Remove "trailing commas" (vírgulas extras)
+        // Isso procura por vírgulas antes de um ']' ou '}' e as remove.
+        cleanedText = cleanedText.replace(/,\s*([\]}])/g, '$1');
+
+        const planoJSON = JSON.parse(cleanedText); // Agora é seguro
+
         res.status(200).json(planoJSON);
 
     } catch (error) {
+        // O erro do JSON.parse vai cair aqui
         console.error("Erro na API do Gemini (Gerar Plano):", error.message);
-        // O erro do 'throw new Error' acima também cairá aqui
         res.status(503).json({ msg: 'O serviço de planos de dieta (IA) está indisponível ou retornou dados inválidos.' });
     }
 };
@@ -92,13 +88,11 @@ exports.salvarPlanoGerado = async (req, res) => {
     }
 
     try {
-        // 1. Desativa TODOS os planos existentes deste usuário
         await Dieta.updateMany(
             { usuario: usuarioId },
             { $set: { isAtivo: false } }
         );
 
-        // 2. Cria o novo plano com os dados do body
         const novoPlano = new Dieta({
             usuario: usuarioId,
             isAtivo: true, 
@@ -111,9 +105,7 @@ exports.salvarPlanoGerado = async (req, res) => {
             totais
         });
 
-        // 3. Salva no banco
         await novoPlano.save();
-        
         res.status(201).json(novoPlano); 
 
     } catch (error) {

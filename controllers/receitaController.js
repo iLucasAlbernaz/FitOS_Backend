@@ -221,7 +221,7 @@ exports.calcularMacros = async (req, res) => {
 
     } catch (error)
     {
-        console.error("Erro na API do Gemini ao calcular macros:", error.response ? error.response.data : error.message);
+        console.error("Erro na API ao calcular macros:", error.response ? error.response.data : error.message);
         res.status(503).json({ msg: "O serviço de cálculo de macros (IA) está indisponível." });
     }
 };
