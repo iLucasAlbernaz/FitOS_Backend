@@ -22,7 +22,7 @@ function renderMeal(title, meal) {
         </li>
     `).join('');
 
-    // [MODIFICADO] Só mostra totais da REFEIÇÃO se for maior que 0
+    // [MODIFICADO] Mostra os totais da REFEIÇÃO (Agora temos esses dados!)
     const totaisRefeicaoHTML = meal.totais.calorias > 0 ? `
         <div class="meal-totals">
             <strong>Totais da Refeição:</strong><br>
@@ -62,37 +62,26 @@ function renderTotais(totais) {
     `;
 }
 
+// [MODIFICADO] Apenas um botão
 function renderPlanSelector() {
     container.innerHTML = `
         <p class="info-message">Você ainda não possui um plano de dieta ativo.</p>
-        <p>Escolha uma das nossas opções para começar:</p>
+        <p>Clique abaixo para gerar um plano profissional baseado no seu perfil (Idade, Sexo e Objetivo).</p>
         
         <div class="plan-selector-buttons">
-            <button id="btn-gerar-spoonacular" class="btn btn-primary">
-                <i class="fas fa-magic"></i> Gerar Plano (IA Profissional)
-            </button>
-            <p style="text-align: center; margin-top: 15px; color: #555;">- Ou use nossos modelos padrão -</p>
-            <button id="btn-gerar-perda" class="btn btn-secondary">
-                Plano Padrão (Perda de Peso)
-            </button>
-            <button id="btn-gerar-ganho" class="btn btn-secondary" style="margin-top: 10px;">
-                Plano Padrão (Ganho de Massa)
+            <button id="btn-gerar-plano-ia" class="btn btn-primary">
+                <i class="fas fa-magic"></i> Gerar Plano de Dieta (IA Profissional)
             </button>
         </div>
     `;
-    document.getElementById('btn-gerar-perda').addEventListener('click', () => {
-        handleGeneratePlan('perda-peso');
-    });
-    document.getElementById('btn-gerar-ganho').addEventListener('click', () => {
-        handleGeneratePlan('ganho-massa');
-    });
-    document.getElementById('btn-gerar-spoonacular').addEventListener('click', handleGerarPlanoIA);
+    
+    document.getElementById('btn-gerar-plano-ia').addEventListener('click', handleGerarPlanoIA);
 }
 
-// Handler para o Spoonacular
+// Chama a rota (Spoonacular)
 async function handleGerarPlanoIA() {
     const token = localStorage.getItem('jwtToken');
-    container.innerHTML = `<p class="info-message">Aguarde... Estamos consultando nosso nutricionista IA (Spoonacular) para criar um plano baseado no seu perfil.</p>`;
+    container.innerHTML = `<p class="info-message">Aguarde... Estamos consultando a IA (Spoonacular) para criar um plano baseado no seu perfil...<br>(Isso pode levar até 30 segundos)</p>`;
     try {
         const response = await fetch(`${API_URL}/dieta/gerar-plano-ia`, {
             method: 'POST',
@@ -112,27 +101,7 @@ async function handleGerarPlanoIA() {
     }
 }
 
-// Handler antigo (Padrão)
-async function handleGeneratePlan(tipoPlano) {
-    const token = localStorage.getItem('jwtToken');
-    container.innerHTML = `<p class="info-message">Gerando seu plano padrão... Aguarde.</p>`;
-    try {
-        const response = await fetch(`${API_URL}/dieta/gerar`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'x-auth-token': token
-            },
-            body: JSON.stringify({ tipoPlano: tipoPlano })
-        });
-        if (!response.ok) throw new Error('Falha ao gerar o plano.');
-        alert('Plano padrão gerado com sucesso!');
-        loadDietPlan(); 
-    } catch (error) {
-        console.error('Erro ao gerar plano:', error);
-        container.innerHTML = `<p class="error-message">Erro ao gerar o plano. Tente novamente.</p>`;
-    }
-}
+// [REMOVIDO] handleGeneratePlan (plano estático) não é mais necessário
 
 // [MODIFICADO] Função principal de carregamento
 export async function loadDietPlan() {
@@ -168,6 +137,7 @@ export async function loadDietPlan() {
             container.innerHTML += renderMeal('Café da Manhã', plan.cafeDaManha);
             container.innerHTML += renderMeal('Almoço', plan.almoco);
             
+            // 'lanche' não é mais usado para totais
             if (plan.lanche) { 
                 container.innerHTML += renderMeal('Lanche', plan.lanche);
             }
@@ -175,13 +145,12 @@ export async function loadDietPlan() {
             container.innerHTML += renderMeal('Jantar', plan.jantar);
             container.innerHTML += renderTotais(plan.totais);
             
-            // [NOVO] Adiciona o botão para gerar outro plano
             container.innerHTML += `
                 <div class="change-plan-section">
                     <hr>
                     <h4>Gerar um novo plano?</h4>
-                    <p>Ao gerar um novo plano, o plano atual (IA Profissional ou Padrão) será substituído.</p>
-                    <button id="btn-show-plan-selector" class="btn btn-secondary">Ver Opções de Plano</button>
+                    <p>Ao gerar um novo plano, o plano atual (IA) será substituído.</p>
+                    <button id="btn-show-plan-selector" class="btn btn-secondary">Gerar Novo Plano</button>
                 </div>
             `;
             document.getElementById('btn-show-plan-selector').addEventListener('click', renderPlanSelector);

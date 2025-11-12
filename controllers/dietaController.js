@@ -1,80 +1,43 @@
-const Dieta = require('../models/Dieta');
+ const Dieta = require('../models/Dieta');
 const Usuario = require('../models/Usuario');
 const axios = require('axios'); 
 
-// --- TEMPLATES PADRÃO (Plano B) ---
-const templatePerdaPeso = {
-    nome: "Perda de Peso (Padrão)",
-    cafeDaManha: {
-        alimentos: [{ nome: 'Ovo Cozido', porcao: '2 unidades', calorias: 140, proteinas: 12, carboidratos: 1, gorduras: 10 }],
-        totais: { calorias: 140, proteinas: 12, carboidratos: 1, gorduras: 10 }
-    },
-    almoco: {
-        alimentos: [{ nome: 'Filé de Frango', porcao: '120g', calorias: 180, proteinas: 35, carboidratos: 0, gorduras: 3 }],
-        totais: { calorias: 180, proteinas: 35, carboidratos: 0, gorduras: 3 }
-    },
-    jantar: {
-        alimentos: [{ nome: 'Salmão Grelhado', porcao: '100g', calorias: 200, proteinas: 22, carboidratos: 0, gorduras: 12 }],
-        totais: { calorias: 200, proteinas: 22, carboidratos: 0, gorduras: 12 }
-    },
-    lanche: {
-        alimentos: [{ nome: 'Iogurte Natural', porcao: '1 pote', calorias: 100, proteinas: 10, carboidratos: 15, gorduras: 0 }],
-        totais: { calorias: 100, proteinas: 10, carboidratos: 15, gorduras: 0 }
-    },
-    totais: { calorias: 620, proteinas: 79, carboidratos: 16, gorduras: 25 }
-};
-const templateGanhoMassa = {
-    nome: "Ganho de Massa (Padrão)",
-    cafeDaManha: {
-        alimentos: [{ nome: 'Ovos Mexidos', porcao: '4 unidades', calorias: 280, proteinas: 24, carboidratos: 2, gorduras: 20 }],
-        totais: { calorias: 280, proteinas: 24, carboidratos: 2, gorduras: 20 }
-    },
-    almoco: {
-        alimentos: [{ nome: 'Patinho Moído', porcao: '150g', calorias: 250, proteinas: 38, carboidratos: 0, gorduras: 10 }],
-        totais: { calorias: 250, proteinas: 38, carboidratos: 0, gorduras: 10 }
-    },
-    jantar: {
-        alimentos: [{ nome: 'Filé de Tilápia', porcao: '150g', calorias: 200, proteinas: 40, carboidratos: 0, gorduras: 3 }],
-        totais: { calorias: 200, proteinas: 40, carboidratos: 0, gorduras: 3 }
-    },
-    lanche: {
-        alimentos: [{ nome: 'Shake de Whey', porcao: '1 scoop', calorias: 120, proteinas: 25, carboidratos: 3, gorduras: 1 }],
-        totais: { calorias: 120, proteinas: 25, carboidratos: 3, gorduras: 1 }
-    },
-    totais: { calorias: 850, proteinas: 127, carboidratos: 5, gorduras: 34 }
-};
+const SPOONACULAR_API_KEY = process.env.SPOONACULAR_API_KEY;
 
-// ROTA: Gerar Plano Padrão (Templates)
-exports.gerarMeuPlano = async (req, res) => {
-    const { tipoPlano } = req.body; 
-    const usuarioId = req.usuario.id;
-    let templateEscolhido;
-    if (tipoPlano === 'perda-peso') templateEscolhido = templatePerdaPeso;
-    else if (tipoPlano === 'ganho-massa') templateEscolhido = templateGanhoMassa;
-    else return res.status(400).json({ msg: 'Tipo de plano inválido.' });
-    
+// --- Helper: Busca os macros de UM prato (1 chamada de API) ---
+async function getRecipeMacros(recipeId) {
     try {
-        await Dieta.findOneAndDelete({ usuario: usuarioId });
-        
-        const novoPlano = new Dieta({
-            usuario: usuarioId,
-            nomePlano: templateEscolhido.nome,
-            cafeDaManha: templateEscolhido.cafeDaManha,
-            almoco: templateEscolhido.almoco,
-            jantar: templateEscolhido.jantar,
-            lanche: templateEscolhido.lanches, 
-            totais: templateEscolhido.totais    
+        const response = await axios.get(`https://api.spoonacular.com/recipes/${recipeId}/nutritionWidget.json`, {
+            params: { apiKey: SPOONACULAR_API_KEY }
         });
-        
-        await novoPlano.save();
-        res.status(201).json(novoPlano);
-    } catch (err) {
-        console.error(err.message);
-        res.status(500).send('Erro interno do servidor ao gerar plano.');
+        const data = response.data;
+        return {
+            calorias: parseFloat(data.calories) || 0,
+            proteinas: parseFloat(data.protein.replace('g', '')) || 0,
+            carboidratos: parseFloat(data.carbs.replace('g', '')) || 0,
+            gorduras: parseFloat(data.fat.replace('g', '')) || 0,
+        };
+    } catch (error) {
+        console.error(`Erro ao buscar macros para ID ${recipeId}:`, error.message);
+        return { calorias: 0, proteinas: 0, carboidratos: 0, gorduras: 0 };
     }
-};
+}
 
-// ROTA: Gerar Plano (IA Profissional Spoonacular)
+// --- Helper: Formata a refeição para o nosso Modelo ---
+function formatarRefeicao(meal, macros) {
+    return {
+        alimentos: [
+            {
+                nome: meal.title,
+                porcao: `Pronto em ${meal.readyInMinutes} min`
+            }
+        ],
+        totais: macros // Agora temos os macros corretos!
+    };
+}
+
+
+// --- ROTA: Gerar Plano (IA Profissional Spoonacular) ---
 exports.gerarPlanoSpoonacular = async (req, res) => {
     const usuarioId = req.usuario.id;
 
@@ -96,42 +59,36 @@ exports.gerarPlanoSpoonacular = async (req, res) => {
             targetCalories = 2800;
         }
 
-        // 3. Chamar a API do Spoonacular
-        const response = await axios.get('https://api.spoonacular.com/mealplanner/generate', {
+        // 3. Chamar a API (1ª chamada)
+        const planResponse = await axios.get('https://api.spoonacular.com/mealplanner/generate', {
             params: {
-                apiKey: process.env.SPOONACULAR_API_KEY,
+                apiKey: SPOONACULAR_API_KEY,
                 timeFrame: 'day',
                 targetCalories: targetCalories
             }
         });
 
-        const mealPlan = response.data;
-        
-        // 4. Mapear a resposta para o nosso modelo de Dieta
+        const mealPlan = planResponse.data;
         const [cafe, almoco, jantar] = mealPlan.meals;
-        const { calories, protein, fat, carbohydrates } = mealPlan.nutrients;
-        
-        const formatarRefeicao = (meal) => ({
-            alimentos: [
-                {
-                    nome: meal.title,
-                    porcao: `Pronto em ${meal.readyInMinutes} min`,
-                    calorias: 0, proteinas: 0, carboidratos: 0, gorduras: 0 
-                }
-            ],
-            totais: { calorias: 0, proteinas: 0, carboidratos: 0, gorduras: 0 } 
-        });
+        const { calories, protein, fat, carbohydrates } = mealPlan.nutrients; // Totais do Dia
 
+        // 4. [A MÁGICA] Chamar a API +3 vezes para buscar os macros de CADA refeição
+        const [macrosCafe, macrosAlmoco, macrosJantar] = await Promise.all([
+            getRecipeMacros(cafe.id),
+            getRecipeMacros(almoco.id),
+            getRecipeMacros(jantar.id)
+        ]);
+        
         // 5. Salvar o novo plano
         await Dieta.findOneAndDelete({ usuario: usuarioId });
         
         const novoPlano = new Dieta({
             usuario: usuarioId,
-            nomePlano: `IA Profissional (${principal})`, // Envia o nome do plano correto
-            cafeDaManha: formatarRefeicao(cafe),
-            almoco: formatarRefeicao(almoco),
-            jantar: formatarRefeicao(jantar),
-            lanche: null, 
+            nomePlano: `IA Profissional (${principal})`, 
+            cafeDaManha: formatarRefeicao(cafe, macrosCafe),
+            almoco: formatarRefeicao(almoco, macrosAlmoco),
+            jantar: formatarRefeicao(jantar, macrosJantar),
+            // 'lanche' não é retornado por esta API
             totais: { 
                 calorias: calories,
                 proteinas: protein,
@@ -149,7 +106,7 @@ exports.gerarPlanoSpoonacular = async (req, res) => {
     }
 };
 
-// ROTA: Buscar Plano Atual
+// --- ROTA: Buscar Plano Atual ---
 exports.getMeuPlano = async (req, res) => {
     try {
         const dieta = await Dieta.findOne({ usuario: req.usuario.id });
@@ -162,3 +119,17 @@ exports.getMeuPlano = async (req, res) => {
         res.status(500).send('Erro ao carregar o plano de dieta.');
     }
 };
+
+    // ROTA: Buscar Plano Atual
+    exports.getMeuPlano = async (req, res) => {
+        try {
+            const dieta = await Dieta.findOne({ usuario: req.usuario.id });
+            if (!dieta) {
+                return res.status(404).json({ msg: 'Nenhum plano alimentar disponível no momento.' });
+            }
+            res.json(dieta);
+        } catch (err) {
+            console.error(err.message);
+            res.status(500).send('Erro ao carregar o plano de dieta.');
+        }
+    };
