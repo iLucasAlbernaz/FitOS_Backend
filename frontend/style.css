@@ -229,7 +229,6 @@ body.dashboard-view #profile-menu {
     align-items: stretch; 
     width: 100%; 
 }
-.form-column { }
 .auth-image-side {
     display: flex;
     justify-content: center;
