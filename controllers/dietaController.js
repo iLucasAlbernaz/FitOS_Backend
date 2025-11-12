@@ -1,8 +1,8 @@
 const Dieta = require('../models/Dieta');
 const Usuario = require('../models/Usuario');
-const { GoogleGenAI } = require('@google/genai'); // 1. Usando o SDK do seu modelo
+const { GoogleGenAI } = require('@google/genai'); // Usando o SDK do seu modelo
 
-const genAI = new GoogleGenAI(process.env.GEMINI_API_KEY); // 2. Usando a sintaxe do seu modelo
+const genAI = new GoogleGenAI(process.env.GEMINI_API_KEY); // Usando a sintaxe do seu modelo
 
 /**
  * ROTA: Gerar SUGESTÃO de Plano (IA Profissional Gemini)
@@ -13,13 +13,14 @@ exports.gerarPlanoDietaIA = async (req, res) => {
     try {
         const usuario = await Usuario.findById(usuarioId);
         if (!usuario) {
-            return res.status(404).json({ msg: 'Usuário não encontrado.' });
+            return res.status(4404).json({ msg: 'Usuário não encontrado.' });
         }
         
         const { principal } = usuario.objetivos;
         const { idade, sexo, altura_cm, peso_atual_kg } = usuario.dados_biometricos;
         const sexoTexto = sexo === 'M' ? 'Masculino' : 'Feminino';
 
+        // Prompt (mantido, pois está bom)
         const prompt = `
             Por favor, aja como um nutricionista sênior do app FitOS.
             Eu preciso que você gere um plano alimentar completo EM PORTUGUÊS para um usuário com o seguinte perfil:
@@ -29,8 +30,10 @@ exports.gerarPlanoDietaIA = async (req, res) => {
             - Altura: ${altura_cm} m
             - Peso Atual: ${peso_atual_kg} kg
 
-            Sua resposta DEVE ser um objeto JSON válido.
-            O JSON deve seguir EXATAMENTE esta estrutura:
+            Sua resposta deve ser APENAS um objeto JSON, sem nenhum outro texto, markdown ou formatação.
+            O JSON deve seguir EXATAMENTE esta estrutura.
+            NÃO inclua comentários (//) ou vírgulas extras (trailing commas).
+
             {
               "nomePlano": "IA: ${principal}",
               "explicacao": "Uma explicação curta (2-3 frases) do motivo pelo qual este plano foi escolhido.",
@@ -46,35 +49,34 @@ exports.gerarPlanoDietaIA = async (req, res) => {
             }
         `;
         
-        // --- [A SOLUÇÃO DEFINITIVA] ---
-        // Força a API a retornar um JSON
-        const generationConfig = {
-            responseMimeType: "application/json",
-        };
-        // --- FIM DA SOLUÇÃO ---
-
-        // 3. Usando a sintaxe do seu modelo (com a config)
+        // [CORREÇÃO] O generationConfig foi removido
+        
+        // 3. Usando a sintaxe do seu modelo (como em receitasController.js)
         const response = await genAI.models.generateContent({
             model: "gemini-2.5-flash", 
             contents: [{ role: "user", parts: [{ text: prompt }] }],
-            generationConfig: generationConfig, // <-- ADICIONADO
+            // generationConfig removido
         });
 
-        // 4. Usando a sintaxe do seu modelo
+        // 4. Usando a sintaxe do seu modelo (como em receitasController.js)
         const text = response.text;
         
-        // 5. [CORRIGIDO]
-        // Não precisamos mais de 'replace' ou 'regex'. 
-        // A API agora GARANTE que 'text' é um JSON válido.
-        const planoJSON = JSON.parse(text); 
+        // 5. [CORREÇÃO COMBINADA]
+        // Etapa 1: Limpeza do ```json (do seu receitasController.js)
+        let cleanedText = text.replace(/```json\n|```/g, '').trim();
+
+        // Etapa 2: Limpeza de vírgulas extras (necessária para este JSON complexo)
+        cleanedText = cleanedText.replace(/,\s*([\]}])/g, '$1');
+
+        // Etapa 3: Agora o parse deve ser seguro
+        const planoJSON = JSON.parse(cleanedText); 
 
         // 6. Apenas retornar o JSON para o frontend.
         res.status(200).json(planoJSON);
 
     } catch (error) {
-        // Se der erro agora, é um problema sério (ex: API offline)
         console.error("Erro na API do Gemini (Gerar Plano):", error.message);
-        res.status(503).json({ msg: 'O serviço de planos de dieta (IA) está indisponível.' });
+        res.status(503).json({ msg: 'O serviço de planos de dieta (IA) está indisponível ou retornou dados inválidos.' });
     }
 };
 
