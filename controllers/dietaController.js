@@ -1,11 +1,11 @@
 const Dieta = require('../models/Dieta');
 const Usuario = require('../models/Usuario');
-const { GoogleGenAI } = require('@google/genai'); // Usa a biblioteca correta
+const { GoogleGenAI } = require('@google/genai'); 
 
 const genAI = new GoogleGenAI(process.env.GEMINI_API_KEY);
 
 /**
- * [MODIFICADO] ROTA: Gerar SUGESTÃO de Plano (IA Profissional Gemini)
+ * ROTA: Gerar SUGESTÃO de Plano (IA Profissional Gemini)
  * Esta rota NÃO salva no banco. Ela apenas retorna o JSON da IA.
  */
 exports.gerarPlanoDietaIA = async (req, res) => {
@@ -55,31 +55,38 @@ exports.gerarPlanoDietaIA = async (req, res) => {
             contents: [{ role: "user", parts: [{ text: prompt }] }],
         });
 
-        // 4. Ler a resposta
+        // 4. [CORREÇÃO] Ler a resposta (Regex mais robusta)
         const text = response.text;
-        const cleanedText = text.replace(/```json\n|```/g, '').trim();
+
+        // Regex para extrair o primeiro objeto JSON ({...}) da resposta da IA
+        const jsonMatch = text.match(/{[\s\S]*?}/);
+
+        if (!jsonMatch) {
+            console.error("Resposta da IA não formatada como JSON:", text);
+            // Lança um erro que será pego pelo catch
+            throw new Error("Resposta da IA não contém um JSON válido.");
+        }
+
+        const cleanedText = jsonMatch[0]; // Pega o JSON capturado
         const planoJSON = JSON.parse(cleanedText);
 
-        // 5. [MODIFICADO] Apenas retornar o JSON para o frontend.
-        // Nenhuma lógica de banco de dados aqui.
+        // 5. Apenas retornar o JSON para o frontend.
         res.status(200).json(planoJSON);
 
     } catch (error) {
-        console.error("Erro na API do Gemini (Gerar Plano):", error);
-        res.status(503).json({ msg: 'O serviço de planos de dieta (IA) está indisponível.' });
+        console.error("Erro na API do Gemini (Gerar Plano):", error.message);
+        // O erro do 'throw new Error' acima também cairá aqui
+        res.status(503).json({ msg: 'O serviço de planos de dieta (IA) está indisponível ou retornou dados inválidos.' });
     }
 };
 
 /**
- * [NOVO] ROTA: Salvar um plano gerado e defini-lo como ativo
- * O frontend envia o JSON (que a IA gerou) no body desta requisição.
+ * ROTA: Salvar um plano gerado e defini-lo como ativo
  */
 exports.salvarPlanoGerado = async (req, res) => {
     const usuarioId = req.usuario.id;
-    // Pega o plano completo que o frontend enviou no body
     const { nomePlano, explicacao, cafeDaManha, almoco, lanche, jantar, totais } = req.body;
 
-    // Validação simples
     if (!nomePlano || !cafeDaManha || !totais) {
         return res.status(400).json({ msg: "Dados do plano inválidos ou incompletos." });
     }
@@ -94,7 +101,7 @@ exports.salvarPlanoGerado = async (req, res) => {
         // 2. Cria o novo plano com os dados do body
         const novoPlano = new Dieta({
             usuario: usuarioId,
-            isAtivo: true, // Define este como o novo plano ativo
+            isAtivo: true, 
             nomePlano,
             explicacao,
             cafeDaManha,
@@ -107,7 +114,6 @@ exports.salvarPlanoGerado = async (req, res) => {
         // 3. Salva no banco
         await novoPlano.save();
         
-        // Retorna o plano completo salvo (com _id, createdAt, etc.)
         res.status(201).json(novoPlano); 
 
     } catch (error) {
@@ -117,14 +123,11 @@ exports.salvarPlanoGerado = async (req, res) => {
 };
 
 
-// --- ROTAS EXISTENTES (Sem mudanças) ---
-
 // ROTA: Buscar Plano ATIVO
 exports.getPlanoAtivo = async (req, res) => {
     try {
         const dieta = await Dieta.findOne({ usuario: req.usuario.id, isAtivo: true });
         if (!dieta) {
-            // Isso é normal se o usuário nunca salvou um plano
             return res.status(404).json({ msg: 'Nenhum plano de dieta ativo no momento.' });
         }
         res.json(dieta);
@@ -153,13 +156,11 @@ exports.setPlanoAtivo = async (req, res) => {
     const planoId = req.params.id;
 
     try {
-        // Desativa todos os outros planos
         await Dieta.updateMany(
             { usuario: usuarioId },
             { $set: { isAtivo: false } }
         );
         
-        // Ativa o plano escolhido
         const planoAtivado = await Dieta.findOneAndUpdate(
             { _id: planoId, usuario: usuarioId },
             { $set: { isAtivo: true } },
