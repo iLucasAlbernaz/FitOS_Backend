@@ -12,11 +12,15 @@ router.get('/meu-plano', auth, dietaController.getPlanoAtivo);
 router.get('/planos-salvos', auth, dietaController.getPlanosSalvos);
 
 // @route   POST /api/dieta/gerar-plano-ia
-// @desc    Gera um novo plano de dieta com IA (Gemini) e o define como ATIVO
+// @desc    [MODIFICADO] Gera uma SUGESTÃO de plano (Não salva no banco)
 router.post('/gerar-plano-ia', auth, dietaController.gerarPlanoDietaIA);
 
+// @route   POST /api/dieta/salvar-plano-gerado
+// @desc    [NOVO] Salva o plano (recebido no body) e o define como ATIVO
+router.post('/salvar-plano-gerado', auth, dietaController.salvarPlanoGerado);
+
 // @route   PUT /api/dieta/set-ativo/:id
-// @desc    Define um plano salvo como o ATIVO
+// @desc    Define um plano salvo (antigo) como o ATIVO
 router.put('/set-ativo/:id', auth, dietaController.setPlanoAtivo);
 
 module.exports = router;
