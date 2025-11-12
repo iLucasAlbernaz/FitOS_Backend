@@ -1,8 +1,8 @@
 const Dieta = require('../models/Dieta');
 const Usuario = require('../models/Usuario');
-const { GoogleGenAI } = require('@google/genai'); // Usando o SDK do seu modelo
+const { GoogleGenAI } = require('@google/genai'); 
 
-const genAI = new GoogleGenAI(process.env.GEMINI_API_KEY); // Usando a sintaxe do seu modelo
+const genAI = new GoogleGenAI(process.env.GEMINI_API_KEY);
 
 /**
  * ROTA: Gerar SUGESTÃO de Plano (IA Profissional Gemini)
@@ -13,14 +13,13 @@ exports.gerarPlanoDietaIA = async (req, res) => {
     try {
         const usuario = await Usuario.findById(usuarioId);
         if (!usuario) {
-            return res.status(4404).json({ msg: 'Usuário não encontrado.' });
+            return res.status(404).json({ msg: 'Usuário não encontrado.' });
         }
         
         const { principal } = usuario.objetivos;
         const { idade, sexo, altura_cm, peso_atual_kg } = usuario.dados_biometricos;
         const sexoTexto = sexo === 'M' ? 'Masculino' : 'Feminino';
 
-        // Prompt (mantido, pois está bom)
         const prompt = `
             Por favor, aja como um nutricionista sênior do app FitOS.
             Eu preciso que você gere um plano alimentar completo EM PORTUGUÊS para um usuário com o seguinte perfil:
@@ -35,7 +34,7 @@ exports.gerarPlanoDietaIA = async (req, res) => {
             NÃO inclua comentários (//) ou vírgulas extras (trailing commas).
 
             {
-              "nomePlano": "IA: ${principal}",
+              "nomePlano": "Plano de ${principal.replace('ia: ', '')}",
               "explicacao": "Uma explicação curta (2-3 frases) do motivo pelo qual este plano foi escolhido.",
               "cafeDaManha": {
                 "alimentos": [{"nome": "Ovo Cozido", "porcao": "2 unidades", "calorias": 140, "proteinas": 12, "carboidratos": 1, "gorduras": 10}],
@@ -49,29 +48,21 @@ exports.gerarPlanoDietaIA = async (req, res) => {
             }
         `;
         
-        // [CORREÇÃO] O generationConfig foi removido
-        
-        // 3. Usando a sintaxe do seu modelo (como em receitasController.js)
         const response = await genAI.models.generateContent({
             model: "gemini-2.5-flash", 
             contents: [{ role: "user", parts: [{ text: prompt }] }],
-            // generationConfig removido
         });
 
-        // 4. Usando a sintaxe do seu modelo (como em receitasController.js)
         const text = response.text;
         
-        // 5. [CORREÇÃO COMBINADA]
-        // Etapa 1: Limpeza do ```json (do seu receitasController.js)
+        // Etapa 1: Limpeza do ```json
         let cleanedText = text.replace(/```json\n|```/g, '').trim();
 
-        // Etapa 2: Limpeza de vírgulas extras (necessária para este JSON complexo)
+        // Etapa 2: Limpeza de vírgulas extras
         cleanedText = cleanedText.replace(/,\s*([\]}])/g, '$1');
 
-        // Etapa 3: Agora o parse deve ser seguro
         const planoJSON = JSON.parse(cleanedText); 
 
-        // 6. Apenas retornar o JSON para o frontend.
         res.status(200).json(planoJSON);
 
     } catch (error) {
@@ -82,6 +73,7 @@ exports.gerarPlanoDietaIA = async (req, res) => {
 
 /**
  * ROTA: Salvar um plano gerado e defini-lo como ativo
+ * (Versão que funciona com múltiplos planos, após remoção do índice 'unique')
  */
 exports.salvarPlanoGerado = async (req, res) => {
     const usuarioId = req.usuario.id;
@@ -92,11 +84,13 @@ exports.salvarPlanoGerado = async (req, res) => {
     }
 
     try {
+        // 1. Desativa TODOS os planos existentes deste usuário
         await Dieta.updateMany(
             { usuario: usuarioId },
             { $set: { isAtivo: false } }
         );
 
+        // 2. Cria o novo plano com os dados do body
         const novoPlano = new Dieta({
             usuario: usuarioId,
             isAtivo: true, 
@@ -109,7 +103,9 @@ exports.salvarPlanoGerado = async (req, res) => {
             totais
         });
 
+        // 3. Salva no banco
         await novoPlano.save();
+        
         res.status(201).json(novoPlano); 
 
     } catch (error) {
@@ -118,63 +114,10 @@ exports.salvarPlanoGerado = async (req, res) => {
     }
 };
 
-
-// ROTA: Buscar Plano ATIVO
-exports.getPlanoAtivo = async (req, res) => {
-    try {
-        const dieta = await Dieta.findOne({ usuario: req.usuario.id, isAtivo: true });
-        if (!dieta) {
-            return res.status(404).json({ msg: 'Nenhum plano de dieta ativo no momento.' });
-        }
-        res.json(dieta);
-    } catch (err) {
-        console.error(err.message);
-        res.status(500).send('Erro ao carregar o plano de dieta.');
-    }
-};
-
-// ROTA: Buscar Planos SALVOS (inativos)
-exports.getPlanosSalvos = async (req, res) => {
-    try {
-        const planos = await Dieta.find({ usuario: req.usuario.id, isAtivo: false })
-                                .sort({ createdAt: -1 })
-                                .select('nomePlano createdAt'); 
-        res.json(planos);
-    } catch (err) {
-        console.error(err.message);
-        res.status(500).send('Erro ao carregar planos salvos.');
-    }
-};
-
-// ROTA: Definir um plano salvo (antigo) como ATIVO
-exports.setPlanoAtivo = async (req, res) => {
-    const usuarioId = req.usuario.id;
-    const planoId = req.params.id;
-
-    try {
-        await Dieta.updateMany(
-            { usuario: usuarioId },
-            { $set: { isAtivo: false } }
-        );
-        
-        const planoAtivado = await Dieta.findOneAndUpdate(
-            { _id: planoId, usuario: usuarioId },
-            { $set: { isAtivo: true } },
-            { new: true } 
-        );
-
-        if (!planoAtivado) {
-            return res.status(404).json({ msg: "Plano não encontrado ou não pertence a você." });
-        }
-        
-        res.json(planoAtivado);
-
-    } catch (err) {
-        console.error(err.message);
-        res.status(500).send('Erro ao ativar o plano.');
-    }
-
-    exports.deletePlanoSalvo = async (req, res) => {
+/**
+ * [NOVO] ROTA: Excluir um plano salvo (inativo)
+ */
+exports.deletePlanoSalvo = async (req, res) => {
     const usuarioId = req.usuario.id;
     const planoId = req.params.id;
 
@@ -200,4 +143,68 @@ exports.setPlanoAtivo = async (req, res) => {
         res.status(500).send('Erro no servidor ao excluir o plano.');
     }
 };
+
+
+/**
+ * ROTA: Buscar Plano ATIVO
+ */
+exports.getPlanoAtivo = async (req, res) => {
+    try {
+        const dieta = await Dieta.findOne({ usuario: req.usuario.id, isAtivo: true });
+        if (!dieta) {
+            return res.status(404).json({ msg: 'Nenhum plano de dieta ativo no momento.' });
+        }
+        res.json(dieta);
+    } catch (err) {
+        console.error(err.message);
+        res.status(500).send('Erro ao carregar o plano de dieta.');
+    }
+};
+
+/**
+ * ROTA: Buscar Planos SALVOS (inativos)
+ */
+exports.getPlanosSalvos = async (req, res) => {
+    try {
+        const planos = await Dieta.find({ usuario: req.usuario.id, isAtivo: false })
+                                .sort({ createdAt: -1 })
+                                .select('nomePlano createdAt'); 
+        res.json(planos);
+    } catch (err) {
+        console.error(err.message);
+        res.status(500).send('Erro ao carregar planos salvos.');
+    }
+};
+
+/**
+ * ROTA: Definir um plano salvo (antigo) como ATIVO
+ */
+exports.setPlanoAtivo = async (req, res) => {
+    const usuarioId = req.usuario.id;
+    const planoId = req.params.id;
+
+    try {
+        // Desativa todos os outros planos
+        await Dieta.updateMany(
+            { usuario: usuarioId },
+            { $set: { isAtivo: false } }
+        );
+        
+        // Ativa o plano escolhido
+        const planoAtivado = await Dieta.findOneAndUpdate(
+            { _id: planoId, usuario: usuarioId },
+            { $set: { isAtivo: true } },
+            { new: true } // Retorna o documento atualizado
+        );
+
+        if (!planoAtivado) {
+            return res.status(404).json({ msg: "Plano não encontrado ou não pertence a você." });
+        }
+        
+        res.json(planoAtivado);
+
+    } catch (err) {
+        console.error(err.message);
+        res.status(500).send('Erro ao ativar o plano.');
+    }
 };

@@ -394,156 +394,300 @@ body.dashboard-view #profile-menu {
 /* ========================================= */
 /* 7. ESTILOS DO PLANO DE DIETA (UC002) */
 /* ========================================= */
-/* Botão principal para gerar */
-.plan-selector-buttons .btn-primary {
-    width: 100%;
-    font-weight: bold;
-    background-color: #00695c;
-}
-.plan-selector-buttons .btn-primary:hover {
-    background-color: #004d40;
-}
-.plan-selector-buttons .btn-primary i {
-    margin-right: 8px;
-}
-
-/* Título do Plano de Dieta (ex: "IA: Ganho de Massa") */
-.plano-dieta-titulo {
-    font-size: 1.1em;
-    color: #555;
-    background-color: #f9f9f9;
-    padding: 10px;
-    border-radius: 4px;
-    border: 1px solid #eee;
-    text-align: center;
-    font-weight: bold;
+/* --- Títulos e Cabeçalhos --- */
+.main-plan-title {
+    font-size: 2em; /* Um pouco menor que antes, mais elegante */
     color: var(--primary-color);
+    text-align: center;
+    margin-bottom: 5px;
+    font-weight: 600;
 }
 
-/* [NOVO] Card de Explicação da IA */
-.explicacao-ia-card {
-    background-color: #f0f7f7;
+.plan-sub-title {
+    text-align: center;
+    color: #555;
+    font-size: 1em;
+    margin-bottom: var(--spacing-unit);
+}
+
+/* --- Card de Informações/Orientações --- */
+/* Baseado no estilo .receita-macros */
+.info-card {
+    background: #f0f7f7;
     border: 1px solid var(--primary-light);
+    border-left: 5px solid var(--primary-color);
+    padding: 15px; /* Um pouco mais que 8px */
+    margin-bottom: var(--spacing-unit);
     border-radius: 8px;
-    padding: 15px;
+    font-size: 0.95em;
+    color: #333;
+}
+
+.info-card h4 {
+    font-size: 1.2em;
+    color: var(--primary-color);
+    margin-top: 0;
+    margin-bottom: 10px;
+    display: flex;
+    align-items: center;
+}
+
+.info-card h4 .fas {
+    margin-right: 10px;
+    font-size: 1.1em;
+}
+
+/* --- Card de Refeição (Café, Almoço, etc.) --- */
+/* Baseado no estilo .receita-card */
+.meal-card {
+    background: #fdfdfd;
+    border: 1px solid #e0e0e0;
+    border-left: 5px solid var(--primary-color);
+    border-radius: 8px;
+    padding: var(--spacing-unit);
+    margin-bottom: var(--spacing-unit);
+}
+
+.meal-card .meal-title {
+    font-size: 1.4em;
+    color: var(--primary-color);
+    margin-top: 0;
+    margin-bottom: 15px;
+    border-bottom: 1px dashed #ccc; /* Padrão de divisor */
+    padding-bottom: 10px;
+}
+
+.meal-card ul {
+    list-style: none; /* Remove bolinhas */
+    padding: 0;
     margin-bottom: 15px;
 }
-.explicacao-ia-card h4 {
-    margin: 0 0 10px 0;
-    color: var(--primary-color);
-}
-.explicacao-ia-card h4 i {
-    margin-right: 5px;
-}
-.explicacao-ia-card p {
-    margin: 0;
-    font-size: 0.95em;
-    line-height: 1.5;
-    color: #333;
-}
 
-/* [NOVO] Detalhes do Modo de Preparo (dentro do card) */
-.modo-preparo-details summary {
-    cursor: pointer;
-    font-weight: bold;
-    color: var(--primary-color);
-    margin-top: 10px;
-    font-size: 0.9em;
-}
-.modo-preparo-details p {
-    white-space: pre-wrap;
-    font-size: 0.9em;
-    padding: 5px 0 5px 15px;
-    border-left: 2px solid #eee;
-}
-
-
-/* Card de Totais do Dia */
-.totais-card {
-    border-left-color: var(--secondary-color);
-    background-color: #f8fdfd;
-}
-.totais-card h3 {
-    color: var(--secondary-color);
-}
-.totais-card .meal-totals {
-    border-top: 1px dashed var(--secondary-color);
-    background-color: transparent;
-}
-.totais-card .meal-totals p {
-    font-size: 1.1em;
-    font-weight: 500;
-    color: #333;
-    margin: 5px 0;
-}
-.totais-card .meal-totals p strong {
-    color: var(--text-color);
-}
-
-/* Seção "Gerar Outro Plano" (no final) */
-.change-plan-section {
-    margin-top: calc(var(--spacing-unit) * 2);
-    padding-top: var(--spacing-unit);
-    text-align: center;
-}
-.change-plan-section hr {
-     margin-bottom: var(--spacing-unit);
-     border: 0;
-     border-top: 1px solid #eee;
-}
-.change-plan-section h4 {
-    color: var(--primary-color);
-    margin-bottom: 0.5rem;
-    margin-top: 0;
-}
-.change-plan-section p {
-    font-size: 0.9em;
+.meal-card li {
+    margin-bottom: 10px;
+    line-height: 1.4;
     color: #555;
 }
-#btn-show-plan-selector, #btn-gerar-outro-plano {
-    width: auto;
-    padding: 10px 20px;
+
+.meal-card li strong {
+    color: #2c3e50; /* Um pouco mais escuro para o nome do alimento */
+}
+
+.meal-card small {
+    color: #7f8c8d;
+    font-size: 0.85em;
+}
+
+/* Baseado no estilo .receita-details */
+.modo-preparo-details {
+    margin-top: 15px;
+    padding-top: 10px;
+    border-top: 1px dashed #ccc; /* Padrão de divisor */
+    font-size: 0.9em;
+}
+
+.modo-preparo-details summary {
     font-weight: bold;
+    color: var(--primary-color);
+    cursor: pointer;
+    outline: none;
+    margin-bottom: 5px;
 }
-#btn-show-plan-selector {
-    background-color: #f0f0f0; 
+
+.modo-preparo-details p {
+    padding: 10px 0 0 0;
+    color: #666;
+    white-space: pre-wrap; /* Preserva quebras de linha */
+}
+
+/* Baseado no estilo .receita-macros */
+.meal-totals {
+    background: #f0f7f7;
+    padding: 8px;
+    border-radius: 4px;
+    text-align: right;
+    font-size: 0.9em;
+    font-weight: bold;
     color: #333;
-    border: 1px solid #ccc;
-}
-#btn-show-plan-selector:hover {
-    background-color: #e0e0e0;
+    margin-top: 15px;
 }
 
-/* Divisor de seção (entre plano ativo e salvos) */
-hr.section-divider {
-    border: 0;
-    border-top: 2px solid #eee;
-    margin: 2rem 0;
+/* --- Card de Totais do Dia --- */
+/* Baseado no .receita-form e .macros-grid */
+.totals-day-card {
+    background: #f9f9f9;
+    padding: var(--spacing-unit);
+    border-radius: 8px;
+    border: 1px solid #ddd;
+    margin: var(--spacing-unit) 0;
 }
 
-/* [NOVO] Lista de Planos Salvos */
-.planos-salvos-list {
-    list-style: none;
-    padding: 0;
+.totals-day-card h3 {
+    text-align: center;
+    color: var(--primary-color);
+    margin-top: 0;
+    margin-bottom: 15px;
 }
+
+/* Baseado no .macros-grid */
+.total-macros {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 10px;
+}
+
+.total-macros p {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    background: #fff;
+    padding: 10px;
+    border-radius: 4px;
+    border: 1px solid #e0e0e0;
+    text-align: center;
+    margin: 0;
+}
+
+.total-macros p strong {
+    color: #555;
+    font-weight: normal; /* Menos ênfase na label */
+    font-size: 0.9em;
+    margin-bottom: 5px;
+}
+
+.total-macros p span {
+    color: var(--primary-color);
+    font-weight: bold;
+    font-size: 1.2em;
+}
+
+/* --- Seção de Planos Salvos --- */
+/* Baseado no .receita-card */
 .plano-salvo-item {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 15px;
-    border: 1px solid #eee;
-    border-radius: 8px;
+    background: #fdfdfd;
+    border: 1px solid #e0e0e0;
+    padding: 15px; /* Um pouco mais que receita-card */
     margin-bottom: 10px;
+    border-radius: 8px;
+    transition: background-color 0.2s ease;
 }
+.plano-salvo-item:hover {
+    background-color: #f9f9f9;
+}
+
 .plano-salvo-item span {
-    font-size: 1.1em;
+    font-size: 1.05em;
     color: #333;
+    font-weight: 500;
 }
-.plano-salvo-item .btn-ativar-plano {
-    width: auto;
-    padding: 8px 15px;
-    margin: 0;
+
+.plano-salvo-actions {
+    display: flex;
+    gap: 10px;
+}
+
+/* Baseado no .receita-card .action-buttons .btn */
+.plano-salvo-actions .btn {
+    width: auto; /* Largura automática */
+    padding: 5px 15px;
+    margin-top: 0;
+    font-size: 0.9em;
+    font-weight: normal;
+}
+
+.plano-salvo-actions .btn-delete-plano {
+    padding: 5px 10px; /* Menor para ícone */
+}
+.plano-salvo-actions .btn-delete-plano .fas {
+    margin-right: 0;
+}
+
+/* --- Botões de Ação (Gerar, Salvar, Cancelar) --- */
+.change-plan-section, 
+.preview-actions,
+.plan-selector-buttons {
+    margin-top: 30px;
+    padding-top: 20px;
+    border-top: 1px dashed #ccc; /* Padrão de divisor */
+    text-align: center;
+}
+.plan-selector-buttons {
+    border-top: none; /* Sem divisor para o primeiro botão */
+}
+
+.btn-large {
+    padding: 12px 30px; /* Um pouco maior */
+    font-size: 1.1em;
+    font-weight: 600;
+}
+
+.btn .fas {
+    margin-right: 8px; /* Padrão do botão de sugestão */
+}
+
+/* --- Mensagens de Feedback (Loading, Erro, Info) --- */
+.plan-info-message, .info-message {
+    background-color: #f0f7f7;
+    border-left: 4px solid var(--primary-color);
+    padding: 15px;
+    margin-bottom: 20px;
+    border-radius: 4px;
+    color: #333;
+    font-size: 1.05em;
+    text-align: center;
+}
+
+.loading-message, .error-section {
+    text-align: center;
+    padding: 30px;
+    margin: 30px auto;
+    border-radius: 8px;
+    max-width: 500px;
+}
+
+.loading-message {
+    background-color: #f0f7f7;
+    border: 1px solid var(--primary-light);
+    color: var(--primary-color);
+}
+
+.loading-message .fas {
+    font-size: 2.5em;
+    color: var(--primary-color);
+    margin-bottom: 15px;
+    animation: spin 1.5s linear infinite; /* Garante que o ícone 'spin' gire */
+}
+
+.loading-message p {
+    font-size: 1.3em;
     font-weight: bold;
+}
+
+.loading-message small {
+    color: #555;
+}
+
+.error-section {
+    /* Assumindo que você tenha uma var(--danger-color) */
+    background-color: #fff0f0; 
+    border: 1px solid var(--danger-color, #e74c3c);
+    color: var(--danger-color, #c0392b);
+}
+
+.error-message {
+    font-size: 1.2em;
+    font-weight: bold;
+    margin-bottom: 15px;
+}
+
+/* --- Divisores --- */
+.section-divider {
+    border: 0;
+    border-top: 1px solid #e0e0e0; /* Divisor simples */
+    margin: 40px 0;
 }
 /* ========================================= */
 /* 8. ESTILOS DO TREINO (UC003) */
