@@ -1,5 +1,3 @@
-// public/scripts/treino.js
-
 import { API_URL } from './auth.js';
 
 const listContainer = document.getElementById('treinos-list-container');
@@ -9,15 +7,13 @@ const showCreateFormBtn = document.getElementById('btn-show-create-form');
 // --- Variáveis de Estado ---
 let currentExercicios = []; 
 let currentEditId = null;  
-let treinoSugerido = null; // Para guardar o preview da IA
+let treinoSugerido = null; 
 
-// --- [NOVO] EVENT LISTENER PRINCIPAL (DELEGAÇÃO DE EVENTOS) ---
-// Gerencia todos os cliques dentro da seção de treinos
+// --- EVENT LISTENER PRINCIPAL (DELEGAÇÃO DE EVENTOS) ---
 document.getElementById('section-treinos').addEventListener('click', (e) => {
     const target = e.target.closest('button');
     if (!target) return;
 
-    // Botões dos cards de treino
     if (target.classList.contains('btn-edit')) {
         handleEditClick(target.dataset.id);
         return;
@@ -27,7 +23,6 @@ document.getElementById('section-treinos').addEventListener('click', (e) => {
         return;
     }
     
-    // Botões principais
     switch (target.id) {
         case 'btn-show-create-form':
             showCreateForm();
@@ -42,7 +37,6 @@ document.getElementById('section-treinos').addEventListener('click', (e) => {
             handleSalvarSugestao();
             break;
         case 'btn-cancelar-sugestao':
-            // Apenas limpa a sugestão e recarrega os treinos
             treinoSugerido = null;
             loadTreinos();
             break;
@@ -54,34 +48,29 @@ document.getElementById('section-treinos').addEventListener('click', (e) => {
             break;
     }
 
-    // Botão de remover exercício (dentro do form)
     if (target.classList.contains('btn-remove-ex')) {
-        handleRemoveExercicio(target.dataset.index);
+        handleRemoveExercicio(e.target.dataset.index);
     }
 });
-// Adiciona listener para o submit do form
+
 formContainer.addEventListener('submit', (e) => {
     if (e.target.id === 'treino-form') {
         handleFormSubmit(e);
     }
 });
-// --- FIM DO NOVO LISTENER ---
 
 
 // --- FUNÇÃO PRINCIPAL ---
 export async function loadTreinos() {
-    // Reseta o estado
     formContainer.style.display = 'none';
     listContainer.style.display = 'block';
     showCreateFormBtn.style.display = 'block';
     currentEditId = null;
     currentExercicios = [];
-    treinoSugerido = null; // Limpa sugestão
+    treinoSugerido = null;
     
-    // 1. Renderiza a UI de sugestão
     listContainer.innerHTML = renderSugestaoUI();
     
-    // 2. Adiciona o container para os treinos atuais
     listContainer.innerHTML += '<div id="treinos-atuais-container"><p class="info-message">Carregando rotinas de treino...</p></div>';
     const treinosAtuaisContainer = document.getElementById('treinos-atuais-container');
 
@@ -108,14 +97,21 @@ export async function loadTreinos() {
 
 // --- RENDERIZAÇÃO DA UI ---
 
-// [NOVO] Renderiza a seção de "Sugerir Treino"
+// [MODIFICADO] Renderiza a seção de "Sugerir Treino" com o campo Nível
 function renderSugestaoUI() {
     return `
     <br/>
         <div id="treino-sugestao-container" class="sugestao-container">
             <h4><i class="fas fa-magic"></i> Sugestão de Treino</h4>
-            <p>Selecione um grupo muscular para gerar uma sugestão com base no seu perfil.</p>
+            <p>Selecione seu nível e o grupo muscular para gerar uma sugestão com base no seu perfil.</p>
             <div class="sugestao-form">
+                <select id="sugestao-nivel-treino" class="input-field">
+                    <option value="" disabled selected>Nível de Treino</option>
+                    <option value="Iniciante">Iniciante (0-6 meses)</option>
+                    <option value="Intermediário">Intermediário (6 meses - 2 anos)</option>
+                    <option value="Avançado">Avançado (+2 anos)</option>
+                </select>
+
                 <select id="sugestao-grupo-muscular" class="input-field">
                     <option value="Peito">Peito</option>
                     <option value="Costas">Costas</option>
@@ -132,12 +128,10 @@ function renderSugestaoUI() {
     `;
 }
 
-// [NOVO] Renderiza o preview da IA
 function renderTreinoPreview(treino) {
     const previewContainer = document.getElementById('treino-preview-container');
     if (!previewContainer) return;
 
-    // [ATUALIZADO] Mostra a orientação
     const exerciciosHtml = treino.exercicios.map(ex => 
         `<li>
             <strong>${ex.nome}</strong> (${ex.series}x ${ex.repeticoes})
@@ -146,7 +140,8 @@ function renderTreinoPreview(treino) {
     ).join('');
 
     previewContainer.innerHTML = `
-        <div class="treino-card sugestao-card"> <h4>${treino.nome}</h4>
+        <div class="treino-card sugestao-card">
+            <h4>${treino.nome}</h4>
             <small>${treino.grupoMuscular}</small>
             <div class="exercicios-list">
                 <ul>${exerciciosHtml}</ul>
@@ -159,7 +154,6 @@ function renderTreinoPreview(treino) {
     `;
 }
 
-// Renderiza o botão "Gerar ABC"
 function renderGerarABCButton(container) {
     container.innerHTML = `
         <div class="gerar-abc-container">
@@ -169,14 +163,11 @@ function renderGerarABCButton(container) {
             </button>
         </div>
     `;
-    // Listener é gerenciado pelo Event Delegation
 }
 
-// [ATUALIZADO] Renderiza a lista de treinos salvos
 function renderTreinoList(treinos, container) {
     container.innerHTML = ''; 
     treinos.forEach(treino => {
-        // [ATUALIZADO] Mostra a orientação
         const exerciciosHtml = treino.exercicios.map(ex => 
             `<li>
                 <strong>${ex.nome}</strong> (${ex.series}x ${ex.repeticoes})
@@ -198,10 +189,8 @@ function renderTreinoList(treinos, container) {
             </div>
         `;
     });
-    // Listeners são gerenciados pelo Event Delegation
 }
 
-// [ATUALIZADO] Renderiza o formulário (Criar/Editar)
 function renderForm(title, data = {}) {
     listContainer.style.display = 'none';
     showCreateFormBtn.style.display = 'none';
@@ -233,10 +222,8 @@ function renderForm(title, data = {}) {
             <button type="button" id="btn-cancelar" class="btn btn-secondary">Cancelar</button>
         </form>
     `;
-    // Listeners são gerenciados pelo Event Delegation
 }
 
-// [ATUALIZADO] Desenha a lista de exercícios DENTRO do formulário
 function renderExerciciosFormList() {
     if (currentExercicios.length === 0) {
         return '<p>Nenhum exercício adicionado.</p>';
@@ -254,9 +241,16 @@ function renderExerciciosFormList() {
 
 // --- HANDLERS (Ações) ---
 
-// [NOVO] Chama a IA para sugerir um treino
+// [MODIFICADO] Chama a IA para sugerir um treino
 async function handleGerarSugestao() {
     const grupoMuscular = document.getElementById('sugestao-grupo-muscular').value;
+    const nivelTreino = document.getElementById('sugestao-nivel-treino').value; // [NOVO]
+
+    if (!nivelTreino) {
+        alert('Por favor, selecione seu nível de treino.');
+        return;
+    }
+
     const previewContainer = document.getElementById('treino-preview-container');
     previewContainer.innerHTML = '<p class="info-message">Aguarde... Consultando IA...</p>';
 
@@ -268,7 +262,8 @@ async function handleGerarSugestao() {
                 'Content-Type': 'application/json',
                 'x-auth-token': token 
             },
-            body: JSON.stringify({ grupoMuscular })
+            // [MODIFICADO] Envia nivelTreino e grupoMuscular
+            body: JSON.stringify({ grupoMuscular, nivelTreino }) 
         });
 
         if (!response.ok) {
@@ -276,16 +271,16 @@ async function handleGerarSugestao() {
             throw new Error(err.msg || 'Falha ao gerar sugestão.');
         }
 
-        treinoSugerido = await response.json(); // Salva o JSON no estado
-        renderTreinoPreview(treinoSugerido); // Renderiza o preview
+        treinoSugerido = await response.json();
+        renderTreinoPreview(treinoSugerido);
 
     } catch (error) {
         console.error('Erro ao gerar sugestão:', error);
-        previewContainer.innerHTML = `<p class="error-message">${error.message}</p>`;
+        alert('Erro ao gerar sugestão. Verifique o console.');
+        previewContainer.innerHTML = `<p class="error-message">Erro: ${error.message}</p>`;
     }
 }
 
-// [NOVO] Salva a sugestão da IA (usa a rota POST normal)
 async function handleSalvarSugestao() {
     if (!treinoSugerido) return;
 
@@ -300,13 +295,13 @@ async function handleSalvarSugestao() {
                 'Content-Type': 'application/json',
                 'x-auth-token': token
             },
-            body: JSON.stringify(treinoSugerido) // Envia o JSON da sugestão
+            body: JSON.stringify(treinoSugerido)
         });
 
         if (!response.ok) throw new Error('Falha ao salvar a rotina.');
 
         alert('Rotina salva com sucesso!');
-        loadTreinos(); // Volta para a lista
+        loadTreinos();
 
     } catch (error) {
         console.error('Erro ao salvar:', error);
@@ -314,12 +309,11 @@ async function handleSalvarSugestao() {
     }
 }
 
-// [ATUALIZADO] Adiciona um exercício (manual) ao array 'currentExercicios'
 function handleAddExercicio() {
     const nome = document.getElementById('ex-nome').value;
     const series = document.getElementById('ex-series').value;
     const repeticoes = document.getElementById('ex-reps').value;
-    const orientacao = document.getElementById('ex-orientacao').value; // [NOVO]
+    const orientacao = document.getElementById('ex-orientacao').value;
 
     if (!nome || !series || !repeticoes) {
         alert('Preencha pelo menos Nome, Séries e Repetições.');
@@ -328,23 +322,19 @@ function handleAddExercicio() {
 
     currentExercicios.push({ nome, series, repeticoes, orientacao });
     
-    // Limpa os campos
     document.getElementById('ex-nome').value = '';
     document.getElementById('ex-series').value = '';
     document.getElementById('ex-reps').value = '';
-    document.getElementById('ex-orientacao').value = ''; // [NOVO]
+    document.getElementById('ex-orientacao').value = '';
     
-    // Atualiza a lista no formulário
     document.getElementById('exercicios-list-form').innerHTML = renderExerciciosFormList();
 }
 
-// Remove um exercício do array 'currentExercicios'
 function handleRemoveExercicio(index) {
     currentExercicios.splice(index, 1);
     document.getElementById('exercicios-list-form').innerHTML = renderExerciciosFormList();
 }
 
-// Salva o formulário (Criar ou Editar)
 async function handleFormSubmit(e) {
     e.preventDefault();
     const token = localStorage.getItem('jwtToken');
@@ -352,7 +342,7 @@ async function handleFormSubmit(e) {
     const data = {
         nome: document.getElementById('treino-nome').value,
         grupoMuscular: document.getElementById('treino-grupo').value,
-        exercicios: currentExercicios // currentExercicios já inclui 'orientacao'
+        exercicios: currentExercicios
     };
 
     if (currentExercicios.length === 0) {
@@ -384,7 +374,6 @@ async function handleFormSubmit(e) {
     }
 }
 
-// Mostra o formulário de CADASTRAR
 function showCreateForm() {
     currentEditId = null;
     currentExercicios = [];
@@ -392,7 +381,6 @@ function showCreateForm() {
     showCreateFormBtn.style.display = 'none';
 }
 
-// Mostra o formulário de EDITAR
 async function handleEditClick(id) {
     try {
         const token = localStorage.getItem('jwtToken');
@@ -414,7 +402,6 @@ async function handleEditClick(id) {
     }
 }
 
-// Excluir um treino
 async function handleDeleteClick(id) {
     if (!confirm('Tem certeza que deseja excluir esta rotina de treino?')) {
         return;
@@ -438,7 +425,6 @@ async function handleDeleteClick(id) {
     }
 }
 
-// Gerar os treinos ABC
 async function handleGerarABC() {
     try {
         const token = localStorage.getItem('jwtToken');
