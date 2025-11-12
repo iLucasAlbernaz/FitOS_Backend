@@ -691,40 +691,334 @@ body.dashboard-view #profile-menu {
 /* ========================================= */
 /* 8. ESTILOS DO TREINO (UC003) */
 /* ========================================= */
-.section-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    border-bottom: 2px solid var(--primary-light);
-    padding-bottom: 10px;
-    margin-bottom: var(--spacing-unit);
-}
-.section-header h3 { margin: 0; padding: 0; border: none; }
-.treino-card {
+/* --- Seção de Sugestão de Treino --- */
+.sugestao-container {
     background: #fdfdfd;
     border: 1px solid #e0e0e0;
-    border-left: 5px solid var(--secondary-color);
+    border-left: 5px solid var(--primary-color);
     border-radius: 8px;
     padding: var(--spacing-unit);
     margin-bottom: var(--spacing-unit);
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
 }
-.treino-card h4 { margin: 0 0 5px 0; color: var(--primary-color); }
-.treino-card small { color: #555; font-weight: bold; }
-.treino-card .exercicios-list ul { list-style-type: disc; padding-left: 20px; margin: 10px 0 0 0; }
-.treino-card .exercicios-list { margin-top: 10px; font-size: 0.9em; }
-.treino-card .action-buttons { margin-top: 15px; display: flex; gap: 10px; }
-.treino-card .action-buttons .btn { width: 100px; padding: 5px; margin-top: 0; font-size: 0.9em; font-weight: normal; }
-.gerar-abc-container { text-align: center; padding: 20px; background: #f0f7f7; border-radius: 8px; }
-.treino-form { background: #f9f9f9; padding: var(--spacing-unit); border-radius: 8px; border: 1px solid #ddd; margin-top: var(--spacing-unit); }
-.treino-form h4 { margin-top: 0; }
-.treino-form .form-divider { border: 0; border-top: 1px dashed #ccc; margin: 15px 0; }
-.treino-form .exercicio-item { display: grid; grid-template-columns: 2fr 1fr 1fr auto; gap: 10px; align-items: center; margin-bottom: 10px; }
-.treino-form .exercicio-item input { margin-bottom: 0; }
-.treino-form .exercicio-item button { width: auto; padding: 8px 12px; margin-top: 0; line-height: 1; }
-.exercicios-list-form ul { list-style-type: none; padding-left: 0; max-height: 200px; overflow-y: auto; background: #fff; border: 1px solid #eee; padding: 10px; border-radius: 4px; }
-.exercicios-list-form li { display: flex; justify-content: space-between; align-items: center; padding: 8px; border-bottom: 1px solid #f0f0f0; }
-.exercicios-list-form li span { flex: 1; }
-.exercicios-list-form li button { width: auto; padding: 2px 8px; font-size: 0.8em; margin: 0; }
+
+.sugestao-container h4 {
+    margin-top: 0;
+    margin-bottom: 10px;
+    color: var(--primary-color);
+    font-size: 1.4em;
+    display: flex;
+    align-items: center;
+    border-bottom: 1px dashed var(--primary-light);
+    padding-bottom: 10px;
+}
+
+.sugestao-container h4 .fas {
+    margin-right: 10px;
+    font-size: 1.1em;
+}
+
+.sugestao-container p {
+    font-size: 0.95em;
+    color: #555;
+    margin-bottom: 15px;
+    
+}
+
+.sugestao-form {
+    display: flex;
+    gap: 10px;
+    align-items:baseline;
+
+
+}
+
+.sugestao-form select {
+    flex-grow: 1;
+    padding: 10px 12px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    background-color: #fff;
+    font-size: 1em;
+    color: #333;
+}
+
+.sugestao-form .btn {
+    padding: 10px 20px;
+    font-size: 1em;
+    font-weight: bold;
+}
+
+/* Container do Preview da Sugestão */
+#treino-preview-container {
+    margin-top: var(--spacing-unit);
+}
+
+/* Card de Sugestão de Treino (preview) */
+.treino-card.sugestao-card {
+    border-left-color: var(--secondary-color);
+}
+.treino-card.sugestao-card h4 {
+    color: var(--secondary-color);
+}
+.treino-card.sugestao-card .action-buttons {
+    display: flex;
+    justify-content: center;
+    gap: 15px;
+    margin-top: 20px;
+}
+.treino-card.sugestao-card .action-buttons .btn {
+    width: auto;
+    min-width: 150px;
+    padding: 10px 20px;
+    font-size: 1em;
+    font-weight: bold;
+}
+
+
+/* --- Lista de Treinos Existentes --- */
+.treino-card {
+    background: #fdfdfd;
+    border: 1px solid #e0e0e0;
+    border-left: 5px solid var(--primary-color);
+    border-radius: 8px;
+    padding: var(--spacing-unit);
+    margin-bottom: var(--spacing-unit);
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+}
+
+.treino-card h4 {
+    margin: 0 0 5px 0;
+    color: var(--primary-color);
+    font-size: 1.5em;
+}
+
+.treino-card small {
+    display: block;
+    margin-bottom: 15px;
+    color: #777;
+    font-style: italic;
+    font-size: 0.9em;
+}
+
+.treino-card .exercicios-list ul {
+    list-style-type: none;
+    padding: 0;
+    margin: 0;
+}
+
+.treino-card .exercicios-list li {
+    margin-bottom: 8px;
+    line-height: 1.4;
+    color: #444;
+    padding-left: 10px;
+    border-left: 2px solid var(--primary-light);
+}
+
+.treino-card .exercicios-list li:last-child {
+    margin-bottom: 0;
+}
+
+.treino-card .exercicios-list li strong {
+    color: var(--primary-color);
+}
+
+.orientacao-texto {
+    display: block;
+    font-size: 0.8em;
+    color: #666;
+    margin-top: 3px;
+    padding-left: 5px;
+    border-left: 2px dotted #ccc;
+}
+
+
+.treino-card .action-buttons {
+    margin-top: 20px;
+    display: flex;
+    gap: 10px;
+    justify-content: flex-end;
+}
+
+.treino-card .action-buttons .btn {
+    width: 90px;
+    padding: 8px 10px;
+    margin-top: 0;
+    font-size: 0.9em;
+    font-weight: normal;
+}
+
+
+/* --- Gerar ABC Button --- */
+.gerar-abc-container {
+    text-align: center;
+    margin: var(--spacing-unit) 0 2rem 0;
+    padding: var(--spacing-unit);
+    background-color: #f0f7f7;
+    border: 1px solid var(--primary-light);
+    border-radius: 8px;
+}
+.gerar-abc-container p {
+    margin-bottom: 15px;
+    font-size: 1.1em;
+    color: #333;
+}
+.gerar-abc-container .btn {
+    font-size: 1.1em;
+    padding: 10px 25px;
+}
+
+
+/* --- Formulário de Treino (Criar/Editar) --- */
+.treino-form {
+    background: #f9f9f9;
+    padding: var(--spacing-unit);
+    border-radius: 8px;
+    border: 1px solid #ddd;
+    margin-top: var(--spacing-unit);
+    box-shadow: 0 2px 5px rgba(0,0,0,0.08);
+}
+
+.treino-form h4 {
+    margin-top: 0;
+    margin-bottom: 20px;
+    color: var(--primary-color);
+    font-size: 1.6em;
+    text-align: center;
+}
+
+.treino-form h5 {
+    color: var(--primary-color);
+    margin-top: 20px;
+    margin-bottom: 15px;
+    border-bottom: 1px dashed #ccc;
+    padding-bottom: 5px;
+}
+
+.exercicio-item-grid {
+    display: grid;
+    grid-template-columns: 2fr 0.8fr 0.8fr 1.5fr auto; 
+    gap: 10px;
+    align-items: center;
+    margin-bottom: 15px;
+    padding: 10px;
+    background-color: #eef7f7;
+    border-radius: 5px;
+    border: 1px dashed var(--primary-light);
+}
+
+.exercicio-item-grid input {
+    margin-bottom: 0;
+    padding: 8px 10px;
+    font-size: 0.9em;
+}
+
+.exercicio-item-grid button {
+    width: 40px;
+    height: 40px;
+    padding: 0;
+    margin: 0;
+    font-size: 1.8em;
+    line-height: 1;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    border-radius: 50%;
+}
+
+
+/* Lista de exercícios dentro do formulário */
+.exercicios-list-form ul {
+    list-style-type: none;
+    padding: 0;
+    margin: 0;
+}
+
+.exercicios-list-form li {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background-color: #fff;
+    border: 1px solid #eee;
+    padding: 10px 15px;
+    margin-bottom: 8px;
+    border-radius: 5px;
+    font-size: 0.95em;
+    color: #444;
+}
+.exercicios-list-form li:last-child {
+    margin-bottom: 0;
+}
+
+.exercicios-list-form li strong {
+    color: var(--primary-color);
+}
+
+.exercicios-list-form .btn-remove-ex {
+    /* [CORREÇÃO] Reseta o 'width' e 'display' da classe .btn */
+    width: auto;             
+    display: inline-flex;  /* Faz o botão se comportar corretamente no flex */
+    flex-shrink: 0;        /* Impede que o botão seja "espremido" */
+    
+    /* Seus estilos originais */
+    background-color: #ff4d4d;
+    color: white;
+    border: none;
+    padding: 5px 10px;
+    border-radius: 4px;
+    font-size: 1.1em;
+    line-height: 1;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+}
+
+.exercicios-list-form .btn-remove-ex:hover {
+    background-color: #cc0000; /* Adicionando um hover que faltava */
+}
+
+/* Botoes de acao do formulario */
+
+.treino-form .btn-primary {
+    margin-right: 10px;
+}
+
+/* --- [BLOCO REMOVIDO] --- */
+/* O estilo para #btn-show-create-form foi removido 
+   para permitir que as classes .btn e .btn-primary funcionem. */
+
+/* --- Mensagens --- */
+.info-message, .error-message {
+    text-align: center;
+    padding: 15px;
+    border-radius: 5px;
+    margin-bottom: var(--spacing-unit);
+    font-size: 1.05em;
+}
+
+.info-message {
+    background-color: #eef7f7;
+    border-left: 4px solid var(--primary-light);
+    color: #333;
+}
+
+.error-message {
+    background-color: #ffe0e0;
+    border-left: 4px solid var(--danger-color, #e74c3c);
+    color: #cc0000;
+}
+
+
+/* --- Divisores --- */
+.section-divider {
+    border: 0;
+    border-top: 1px solid #e0e0e0;
+    margin: 40px 0;
+}
+.form-divider {
+    border: 0;
+    border-top: 1px dashed #ccc;
+    margin: 20px 0;
+}
 /* ========================================= */
 /* 9. ESTILOS DO DIÁRIO (UC004) */
 /* ========================================= */

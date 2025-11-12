@@ -5,39 +5,41 @@ const { GoogleGenAI } = require('@google/genai'); // Adicionado para IA
 // Configuração do Gemini
 const genAI = new GoogleGenAI(process.env.GEMINI_API_KEY);
 
-// --- [NOVO] FUNÇÃO DE SUGESTÃO (IA) ---
+// --- [ATUALIZADO] FUNÇÃO DE SUGESTÃO (IA) ---
 exports.sugerirTreino = async (req, res) => {
-    const { grupoMuscular } = req.body;
-    if (!grupoMuscular) {
-        return res.status(400).json({ msg: "Grupo muscular é obrigatório." });
+    // [MODIFICADO] Recebe grupoMuscular E nivelTreino
+    const { grupoMuscular, nivelTreino } = req.body; 
+    
+    if (!grupoMuscular || !nivelTreino) {
+        return res.status(400).json({ msg: "Grupo muscular e nível de treino são obrigatórios." });
     }
 
     try {
-        // 1. Busca o perfil do usuário
         const usuario = await Usuario.findById(req.usuario.id);
         if (!usuario) {
             return res.status(404).json({ msg: 'Usuário não encontrado.' });
         }
 
-        // 2. Pega os dados para o prompt
         const { principal } = usuario.objetivos;
         const { idade, sexo } = usuario.dados_biometricos;
         const sexoTexto = sexo === 'M' ? 'Masculino' : 'Feminino';
 
-        // 3. Cria o prompt
+        // [MODIFICADO] O prompt agora inclui o nível de treino
         const prompt = `
             Aja como um personal trainer profissional do app FitOS.
             O usuário tem o perfil:
             - Objetivo: ${principal}
             - Idade: ${idade}
             - Sexo: ${sexoTexto}
+            - Nível de Treino: ${nivelTreino}
 
-            Gere uma rotina de treino focada em "${grupoMuscular}".
+            Gere uma rotina de treino focada em "${grupoMuscular}", adaptada para um nível de treino "${nivelTreino}".
+            Para um nível ${nivelTreino}, garanta que a seleção de exercícios, séries e repetições seja apropriada. Por exemplo, para "Iniciante", use máquinas e menos volume. Para "Avançado", use mais exercícios compostos e técnicas intensas.
             O treino deve ter entre 4 e 6 exercícios.
             
             Retorne APENAS um objeto JSON, sem markdown ou texto extra, seguindo esta estrutura:
             {
-              "nome": "Sugestão: ${grupoMuscular}",
+              "nome": "Sugestão: ${grupoMuscular} (${nivelTreino})",
               "grupoMuscular": "${grupoMuscular} (Foco: ${principal})",
               "exercicios": [
                 {
@@ -56,7 +58,6 @@ exports.sugerirTreino = async (req, res) => {
             }
         `;
 
-        // 4. Chama a IA
         const response = await genAI.models.generateContent({
             model: "gemini-2.5-flash", 
             contents: [{ role: "user", parts: [{ text: prompt }] }],
@@ -64,13 +65,10 @@ exports.sugerirTreino = async (req, res) => {
 
         const text = response.text;
         
-        // 5. Limpa o JSON (usando a lógica que funcionou no dietaController)
         let cleanedText = text.replace(/```json\n|```/g, '').trim();
         cleanedText = cleanedText.replace(/,\s*([\]}])/g, '$1');
 
         const treinoJSON = JSON.parse(cleanedText); 
-        
-        // 6. Retorna o JSON de preview
         res.status(200).json(treinoJSON);
 
     } catch (error) {
@@ -80,7 +78,7 @@ exports.sugerirTreino = async (req, res) => {
 };
 
 
-// --- TEMPLATES ABC (Sua Solicitação) ---
+// --- TEMPLATES ABC (Sua Solicitação Original) ---
 const treinoATemplate = {
     nome: 'Treino A',
     grupoMuscular: 'Peito, Tríceps e Ombros',
@@ -123,7 +121,6 @@ exports.gerarTreinosABC = async (req, res) => {
     try {
         const usuarioId = req.usuario.id;
 
-        // Limpa treinos antigos se for o caso (ou você pode querer remover esta linha)
         await Treino.deleteMany({ usuario: usuarioId });
 
         const treinosParaSalvar = [
@@ -177,7 +174,7 @@ exports.createTreino = async (req, res) => {
             usuario: req.usuario.id,
             nome,
             grupoMuscular,
-            exercicios // Isto já inclui o campo 'orientacao' vindo do frontend
+            exercicios 
         });
 
         const treino = await novoTreino.save();
@@ -197,7 +194,6 @@ exports.updateTreino = async (req, res) => {
             return res.status(401).json({ msg: 'Não autorizado' });
         }
 
-        // $set: req.body já atualiza os exercícios com o novo campo 'orientacao'
         treino = await Treino.findByIdAndUpdate(
             req.params.id,
             { $set: req.body }, 

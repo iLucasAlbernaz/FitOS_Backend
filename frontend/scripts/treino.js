@@ -111,6 +111,7 @@ export async function loadTreinos() {
 // [NOVO] Renderiza a seção de "Sugerir Treino"
 function renderSugestaoUI() {
     return `
+    <br/>
         <div id="treino-sugestao-container" class="sugestao-container">
             <h4><i class="fas fa-magic"></i> Sugestão de Treino</h4>
             <p>Selecione um grupo muscular para gerar uma sugestão com base no seu perfil.</p>
