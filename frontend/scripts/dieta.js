@@ -38,11 +38,19 @@ if (container) {
             return;
         }
 
-        // Para botões com classe (como "Ativar")
+        // Para botões com classe (como "Ativar" e "Excluir")
         if (target.classList.contains('btn-ativar-plano')) {
             const planoId = target.dataset.id;
             if (planoId) {
                 handleSetPlanoAtivo(planoId);
+            }
+            return;
+        }
+
+        if (target.classList.contains('btn-delete-plano')) {
+            const planoId = target.dataset.id;
+            if (planoId) {
+                handleDeletePlano(planoId); // Chama a nova função de exclusão
             }
             return;
         }
@@ -54,11 +62,15 @@ if (container) {
 // --- 1. RENDERIZAÇÃO PRINCIPAL ---
 
 function renderMeal(title, meal) {
-    if (!meal || !meal.alimentos || meal.alimentos.length === 0) return '';
+    if (!meal || !meal.alimentos || meal.alimentos.length === 0) {
+        return '';
+    }
+    
     const alimentosHTML = meal.alimentos.map(alimento => `
         <li>
             <strong>${alimento.nome}</strong> (${alimento.porcao})
-            ${alimento.calorias > 0 ? `<br><small>
+            ${alimento.calorias > 0 ? `
+            <br><small>
                 ${alimento.calorias} kcal | 
                 Prot: ${alimento.proteinas}g | 
                 Carb: ${alimento.carboidratos}g | 
@@ -66,25 +78,28 @@ function renderMeal(title, meal) {
             </small>` : ''}
         </li>
     `).join('');
+
     const preparoHTML = meal.modoPreparo ? `
         <details class="modo-preparo-details">
             <summary>Modo de Preparo</summary>
             <p>${meal.modoPreparo}</p>
         </details>
     ` : '';
+
     const totaisRefeicaoHTML = `
         <div class="meal-totals">
-            <strong>Totais da Refeição:</strong><br><small>
-                ${meal.totais.calorias} kcal | 
+            <small>
+                Total: ${meal.totais.calorias} kcal | 
                 Prot: ${meal.totais.proteinas}g | 
                 Carb: ${meal.totais.carboidratos}g | 
                 Gord: ${meal.totais.gorduras}g
             </small>
         </div>
     `;
+
     return `
         <div class="meal-card">
-            <h3>${title}</h3>
+            <h3 class="meal-title">${title}</h3>
             <ul>${alimentosHTML}</ul>
             ${preparoHTML}
             ${totaisRefeicaoHTML}
@@ -92,47 +107,57 @@ function renderMeal(title, meal) {
     `;
 }
 
-function renderExplicacao(explicacao) {
+// Renderiza as "Orientações do Plano"
+function renderOrientacoes(explicacao) {
     if (!explicacao) return '';
     return `
-        <div class="explicacao-ia-card">
-            <h4><i class="fas fa-brain"></i> Explicação da IA</h4>
+        <div class="info-card">
+            <h4><i class="fas fa-info-circle"></i> Orientações do Plano</h4>
             <p>${explicacao}</p>
         </div>
     `;
 }
 
+// Renderiza os "Totais do Dia (Estimativa)"
 function renderTotais(totais) {
     if (!totais || totais.calorias === 0) return '';
     return `
-        <div class="meal-card totais-card">
-            <h3>Totais do Dia (Estimado pela IA)</h3>
-            <div class="meal-totals" style="text-align: center;">
-                <p><strong>Calorias:</strong> ${totais.calorias} kcal</p>
-                <p><strong>Proteínas:</strong> ${totais.proteinas} g</p>
-                <p><strong>Carboidratos:</strong> ${totais.carboidratos} g</p>
-                <p><strong>Gorduras:</strong> ${totais.gorduras} g</p>
+        <div class="totals-day-card">
+            <h3>Totais do Dia (Estimativa)</h3>
+            <div class="total-macros">
+                <p><strong>Calorias:</strong> <span>${totais.calorias} kcal</span></p>
+                <p><strong>Proteínas:</strong> <span>${totais.proteinas} g</span></p>
+                <p><strong>Carboidratos:</strong> <span>${totais.carboidratos} g</span></p>
+                <p><strong>Gorduras:</strong> <span>${totais.gorduras} g</span></p>
             </div>
         </div>
     `;
 }
 
+// [MODIFICADO] Adiciona o botão de excluir
 function renderPlanosSalvos(planos) {
     if (!planos || planos.length === 0) {
-        return '<h4><i class="fas fa-save"></i> Planos Salvos</h4><p class="info-message">Você ainda não tem planos salvos.</p>';
+        return '<h4 class="section-title"><i class="fas fa-save"></i> Planos Salvos</h4><p class="info-message">Você ainda não tem planos salvos.</p>';
     }
+
     const planosHTML = planos.map(plano => {
         const data = new Date(plano.createdAt).toLocaleDateString('pt-BR');
         return `
             <li class="plano-salvo-item">
                 <span><strong>${plano.nomePlano}</strong> (Salvo em ${data})</span>
-                <button class="btn btn-secondary btn-ativar-plano" data-id="${plano._id}">Ativar</button>
+                <div class="plano-salvo-actions">
+                    <button class="btn btn-secondary btn-ativar-plano" data-id="${plano._id}">Ativar</button>
+                    <button class="btn btn-danger btn-delete-plano" data-id="${plano._id}">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </div>
             </li>
         `;
     }).join('');
+
     return `
-        <h4><i class="fas fa-save"></i> Planos Salvos</h4>
-        <p>Gere um novo plano para salvar o plano atual nesta lista.</p>
+        <h4 class="section-title"><i class="fas fa-save"></i> Planos Salvos</h4>
+        <p class="info-message">Gere um novo plano para salvar o plano atual nesta lista.</p>
         <ul class="planos-salvos-list">
             ${planosHTML}
         </ul>
@@ -142,36 +167,40 @@ function renderPlanosSalvos(planos) {
 // Renderiza o botão "Gerar Novo Plano"
 function renderPlanSelector() {
     container.innerHTML = `
-        <p class="info-message">Você ainda não possui um plano de dieta ativo.</p>
-        <p>Clique abaixo para gerar um plano personalizado baseado no seu perfil (Idade, Sexo e Objetivo).</p>
+        <div class="plan-info-message">
+            <p>Você ainda não possui um plano de dieta ativo.</p>
+            <p>Clique abaixo para gerar um plano personalizado baseado no seu perfil (Idade, Sexo e Objetivo).</p>
+        </div>
         <div class="plan-selector-buttons">
-            <button id="btn-gerar-plano-ia" class="btn btn-primary">
-                <i class="fas fa-magic"></i> Gerar Plano de Dieta (IA)
+            <button id="btn-gerar-plano-ia" class="btn btn-primary btn-large">
+                <i class="fas fa-magic"></i> Gerar Plano de Dieta
             </button>
         </div>
     `;
-    // [REMOVIDO] O listener individual foi removido
 }
 
 // Renderiza a tela de PREVIEW (plano gerado mas não salvo)
 function renderPlanoPreview(plan) {
     container.innerHTML = ''; 
-    container.innerHTML += `<h4 class="plano-dieta-titulo">Sugestão da IA: ${plan.nomePlano}</h4>`;
-    container.innerHTML += `<p class="info-message">Este é um plano sugerido. Revise abaixo e clique em "Salvar" para ativá-lo.</p>`;
-    container.innerHTML += renderExplicacao(plan.explicacao);
+    container.innerHTML += `<h2 class="main-plan-title">Sugestão de Plano: ${plan.nomePlano}</h2>`;
+    container.innerHTML += `<p class="plan-sub-title">Este é um plano sugerido. Revise abaixo e clique em "Salvar" para ativá-lo.</p>`;
+    
+    container.innerHTML += renderOrientacoes(plan.explicacao);
     container.innerHTML += renderMeal('Café da Manhã', plan.cafeDaManha);
     container.innerHTML += renderMeal('Almoço', plan.almoco);
-    if (plan.lanche) container.innerHTML += renderMeal('Lanche', plan.lanche);
+    if (plan.lanche) { 
+        container.innerHTML += renderMeal('Lanche', plan.lanche);
+    }
     container.innerHTML += renderMeal('Jantar', plan.jantar);
     container.innerHTML += renderTotais(plan.totais);
+    
     container.innerHTML += `
         <div class="preview-actions">
             <hr>
-            <button id="btn-salvar-plano" class="btn btn-primary">Salvar e Ativar Plano</button>
+            <button id="btn-salvar-plano" class="btn btn-primary btn-large">Salvar e Ativar Plano</button>
             <button id="btn-cancelar-plano" class="btn btn-secondary">Cancelar</button>
         </div>
     `;
-    // [REMOVIDO] Os listeners individuais foram removidos
 }
 
 
@@ -180,7 +209,13 @@ function renderPlanoPreview(plan) {
 // Apenas GERA a sugestão, não salva
 async function handleGerarPlanoIA() {
     const token = localStorage.getItem('jwtToken');
-    container.innerHTML = `<p class="info-message">Aguarde... Estamos consultando o Gemini para criar um plano de dieta personalizado...<br>(Isso pode levar até 30 segundos)</p>`;
+    container.innerHTML = `
+        <div class="loading-message">
+            <i class="fas fa-spinner fa-spin"></i>
+            <p>Aguarde... Estamos criando um plano de dieta personalizado...</p>
+            <small>(Isso pode levar até 30 segundos)</small>
+        </div>
+    `;
     try {
         const response = await fetch(`${API_URL}/dieta/gerar-plano-ia`, {
             method: 'POST',
@@ -197,9 +232,12 @@ async function handleGerarPlanoIA() {
 
     } catch (error) {
         console.error('Erro ao gerar plano IA:', error);
-        container.innerHTML = `<p class="error-message">${error.message}</p>`;
-        container.innerHTML += `<button id="btn-retry-ia" class="btn btn-primary" style="margin-top: 10px;">Tentar Novamente</button>`;
-        // [REMOVIDO] O listener individual foi removido
+        container.innerHTML = `
+            <div class="error-section">
+                <p class="error-message">${error.message}</p>
+                <button id="btn-retry-ia" class="btn btn-primary" style="margin-top: 10px;">Tentar Novamente</button>
+            </div>
+        `;
     }
 }
 
@@ -228,7 +266,7 @@ async function handleSalvarPlanoGerado() {
             throw new Error(err.msg || 'Falha ao salvar o plano.');
         }
 
-        alert('Novo plano da IA salvo e ativado!');
+        alert('Novo plano salvo e ativado!');
         planoSugerido = null; 
         loadDietPlan(); 
 
@@ -261,11 +299,49 @@ async function handleSetPlanoAtivo(planoId) {
     }
 }
 
+// [NOVO] Função para Excluir um plano salvo
+async function handleDeletePlano(planoId) {
+    // Confirmação de segurança
+    if (!confirm('Tem certeza que deseja excluir este plano salvo? Esta ação não pode ser desfeita.')) {
+        return;
+    }
+
+    const token = localStorage.getItem('jwtToken');
+    // Mostra o loading *dentro* da seção de planos salvos, se possível,
+    // ou apenas um loading genérico.
+    container.innerHTML = `<div class="loading-message"><i class="fas fa-spinner fa-spin"></i><p>Excluindo plano...</p></div>`;
+    
+    try {
+        const response = await fetch(`${API_URL}/dieta/plano/${planoId}`, {
+            method: 'DELETE',
+            headers: { 'x-auth-token': token }
+        });
+
+        if (!response.ok) {
+            const err = await response.json();
+            throw new Error(err.msg || 'Falha ao excluir o plano.');
+        }
+        
+        alert('Plano salvo excluído com sucesso!');
+        loadDietPlan(); // Recarrega a seção de dieta
+
+    } catch (error) {
+        console.error('Erro ao excluir plano:', error);
+        alert(error.message);
+        loadDietPlan(); // Recarrega mesmo se der erro, para mostrar o estado atual
+    }
+}
+
 
 // --- 3. FUNÇÃO PRINCIPAL (loadDietPlan) ---
 export async function loadDietPlan() {
     if (!container) return;
-    container.innerHTML = '<p class="info-message">Carregando seu plano de dieta...</p>';
+    container.innerHTML = `
+        <div class="loading-message">
+            <i class="fas fa-spinner fa-spin"></i>
+            <p>Carregando seu plano de dieta...</p>
+        </div>
+    `;
     const token = localStorage.getItem('jwtToken');
     if (!token) {
         container.innerHTML = '<p class="error-message">Você precisa estar logado para ver o plano.</p>';
@@ -291,22 +367,24 @@ export async function loadDietPlan() {
             const plan = await planoAtivoRes.json();
             if (plan && plan.cafeDaManha) { 
                 container.innerHTML = ''; 
-                container.innerHTML += `<h4 class="plano-dieta-titulo">Plano Ativo: ${plan.nomePlano}</h4>`;
-                container.innerHTML += renderExplicacao(plan.explicacao);
+                container.innerHTML += `<h2 class="main-plan-title">Plano Ativo: ${plan.nomePlano}</h2>`;
+                container.innerHTML += renderOrientacoes(plan.explicacao);
                 container.innerHTML += renderMeal('Café da Manhã', plan.cafeDaManha);
                 container.innerHTML += renderMeal('Almoço', plan.almoco);
-                if (plan.lanche) container.innerHTML += renderMeal('Lanche', plan.lanche);
+                if (plan.lanche) { 
+                    container.innerHTML += renderMeal('Lanche', plan.lanche);
+                }
                 container.innerHTML += renderMeal('Jantar', plan.jantar);
                 container.innerHTML += renderTotais(plan.totais);
+                
                 container.innerHTML += `
                     <div class="change-plan-section">
                         <hr>
-                        <h4>Gerar um novo plano?</h4>
-                        <p>Seu plano atual será salvo e um novo plano será gerado pela IA.</p>
-                        <button id="btn-gerar-outro-plano" class="btn btn-primary">Gerar Novo Plano (IA)</button>
+                        <h4 class="section-title">Gerar um novo plano?</h4>
+                        <p class="info-message">Seu plano atual será salvo e um novo plano será sugerido.</p>
+                        <button id="btn-gerar-outro-plano" class="btn btn-primary btn-large">Gerar Novo Plano</button>
                     </div>
                 `;
-                // [REMOVIDO] O listener individual foi removido
             } else {
                 renderPlanSelector();
             }
@@ -317,11 +395,16 @@ export async function loadDietPlan() {
             const planosSalvos = await planosSalvosRes.json();
             container.innerHTML += `<hr class="section-divider">`;
             container.innerHTML += renderPlanosSalvos(planosSalvos);
-            // [REMOVIDO] O listener individual foi removido
+            
+            // Os listeners agora são gerenciados pelo listener principal
         }
 
     } catch (error) {
         console.error('Erro ao carregar plano de dieta:', error);
-        container.innerHTML = '<p class="error-message">Erro ao carregar o plano de dieta. Tente novamente mais tarde.</p>';
+        container.innerHTML = `
+            <div class="error-section">
+                <p class="error-message">Erro ao carregar o plano de dieta. Tente novamente mais tarde.</p>
+            </div>
+        `;
     }
 }

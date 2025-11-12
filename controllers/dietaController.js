@@ -173,4 +173,31 @@ exports.setPlanoAtivo = async (req, res) => {
         console.error(err.message);
         res.status(500).send('Erro ao ativar o plano.');
     }
+
+    exports.deletePlanoSalvo = async (req, res) => {
+    const usuarioId = req.usuario.id;
+    const planoId = req.params.id;
+
+    try {
+        const plano = await Dieta.findOne({ _id: planoId, usuario: usuarioId });
+
+        if (!plano) {
+            return res.status(404).json({ msg: "Plano não encontrado ou não pertence a você." });
+        }
+
+        // Regra de segurança: Não permitir excluir o plano que está ativo no momento.
+        if (plano.isAtivo) {
+            return res.status(400).json({ msg: "Você não pode excluir seu plano ativo. Ative outro plano primeiro." });
+        }
+
+        // Se não está ativo e pertence ao usuário, pode excluir.
+        await Dieta.findByIdAndDelete(planoId);
+
+        res.json({ msg: 'Plano salvo excluído com sucesso.' });
+
+    } catch (error) {
+        console.error("Erro ao excluir plano salvo:", error.message);
+        res.status(500).send('Erro no servidor ao excluir o plano.');
+    }
+};
 };
