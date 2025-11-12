@@ -394,34 +394,97 @@ body.dashboard-view #profile-menu {
 /* ========================================= */
 /* 7. ESTILOS DO PLANO DE DIETA (UC002) */
 /* ========================================= */
-.meal-card {
-    background-color: #f9f9f9;
-    border: 1px solid #e0e0e0;
-    border-left: 5px solid var(--primary-color);
-    border-radius: 8px;
-    padding: var(--spacing-unit);
-    margin-bottom: var(--spacing-unit);
+/* Botão principal para gerar */
+.plan-selector-buttons .btn-primary {
+    width: 100%;
+    font-weight: bold;
+    background-color: #00695c;
 }
-.meal-card h3 {
-    margin-top: 0;
+.plan-selector-buttons .btn-primary:hover {
+    background-color: #004d40;
+}
+.plan-selector-buttons .btn-primary i {
+    margin-right: 8px;
+}
+
+/* Título do Plano de Dieta (ex: "IA: Ganho de Massa") */
+.plano-dieta-titulo {
+    font-size: 1.1em;
+    color: #555;
+    background-color: #f9f9f9;
+    padding: 10px;
+    border-radius: 4px;
+    border: 1px solid #eee;
+    text-align: center;
+    font-weight: bold;
     color: var(--primary-color);
 }
-.meal-card ul { list-style-type: none; padding-left: 0; }
-.meal-card li { padding: 10px 0; border-bottom: 1px solid #eee; }
-.meal-card li:last-child { border-bottom: none; }
-.meal-card li strong { color: var(--text-color); }
-.meal-card li small { color: #555; }
-.meal-totals {
-    margin-top: 10px;
-    padding-top: 10px;
-    border-top: 1px dashed var(--primary-light);
+
+/* [NOVO] Card de Explicação da IA */
+.explicacao-ia-card {
     background-color: #f0f7f7;
-    padding: 8px;
-    border-radius: 4px;
+    border: 1px solid var(--primary-light);
+    border-radius: 8px;
+    padding: 15px;
+    margin-bottom: 15px;
 }
+.explicacao-ia-card h4 {
+    margin: 0 0 10px 0;
+    color: var(--primary-color);
+}
+.explicacao-ia-card h4 i {
+    margin-right: 5px;
+}
+.explicacao-ia-card p {
+    margin: 0;
+    font-size: 0.95em;
+    line-height: 1.5;
+    color: #333;
+}
+
+/* [NOVO] Detalhes do Modo de Preparo (dentro do card) */
+.modo-preparo-details summary {
+    cursor: pointer;
+    font-weight: bold;
+    color: var(--primary-color);
+    margin-top: 10px;
+    font-size: 0.9em;
+}
+.modo-preparo-details p {
+    white-space: pre-wrap;
+    font-size: 0.9em;
+    padding: 5px 0 5px 15px;
+    border-left: 2px solid #eee;
+}
+
+
+/* Card de Totais do Dia */
+.totais-card {
+    border-left-color: var(--secondary-color);
+    background-color: #f8fdfd;
+}
+.totais-card h3 {
+    color: var(--secondary-color);
+}
+.totais-card .meal-totals {
+    border-top: 1px dashed var(--secondary-color);
+    background-color: transparent;
+}
+.totais-card .meal-totals p {
+    font-size: 1.1em;
+    font-weight: 500;
+    color: #333;
+    margin: 5px 0;
+}
+.totais-card .meal-totals p strong {
+    color: var(--text-color);
+}
+
+/* Seção "Gerar Outro Plano" (no final) */
 .change-plan-section {
     margin-top: calc(var(--spacing-unit) * 2);
     padding-top: var(--spacing-unit);
+    text-align: center;
 }
 .change-plan-section hr {
      margin-bottom: var(--spacing-unit);
@@ -433,14 +496,54 @@ body.dashboard-view #profile-menu {
     margin-bottom: 0.5rem;
     margin-top: 0;
 }
-.change-plan-section .btn-secondary {
+.change-plan-section p {
+    font-size: 0.9em;
+    color: #555;
+}
+#btn-show-plan-selector, #btn-gerar-outro-plano {
+    width: auto;
+    padding: 10px 20px;
+    font-weight: bold;
+}
+#btn-show-plan-selector {
     background-color: #f0f0f0; 
     color: #333;
     border: 1px solid #ccc;
-    font-weight: bold;
 }
-.change-plan-section .btn-secondary:hover {
+#btn-show-plan-selector:hover {
     background-color: #e0e0e0;
+}
+
+/* Divisor de seção (entre plano ativo e salvos) */
+hr.section-divider {
+    border: 0;
+    border-top: 2px solid #eee;
+    margin: 2rem 0;
+}
+
+/* [NOVO] Lista de Planos Salvos */
+.planos-salvos-list {
+    list-style: none;
+    padding: 0;
+}
+.plano-salvo-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px;
+    border: 1px solid #eee;
+    border-radius: 8px;
+    margin-bottom: 10px;
+}
+.plano-salvo-item span {
+    font-size: 1.1em;
+    color: #333;
+}
+.plano-salvo-item .btn-ativar-plano {
+    width: auto;
+    padding: 8px 15px;
+    margin: 0;
+    font-weight: bold;
 }
 /* ========================================= */
 /* 8. ESTILOS DO TREINO (UC003) */
