@@ -20,6 +20,7 @@ exports.gerarPlanoDietaIA = async (req, res) => {
         const { idade, sexo, altura_cm, peso_atual_kg } = usuario.dados_biometricos;
         const sexoTexto = sexo === 'M' ? 'Masculino' : 'Feminino';
 
+        // [PROMPT MELHORADO] Adicionando regras explícitas para evitar JSON inválido
         const prompt = `
             Por favor, aja como um nutricionista sênior do app FitOS.
             Eu preciso que você gere um plano alimentar completo EM PORTUGUÊS para um usuário com o seguinte perfil:
@@ -30,7 +31,13 @@ exports.gerarPlanoDietaIA = async (req, res) => {
             - Peso Atual: ${peso_atual_kg} kg
 
             Sua resposta deve ser APENAS um objeto JSON, sem nenhum outro texto, markdown ou formatação.
-            O JSON deve seguir EXATAMENTE esta estrutura:
+            O JSON deve seguir EXATAMENTE esta estrutura.
+
+            REGRAS RÍGIDAS DE FORMATAÇÃO:
+            1. NÃO inclua vírgulas extras no final de listas ou objetos (trailing commas). Ex: [ "item1", "item2", ] <- ERRADO.
+            2. NÃO inclua comentários de código (// ou /* */) dentro do JSON.
+            3. TODAS as chaves (keys) e valores (values) do tipo string DEVEM usar aspas duplas ("").
+
             {
               "nomePlano": "IA: ${principal}",
               "explicacao": "Uma explicação curta (2-3 frases) do motivo pelo qual este plano foi escolhido.",
@@ -61,16 +68,20 @@ exports.gerarPlanoDietaIA = async (req, res) => {
 
         let cleanedText = jsonMatch[0]; 
 
-        // [NOVA CORREÇÃO] Remove "trailing commas" (vírgulas extras)
-        // Isso procura por vírgulas antes de um ']' ou '}' e as remove.
+        // [NOVA CORREÇÃO] Limpeza em duas etapas
+        
+        // Etapa 1: Remover comentários de linha (ex: // isso é um comentário)
+        cleanedText = cleanedText.replace(/\/\/[^\n]*/g, '');
+        
+        // Etapa 2: Remover vírgulas extras (trailing commas) de arrays e objetos
         cleanedText = cleanedText.replace(/,\s*([\]}])/g, '$1');
 
-        const planoJSON = JSON.parse(cleanedText); // Agora é seguro
+        // Agora tentamos o parse
+        const planoJSON = JSON.parse(cleanedText);
 
         res.status(200).json(planoJSON);
 
     } catch (error) {
-        // O erro do JSON.parse vai cair aqui
         console.error("Erro na API do Gemini (Gerar Plano):", error.message);
         res.status(503).json({ msg: 'O serviço de planos de dieta (IA) está indisponível ou retornou dados inválidos.' });
     }
