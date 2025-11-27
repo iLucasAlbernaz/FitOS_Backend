@@ -73,7 +73,6 @@ exports.gerarPlanoDietaIA = async (req, res) => {
 
 /**
  * ROTA: Salvar um plano gerado e defini-lo como ativo
- * (Versão que funciona com múltiplos planos, após remoção do índice 'unique')
  */
 exports.salvarPlanoGerado = async (req, res) => {
     const usuarioId = req.usuario.id;
@@ -115,7 +114,7 @@ exports.salvarPlanoGerado = async (req, res) => {
 };
 
 /**
- * [NOVO] ROTA: Excluir um plano salvo (inativo)
+ * ROTA: Excluir um plano salvo (inativo)
  */
 exports.deletePlanoSalvo = async (req, res) => {
     const usuarioId = req.usuario.id;
@@ -167,8 +166,9 @@ exports.getPlanoAtivo = async (req, res) => {
 exports.getPlanosSalvos = async (req, res) => {
     try {
         const planos = await Dieta.find({ usuario: req.usuario.id, isAtivo: false })
-                                .sort({ createdAt: -1 })
-                                .select('nomePlano createdAt'); 
+            .sort({ createdAt: -1 })
+            // [ATUALIZADO] Adicionado 'explicacao' e 'totais' para o preview
+            .select('nomePlano createdAt explicacao totais'); 
         res.json(planos);
     } catch (err) {
         console.error(err.message);

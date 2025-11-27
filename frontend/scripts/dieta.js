@@ -5,17 +5,15 @@ const container = document.getElementById('dieta-container');
 // Variável para guardar o plano sugerido pela IA antes de salvar
 let planoSugerido = null;
 
-// --- [NOVO] EVENT LISTENER PRINCIPAL (DELEGAÇÃO DE EVENTOS) ---
-// Este único listener gerencia TODOS os cliques dentro do container
+// --- EVENT LISTENER PRINCIPAL (DELEGAÇÃO DE EVENTOS) ---
 if (container) {
     container.addEventListener('click', (e) => {
-        // Pega o elemento exato que foi clicado
+        // Pega o elemento exato que foi clicado (botão ou ícone dentro dele)
         const target = e.target.closest('button'); 
         
         // Se o clique não foi em um botão, ignora
         if (!target) return;
 
-        // Gerencia os diferentes botões
         const targetId = target.id;
         
         if (targetId === 'btn-gerar-plano-ia' || targetId === 'btn-gerar-outro-plano') {
@@ -38,7 +36,30 @@ if (container) {
             return;
         }
 
-        // Para botões com classe (como "Ativar" e "Excluir")
+        // [NOVO] Lógica para abrir/fechar o preview (botão de olho)
+        if (target.classList.contains('btn-toggle-preview')) {
+            const planoId = target.dataset.id;
+            const previewDiv = document.getElementById(`preview-${planoId}`);
+            
+            if (previewDiv) {
+                if (previewDiv.style.display === 'none') {
+                    previewDiv.style.display = 'block';
+                    // Muda ícone para "fechar" (olho cortado ou apenas muda visual)
+                    target.innerHTML = '<i class="fas fa-eye-slash"></i>'; 
+                    target.classList.remove('btn-info');
+                    target.classList.add('btn-secondary');
+                } else {
+                    previewDiv.style.display = 'none';
+                    // Volta ícone original
+                    target.innerHTML = '<i class="fas fa-eye"></i>'; 
+                    target.classList.remove('btn-secondary');
+                    target.classList.add('btn-info');
+                }
+            }
+            return;
+        }
+
+        // Botão Ativar
         if (target.classList.contains('btn-ativar-plano')) {
             const planoId = target.dataset.id;
             if (planoId) {
@@ -47,16 +68,17 @@ if (container) {
             return;
         }
 
+        // Botão Excluir
         if (target.classList.contains('btn-delete-plano')) {
             const planoId = target.dataset.id;
             if (planoId) {
-                handleDeletePlano(planoId); // Chama a nova função de exclusão
+                handleDeletePlano(planoId);
             }
             return;
         }
     });
 }
-// --- FIM DO NOVO LISTENER ---
+// --- FIM DO LISTENER ---
 
 
 // --- 1. RENDERIZAÇÃO PRINCIPAL ---
@@ -134,7 +156,7 @@ function renderTotais(totais) {
     `;
 }
 
-// [MODIFICADO] Adiciona o botão de excluir
+// [MODIFICADO] Adiciona o botão de preview e área de detalhes oculta
 function renderPlanosSalvos(planos) {
     if (!planos || planos.length === 0) {
         return '<h4 class="section-title"><i class="fas fa-save"></i> Planos Salvos</h4><p class="info-message">Você ainda não tem planos salvos.</p>';
@@ -142,14 +164,43 @@ function renderPlanosSalvos(planos) {
 
     const planosHTML = planos.map(plano => {
         const data = new Date(plano.createdAt).toLocaleDateString('pt-BR');
+        
+        // Dados para o preview (se existirem)
+        const cals = plano.totais ? plano.totais.calorias : 0;
+        const prot = plano.totais ? plano.totais.proteinas : 0;
+        const carb = plano.totais ? plano.totais.carboidratos : 0;
+        const gord = plano.totais ? plano.totais.gorduras : 0;
+        const desc = plano.explicacao || 'Sem descrição disponível.';
+
         return `
-            <li class="plano-salvo-item">
-                <span><strong>${plano.nomePlano}</strong> (Salvo em ${data})</span>
-                <div class="plano-salvo-actions">
-                    <button class="btn btn-secondary btn-ativar-plano" data-id="${plano._id}">Ativar</button>
-                    <button class="btn btn-danger btn-delete-plano" data-id="${plano._id}">
-                        <i class="fas fa-trash"></i>
-                    </button>
+            <li class="plano-salvo-item" style="display:flex; flex-direction:column; padding:10px; border-bottom:1px solid #ddd; margin-bottom:5px;">
+                <div style="display:flex; justify-content:space-between; align-items:center; width:100%;">
+                    <div>
+                        <strong>${plano.nomePlano}</strong> <br>
+                        <small style="color:#666;">Salvo em ${data}</small>
+                    </div>
+                    <div class="plano-salvo-actions" style="display:flex; gap:5px;">
+                        
+                        <button class="btn btn-info btn-toggle-preview" data-id="${plano._id}" title="Ver Resumo" style="padding:5px 10px;">
+                            <i class="fas fa-eye"></i>
+                        </button>
+
+                        <button class="btn btn-secondary btn-ativar-plano" data-id="${plano._id}" style="padding:5px 10px;">Ativar</button>
+                        
+                        <button class="btn btn-danger btn-delete-plano" data-id="${plano._id}" style="padding:5px 10px;">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <div id="preview-${plano._id}" style="display: none; margin-top: 10px; background: #f0f2f5; padding: 10px; border-radius: 5px; font-size: 0.9em; border-left: 4px solid #17a2b8;">
+                    <p style="margin-bottom:8px;"><strong>Objetivo:</strong> ${desc}</p>
+                    <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                        <span style="background:#fff; padding:3px 6px; border-radius:4px; border:1px solid #ccc;">🔥 ${cals} kcal</span>
+                        <span style="background:#fff; padding:3px 6px; border-radius:4px; border:1px solid #ccc;">🥩 P: ${prot}g</span>
+                        <span style="background:#fff; padding:3px 6px; border-radius:4px; border:1px solid #ccc;">🍞 C: ${carb}g</span>
+                        <span style="background:#fff; padding:3px 6px; border-radius:4px; border:1px solid #ccc;">🥑 G: ${gord}g</span>
+                    </div>
                 </div>
             </li>
         `;
@@ -157,8 +208,8 @@ function renderPlanosSalvos(planos) {
 
     return `
         <h4 class="section-title"><i class="fas fa-save"></i> Planos Salvos</h4>
-        <p class="info-message">Gere um novo plano para salvar o plano atual nesta lista.</p>
-        <ul class="planos-salvos-list">
+        <p class="info-message">Gere um novo plano para salvar o plano atual nesta lista. Clique no olho para ver um resumo.</p>
+        <ul class="planos-salvos-list" style="list-style:none; padding:0;">
             ${planosHTML}
         </ul>
     `;
@@ -299,16 +350,13 @@ async function handleSetPlanoAtivo(planoId) {
     }
 }
 
-// [NOVO] Função para Excluir um plano salvo
+// Função para Excluir um plano salvo
 async function handleDeletePlano(planoId) {
-    // Confirmação de segurança
     if (!confirm('Tem certeza que deseja excluir este plano salvo? Esta ação não pode ser desfeita.')) {
         return;
     }
 
     const token = localStorage.getItem('jwtToken');
-    // Mostra o loading *dentro* da seção de planos salvos, se possível,
-    // ou apenas um loading genérico.
     container.innerHTML = `<div class="loading-message"><i class="fas fa-spinner fa-spin"></i><p>Excluindo plano...</p></div>`;
     
     try {
@@ -323,12 +371,12 @@ async function handleDeletePlano(planoId) {
         }
         
         alert('Plano salvo excluído com sucesso!');
-        loadDietPlan(); // Recarrega a seção de dieta
+        loadDietPlan(); 
 
     } catch (error) {
         console.error('Erro ao excluir plano:', error);
         alert(error.message);
-        loadDietPlan(); // Recarrega mesmo se der erro, para mostrar o estado atual
+        loadDietPlan(); 
     }
 }
 
@@ -395,8 +443,6 @@ export async function loadDietPlan() {
             const planosSalvos = await planosSalvosRes.json();
             container.innerHTML += `<hr class="section-divider">`;
             container.innerHTML += renderPlanosSalvos(planosSalvos);
-            
-            // Os listeners agora são gerenciados pelo listener principal
         }
 
     } catch (error) {
